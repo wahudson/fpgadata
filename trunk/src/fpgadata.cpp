@@ -12,7 +12,10 @@ using namespace std;
 
 #include "Error.h"
 #include "yOption.h"
+#include "yRpiGpio.h"
 #include "yFramDat.h"
+
+#define CLKID	CLOCK_MONOTONIC_RAW
 
 
 //--------------------------------------------------------------------------
@@ -106,10 +109,6 @@ yOptLong::parse_options()
 	}
     }
 
-    if ( ! ( csv || tab || hex ) ) {
-	tab = 1;
-    }
-
     string	npix_s  ( npix );
 
     if ( npix_s.length() ) {
@@ -152,7 +151,7 @@ yOptLong::print_usage()
     cout <<
     "    List USB device attributes.\n"
     "usage:  " << ProgName << " [options]\n"
-    "  output forms:\n"
+    "  output forms:  (default is none)\n"
     "    --csv               CSV format\n"
     "    --tab               tabular format\n"
     "    --hex               hex data dump\n"
@@ -215,6 +214,10 @@ int
 main( int	argc,
       char	*argv[]
 ) {
+    int			rv;
+    struct timespec	tpA;
+    struct timespec	tpB;
+
     try {
 //	cerr << "Try" << endl;
 
@@ -235,16 +238,64 @@ main( int	argc,
 	    return ( Error::err() ? 1 : 0 );
 	}
 
-	if ( Error::err() )  return 1;
-
 	yFramDat		Fdx  ( 10 );	// constructor
 
+	if ( Error::err() )  return 1;
+
+	yRpiGpio		Gpx;		// constructor
+
+	volatile unsigned	*gpio_read = Gpx.get_read_addr();
+	volatile unsigned	*gpio_set  = Gpx.get_set_addr();
+	volatile unsigned	*gpio_clr  = Gpx.get_clr_addr();
+
+	if ( Opx.debug ) {
+	    cout << "    gpio_read= " << gpio_read << endl;
+	    cout << "    gpio_set=  " << gpio_set  << endl;
+	    cout << "    gpio_clr=  " << gpio_clr  << endl;
+	}
+
+
+    // Main Loop
+
+	rv = clock_gettime( CLKID, &tpA );
+
+	unsigned	ilevel;
+	for ( int ii=Fdx.nlimit( Opx.npix_n );  ii>0;  ii-- )
+	{
+	    ilevel = *gpio_read;	// Read GPIO level
+	    *gpio_set = 0x00010;
+	    *gpio_clr = 0x00010;
+	    Fdx.push_dat( ilevel );
+//	    mem[i] += (ilevel >> 6) & 0x00ff;
+	}
+
+	rv = clock_gettime( CLKID, &tpB );
+
+	if ( rv ) { cerr << "Error:  clock_gettime() failed" << endl; }
+
+	long int	delta_s  = tpB.tv_sec  - tpA.tv_sec;
+	long int	delta_ns = tpB.tv_nsec - tpA.tv_nsec;
+	if ( delta_ns < 0 ) {
+	    delta_ns += 1000000000;
+	    delta_s  -= 1;
+	}
+
+	cout << "    delta_ns = " << delta_ns << endl;
+
+	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
+	cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
+	cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
+	cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
+
+
+/*
 	for ( int i = 0;  i<172;  i++ )
 	{
 	    Fdx.push_dat( 0 );
 	    i++;
 	    Fdx.push_dat( i+1 );
 	}
+*/
 
 	if ( Opx.debug ) {
 	    Fdx.show_debug();

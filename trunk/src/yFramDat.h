@@ -23,6 +23,7 @@ class yFramDat {
    ~yFramDat();
 
     void		show_debug();
+    int			nlimit( unsigned int  ntran );
     bool		push_dat( uint16_t  value );
     void		print_coeff16_tab();
     void		print_coeff16_csv();

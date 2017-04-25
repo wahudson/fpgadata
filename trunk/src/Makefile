@@ -12,12 +12,14 @@ OJ         = ../obj
 INCS       = \
         Error.h \
         yOption.h \
+        yRpiGpio.h \
         yFramDat.h
 
 		# objects not including main()
 OBJS       = \
 	$(OJ)/Error.o \
 	$(OJ)/yOption.o \
+	$(OJ)/yRpiGpio.o \
 	$(OJ)/yFramDat.o
 
 		# compiler flags
@@ -46,6 +48,9 @@ $(BINDIR)/fpgadata:	$(OJ)/fpgadata.o  $(OBJS)
 
 $(OJ)/fpgadata.o:	fpgadata.cpp  $(INCS)
 	g++ $(CXXFLAGS) -o $@  -c fpgadata.cpp
+
+$(OJ)/yRpiGpio.o:	yRpiGpio.cpp  yRpiGpio.h
+	g++ $(CXXFLAGS) -o $@  -c yRpiGpio.cpp
 
 $(OJ)/yFramDat.o:	yFramDat.cpp  yFramDat.h
 	g++ $(CXXFLAGS) -o $@  -c yFramDat.cpp

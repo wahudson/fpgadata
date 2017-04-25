@@ -79,6 +79,29 @@ yFramDat::show_debug()
 
 
 /*
+* Check data array limit, reduce as necessary. 
+* Use in  "for ( i=self.nlimit( n_trans ); ..)"
+* call:
+*    self.nlimit( n_trans )
+* return:
+*    ()  = limited value
+*/
+int
+yFramDat::nlimit(
+    unsigned int	ntran
+)
+{
+    if ( ntran <= size ) {
+	return( ntran );
+    }
+    else {
+	return( size );
+	cerr << "Error:  yFramDat::nlimit() size exceeded" << endl;
+    }
+}
+
+
+/*
 * Push data onto array.
 * call:
 *    self.push_dat()
