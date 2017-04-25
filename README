@@ -1,0 +1,31 @@
+2017-04-22
+		fpgadata -- FPGA to Raspberry Pi Data Transfer
+		----------------------------------------------
+
+This is the "fpgadata" tool.
+
+Content Experts:
+    William Hudson  970-215-8461
+
+
+Files:
+------
+README		this file
+
+trunk/		mainline development
+tags/		release tags
+branches/	development branches
+
+doc/		release notes
+
+
+Repository History:  (newest first)
+----------------------------------------------------------------------------
+(2017-04-22)  Initial development
+
+???
+URL: file:///home/wah/SVN_tool/usblist
+Repository Root: file:///home/wah/SVN_tool/usblist
+Repository UUID: 9df72383-472d-4259-abf5-522e46aae790
+Revision: 0
+
