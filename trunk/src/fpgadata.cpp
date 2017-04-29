@@ -127,6 +127,10 @@ yOptLong::parse_options()
     if ( repeat_s.length() ) {
 	repeat_n = stoi( repeat_s );
     }
+
+    if ( get_argc() > 0 ) {
+	Error::err( "extra arguments:  ", next_arg() );
+    }
 }
 
 
@@ -237,17 +241,9 @@ main( int	argc,
     struct timespec	tpB;
 
     try {
-//	cerr << "Try" << endl;
-
 	yOptLong		Opx  ( argc, argv );	// constructor
 
-	try {
-	    Opx.parse_options();
-	}
-	catch (...) {
-	    Error::err( "in option parsing" );
-	    return 1;
-	}
+	Opx.parse_options();
 
 	yMain			Mnx  ( &Opx );	// constructor
 
@@ -345,8 +341,6 @@ main( int	argc,
     catch (...) {
 	cerr << "caught something" << endl;
     }
-
-//    cerr << "End" << endl;
 
     return ( Error::err() ? 1 : 0 );
 }
