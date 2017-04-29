@@ -24,6 +24,12 @@ class yFramDat {
 
     void		show_debug();
     int			get_length();
+
+    inline void		clear()
+    {
+	len = 0;
+    }
+
     int			nlimit( unsigned int  ntran );
     bool		push_dat( uint16_t  value );
     void		print_coeff16_tab();

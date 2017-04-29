@@ -36,6 +36,7 @@ class yOptLong : public yOption {
   public:	// option values
 
     const char*		npix;
+    const char*		repeat;
     const char*		prefix;
     bool		csv;
     bool		tab;
@@ -49,6 +50,7 @@ class yOptLong : public yOption {
   public:	// data values
 
     int			npix_n;			// number of pixels
+    int			repeat_n;		// repeat loop
 
   public:
     yOptLong( int argc,  char* argv[] );	// constructor
@@ -71,6 +73,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     : yOption( argc, argv )
 {
     npix        = "";
+    repeat      = "";
     prefix      = "";
     csv         = 0;
     tab         = 0;
@@ -82,6 +85,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     TESTOP      = 0;
 
     npix_n      = 64;
+    repeat_n    = 1;
 }
 
 
@@ -94,6 +98,7 @@ yOptLong::parse_options()
     while ( this->next() )
     {
 	if      ( is( "--npix="      )) { npix       = this->val(); }
+	else if ( is( "--repeat="    )) { repeat     = this->val(); }
 	else if ( is( "--prefix="    )) { prefix     = this->val(); }
 	else if ( is( "--csv"        )) { csv        = 1; }
 	else if ( is( "--tab"        )) { tab        = 1; }
@@ -112,10 +117,15 @@ yOptLong::parse_options()
 	}
     }
 
-    string	npix_s  ( npix );
+    string	npix_s    ( npix );
+    string	repeat_s  ( repeat );
 
     if ( npix_s.length() ) {
 	npix_n = stoi( npix_s );
+    }
+
+    if ( repeat_s.length() ) {
+	repeat_n = stoi( repeat_s );
     }
 }
 
@@ -128,6 +138,7 @@ yOptLong::print_option_flags()
 {
 
     cout << "--npix        = " << npix         << endl;
+    cout << "--repeat      = " << repeat       << endl;
     cout << "--prefix      = " << prefix       << endl;
     cout << "--csv         = " << csv          << endl;
     cout << "--tab         = " << tab          << endl;
@@ -143,6 +154,7 @@ yOptLong::print_option_flags()
     }
 
     cout << "npix_n        = " << npix_n       << endl;
+    cout << "repeat_n      = " << repeat_n     << endl;
 }
 
 
@@ -162,6 +174,7 @@ yOptLong::print_usage()
     "    --raw               raw hex data\n"
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
+    "    --repeat=N          repeat data read loop N times\n"
     " #  --gray=N,N,...      image file coefficient numbers\n"
     " #  --prefix=NAME       file name prefix\n"
     "    --help              show this usage\n"
@@ -261,31 +274,34 @@ main( int	argc,
 
 
     // Main Loop
-
-	rv = clock_gettime( CLKID, &tpA );
-
-	unsigned	ilevel;
-	for ( int ii=Fdx.nlimit( Opx.npix_n );  ii>0;  ii-- )
+	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )
 	{
-	    ilevel = *gpio_read;	// Read GPIO level
-	    *gpio_set = 0x00010;
-	    *gpio_clr = 0x00010;
-	    Fdx.push_dat( (ilevel >> 6) & 0x00ff );
-//	    mem[i] += (ilevel >> 6) & 0x00ff;
+	    Fdx.clear();
+	    rv = clock_gettime( CLKID, &tpA );
+
+	    unsigned	ilevel;
+	    for ( int ii=Fdx.nlimit( Opx.npix_n );  ii>0;  ii-- )
+	    {
+		ilevel = *gpio_read;	// Read GPIO level
+		*gpio_set = 0x00010;
+		*gpio_clr = 0x00010;
+		Fdx.push_dat( (ilevel >> 6) & 0x00ff );
+	    }
+
+	    rv = clock_gettime( CLKID, &tpB );
+
+	    if ( rv ) { cerr << "Error:  clock_gettime() failed" << endl; }
+
+	    long int	delta_s  = tpB.tv_sec  - tpA.tv_sec;
+	    long int	delta_ns = tpB.tv_nsec - tpA.tv_nsec;
+	    if ( delta_ns < 0 ) {
+		delta_ns += 1000000000;
+		delta_s  -= 1;
+	    }
+
+	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
+		 <<setw(9) << delta_ns << endl;
 	}
-
-	rv = clock_gettime( CLKID, &tpB );
-
-	if ( rv ) { cerr << "Error:  clock_gettime() failed" << endl; }
-
-	long int	delta_s  = tpB.tv_sec  - tpA.tv_sec;
-	long int	delta_ns = tpB.tv_nsec - tpA.tv_nsec;
-	if ( delta_ns < 0 ) {
-	    delta_ns += 1000000000;
-	    delta_s  -= 1;
-	}
-
-	cerr << "    delta_ns = " << delta_ns << endl;
 
 //	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
 //	cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
