@@ -40,6 +40,7 @@ class yOptLong : public yOption {
     bool		csv;
     bool		tab;
     bool		hex;
+    bool		raw;
 
     bool		verbose;
     bool		debug;
@@ -74,6 +75,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     csv         = 0;
     tab         = 0;
     hex         = 0;
+    raw         = 0;
 
     verbose     = 0;
     debug       = 0;
@@ -96,6 +98,7 @@ yOptLong::parse_options()
 	else if ( is( "--csv"        )) { csv        = 1; }
 	else if ( is( "--tab"        )) { tab        = 1; }
 	else if ( is( "--hex"        )) { hex        = 1; }
+	else if ( is( "--raw"        )) { raw        = 1; }
 
 	else if ( is( "--verbose"    )) { verbose    = 1; }
 	else if ( is( "-v"           )) { verbose    = 1; }
@@ -129,6 +132,7 @@ yOptLong::print_option_flags()
     cout << "--csv         = " << csv          << endl;
     cout << "--tab         = " << tab          << endl;
     cout << "--hex         = " << hex          << endl;
+    cout << "--raw         = " << raw          << endl;
     cout << "--verbose     = " << verbose      << endl;
     cout << "--debug       = " << debug        << endl;
 
@@ -155,6 +159,7 @@ yOptLong::print_usage()
     "    --csv               CSV format\n"
     "    --tab               tabular format\n"
     "    --hex               hex data dump\n"
+    "    --raw               raw hex data\n"
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
     " #  --gray=N,N,...      image file coefficient numbers\n"
@@ -280,13 +285,12 @@ main( int	argc,
 	    delta_s  -= 1;
 	}
 
-	cout << "    delta_ns = " << delta_ns << endl;
+	cerr << "    delta_ns = " << delta_ns << endl;
 
-	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
-	cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
-	cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
-	cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
-
+//	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
+//	cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
+//	cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
+//	cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
 
 /*
 	for ( int i = 0;  i<172;  i++ )
@@ -303,16 +307,22 @@ main( int	argc,
 
 	if ( Opx.tab ) {
 	    Fdx.print_coeff16_tab();
+	    cout << endl;
 	}
 
 	if ( Opx.csv ) {
-	    cout << endl;
 	    Fdx.print_coeff16_csv();
+	    cout << endl;
 	}
 
 	if ( Opx.hex ) {
-	    cout << endl;
 	    Fdx.print_hex_dump();
+	    cout << endl;
+	}
+
+	if ( Opx.raw ) {
+	    Fdx.print_index_data();
+	    cout << endl;
 	}
 
     }

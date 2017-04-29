@@ -23,11 +23,13 @@ class yFramDat {
    ~yFramDat();
 
     void		show_debug();
+    int			get_length();
     int			nlimit( unsigned int  ntran );
     bool		push_dat( uint16_t  value );
     void		print_coeff16_tab();
     void		print_coeff16_csv();
     void		print_hex_dump();
+    void		print_index_data();
 };
 
 

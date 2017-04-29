@@ -78,6 +78,20 @@ yFramDat::show_debug()
 
 
 /*
+* Get length of data array.
+* call:
+*    self.get_length()
+* return:
+*    ()  = current length of data array
+*/
+int
+yFramDat::get_length()
+{
+    return len;
+}
+
+
+/*
 * Check data array limit, reduce as necessary. 
 * Use in  "for ( i=self.nlimit( n_trans ); ..)"
 * call:
@@ -101,9 +115,10 @@ yFramDat::nlimit(
 
 
 /*
-* Push data onto array.
+* Push raw data onto array.
+*    Data is 16-bit words.
 * call:
-*    self.push_dat()
+*    self.push_dat( value )
 * return:
 *    ()  : status, 1= success, 0= fail full array
 */
@@ -195,7 +210,7 @@ yFramDat::print_coeff16_csv()
 /*
 * Print data as a hex dump.
 *    Output in big-endian, address ascending to the right.
-*    Data is 16-bit words.
+*    Data is 16-bit words, in hex format.
 * call:
 *    self.print_hex_dump()
 */
@@ -221,6 +236,28 @@ yFramDat::print_hex_dump()
 	    }
 	}
 	cout << endl;
+    }
+    cout <<dec;
+}
+
+
+/*
+* Print raw data as 16-bit words, with index.
+*    Data is 16-bit words, in hex.
+* call:
+*    self.print_index_data()
+*/
+void
+yFramDat::print_index_data()
+{
+    cout << " index   hex" << endl;
+    cout <<dec;
+    cout.fill('0');
+    for ( unsigned int i = 0;  i < len;  i++  )
+    {
+	cout <<dec <<setw(6) << i << "  ";
+	cout <<hex <<setw(4) << (unsigned int) data[i] << endl;
+	// cast from uint16_t
     }
     cout <<dec;
 }
