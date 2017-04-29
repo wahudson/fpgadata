@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>	// open()
 #include <sys/mman.h>	// mmap()
+#include <sys/stat.h>	// stat()
 
 using namespace std;
 
@@ -30,17 +31,23 @@ using namespace std;
 /*
 * Constructor.
 * Set up a memory region to access GPIO.
+*    Access thru /dev/gpiomem, for normal users belonging to group 'gpio'.
+*    If it did not exist, use a fake memory region for testing.
 */
 yRpiGpio::yRpiGpio()
 {
     int				mem_fd;
     void			*gpio_map;
     static volatile unsigned	fake_block[ BLOCK_SIZE ];
+    char			devfile[] = "/dev/gpiomem";
+    struct stat			statbuf;
 
-  if ( 1 ) {
+  if ( stat( devfile, &statbuf ) == 0 ) {	// exists
+    cerr << "Real GPIO" << endl;
+
     // open /dev/gpiomem
-    if (( mem_fd = open( "/dev/gpiomem", O_RDWR|O_SYNC ) ) < 0) {
-	cerr << "can't open /dev/gpiomem" << endl;
+    if (( mem_fd = open( devfile, O_RDWR|O_SYNC ) ) < 0) {
+	cerr << "can't open " << devfile << endl;
 	exit( -1 );
     }
  
@@ -54,7 +61,7 @@ yRpiGpio::yRpiGpio()
 	GPIO_BASE		// Offset to GPIO peripheral
     );
  
-    close( mem_fd );	//No need to keep mem_fd open after mmap
+    close( mem_fd );	// No need to keep mem_fd open after mmap
  
     if ( gpio_map == MAP_FAILED ) {
 	//#!! fix mixed io
@@ -69,11 +76,11 @@ yRpiGpio::yRpiGpio()
     GpioBase = (volatile unsigned *)gpio_map;
   }
   else {
+    cerr << "Fake GPIO" << endl;
     GpioBase = fake_block;
   }
 
-    cout << "    GpioBase= " << GpioBase << endl;
-
+    cerr << "    GpioBase= " << (unsigned *)GpioBase << endl;
 }
 
 
