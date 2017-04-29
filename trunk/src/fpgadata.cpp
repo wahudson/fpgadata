@@ -249,9 +249,9 @@ main( int	argc,
 	volatile unsigned	*gpio_clr  = Gpx.get_clr_addr();
 
 	if ( Opx.debug ) {
-	    cout << "    gpio_read= " << gpio_read << endl;
-	    cout << "    gpio_set=  " << gpio_set  << endl;
-	    cout << "    gpio_clr=  " << gpio_clr  << endl;
+	    cout << "    gpio_read= " << (unsigned *)gpio_read << endl;
+	    cout << "    gpio_set=  " << (unsigned *)gpio_set  << endl;
+	    cout << "    gpio_clr=  " << (unsigned *)gpio_clr  << endl;
 	}
 
 
@@ -265,7 +265,7 @@ main( int	argc,
 	    ilevel = *gpio_read;	// Read GPIO level
 	    *gpio_set = 0x00010;
 	    *gpio_clr = 0x00010;
-	    Fdx.push_dat( ilevel );
+	    Fdx.push_dat( (ilevel >> 6) & 0x00ff );
 //	    mem[i] += (ilevel >> 6) & 0x00ff;
 	}
 

@@ -36,11 +36,10 @@ yFramDat::yFramDat( size_t nsize )
 // warning: ISO C++ does not support variable-length array types [-Wvla]
 //    data = new( unsigned char [nsize] );
 
-    const int	sz = 2 * 1024;
+    const int	sz = 2 * 1024 * 1024;
 
     len  = 0;
     size = 0;
-//    data = new( unsigned char [sz+1] );
     data = new( uint16_t [sz+1] );
 
     if ( nsize > sz ) {
@@ -135,8 +134,6 @@ yFramDat::print_coeff16_tab()
 
     cout << " index    c0    c1    c2    c3    c4    c5    c6    c7"
                   "    c8    c9   c10   c11   c12   c13   c14   c15" << endl;
-//  cout << " index     0     1     2     3     4     5     6     7"
-//                "     8     9    10    11    12    13    14    15" << endl;
     cout << "------ ----- ----- ----- ----- ----- ----- ----- -----"
                   " ----- ----- ----- ----- ----- ----- ----- -----" << endl;
     cout <<dec;
@@ -198,24 +195,26 @@ yFramDat::print_coeff16_csv()
 /*
 * Print data as a hex dump.
 *    Output in big-endian, address ascending to the right.
+*    Data is 16-bit words.
 * call:
 *    self.print_hex_dump()
 */
 void
 yFramDat::print_hex_dump()
 {
-    cout << "addr   0   1   2   3   4   5   6   7" << endl;
-    cout << "       8   9   a   b   c   d   e   f" << endl;
+    cout << " index     0     1     2     3     4     5     6     7" << endl;
+    cout << " (hex)     8     9     a     b     c     d     e     f" << endl;
     cout <<hex;
     cout.fill('0');
     for ( unsigned int i = 0;  i < len;  )
     {
-	cout <<setw(4) << i;
+	cout <<setw(6) << i;
 
 	for ( int j = 0;  j < 8;  j++, i++ )
 	{
 	    if ( i < len ) {
-		cout << "  " <<setw(2) << (unsigned int) data[i];
+		cout << "  " <<setw(4) << (unsigned int) data[i];
+		// cast from uint16_t
 	    }
 	    else {
 		break;
@@ -223,6 +222,6 @@ yFramDat::print_hex_dump()
 	}
 	cout << endl;
     }
-    cout << dec;
+    cout <<dec;
 }
 
