@@ -17,6 +17,22 @@ using namespace std;
 
 #define CLKID	CLOCK_MONOTONIC_RAW
 
+// GPIO bit postions, in BCM register
+//   28   24   20   16   12    8    4    0     bit number
+// .... .... dddd dddd .... .... .... ....  i  DATA   bits
+// .... ...m .... .... .... .... .... ....  i  metadata flag ???
+// .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
+// .... .... .... .... .... .... .r.. ....   o READAK fifo read aknowledge
+
+// .... .... .... .... ..dd dddd dd.r ....  DATA   bits
+
+//#define DATA_G	0x00ff0000	// DATA
+//#define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
+#define READAK_G	0x00000040	// READAK fifo read aknowledge
+
+#define DATA_POS	16		// position of data LSB
+#define DATA_MASK	0x000000ff	// data width mask, after shift right
+
 
 //--------------------------------------------------------------------------
 // Option Handling
@@ -169,7 +185,7 @@ void
 yOptLong::print_usage()
 {
     cout <<
-    "    List USB device attributes.\n"
+    "    FPGA data transfer on Raspberry Pi\n"
     "usage:  " << ProgName << " [options]\n"
     "  output forms:  (default is none)\n"
     "    --csv               CSV format\n"
@@ -179,8 +195,8 @@ yOptLong::print_usage()
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
-    " #  --gray=N,N,...      image file coefficient numbers\n"
-    " #  --prefix=NAME       file name prefix\n"
+//  " #  --gray=N,N,...      image file coefficient numbers\n"
+//  " #  --prefix=NAME       file name prefix\n"
     "    --help              show this usage\n"
     "    -v, --verbose       verbose output\n"
     "    --debug             debug output\n"
@@ -279,9 +295,9 @@ main( int	argc,
 	    for ( int ii=Fdx.nlimit( Opx.npix_n );  ii>0;  ii-- )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
-		*gpio_set = 0x00010;
-		*gpio_clr = 0x00010;
-		Fdx.push_dat( (ilevel >> 6) & 0x00ff );
+		*gpio_set = READAK_G;
+		*gpio_clr = READAK_G;
+		Fdx.push_dat( (ilevel >> DATA_POS) & DATA_MASK );
 	    }
 
 	    rv = clock_gettime( CLKID, &tpB );
