@@ -36,6 +36,7 @@ class yFramDat {
     void		print_coeff16_csv();
     void		print_hex_dump();
     void		print_index_data();
+    void		print_delta_data();
 };
 
 

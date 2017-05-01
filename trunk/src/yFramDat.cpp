@@ -262,3 +262,29 @@ yFramDat::print_index_data()
     cout <<dec;
 }
 
+
+/*
+* Print delta data as 16-bit words, with index.
+*    Show data difference.  For use with a counter.
+*    Data is 16-bit words, in decimal.
+* call:
+*    self.print_delta_data()
+*/
+void
+yFramDat::print_delta_data()
+{
+    cout << " index   data  delta" << endl;
+    cout <<dec;
+    cout.fill(' ');
+    for ( unsigned int i = 0;  i < len-1;  i++  )
+    {
+	cout <<setw(6) << i << "  "
+	     <<setw(5) << (unsigned int) data[i] << "  "
+	     <<setw(5) << ((int) data[i+1] - (int) data[i])
+	     <<endl;
+	// cast from uint16_t
+	//#!! not showing last element used in diff
+    }
+    cout <<dec;
+}
+

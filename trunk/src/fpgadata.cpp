@@ -58,6 +58,7 @@ class yOptLong : public yOption {
     bool		tab;
     bool		hex;
     bool		raw;
+    bool		delta;
 
     bool		verbose;
     bool		debug;
@@ -95,6 +96,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     tab         = 0;
     hex         = 0;
     raw         = 0;
+    delta       = 0;
 
     verbose     = 0;
     debug       = 0;
@@ -120,6 +122,7 @@ yOptLong::parse_options()
 	else if ( is( "--tab"        )) { tab        = 1; }
 	else if ( is( "--hex"        )) { hex        = 1; }
 	else if ( is( "--raw"        )) { raw        = 1; }
+	else if ( is( "--delta"      )) { delta      = 1; }
 
 	else if ( is( "--verbose"    )) { verbose    = 1; }
 	else if ( is( "-v"           )) { verbose    = 1; }
@@ -164,6 +167,7 @@ yOptLong::print_option_flags()
     cout << "--tab         = " << tab          << endl;
     cout << "--hex         = " << hex          << endl;
     cout << "--raw         = " << raw          << endl;
+    cout << "--delta       = " << delta        << endl;
     cout << "--verbose     = " << verbose      << endl;
     cout << "--debug       = " << debug        << endl;
 
@@ -192,6 +196,7 @@ yOptLong::print_usage()
     "    --tab               tabular format\n"
     "    --hex               hex data dump\n"
     "    --raw               raw hex data\n"
+    "    --delta             delta data in decimal\n"
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
@@ -350,6 +355,11 @@ main( int	argc,
 
 	if ( Opx.raw ) {
 	    Fdx.print_index_data();
+	    cout << endl;
+	}
+
+	if ( Opx.delta ) {
+	    Fdx.print_delta_data();
 	    cout << endl;
 	}
 
