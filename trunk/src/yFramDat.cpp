@@ -78,20 +78,6 @@ yFramDat::show_debug()
 
 
 /*
-* Get length of data array.
-* call:
-*    self.get_length()
-* return:
-*    ()  = current length of data array
-*/
-int
-yFramDat::get_length()
-{
-    return len;
-}
-
-
-/*
 * Check data array limit, reduce as necessary. 
 * Use in  "for ( i=self.nlimit( n_trans ); ..)"
 * call:

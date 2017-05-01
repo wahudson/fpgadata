@@ -22,14 +22,17 @@ class yFramDat {
     yFramDat( size_t nsize );
    ~yFramDat();
 
-    void		show_debug();
-    int			get_length();
+    inline int		get_length()	// Get length of data array.
+    {
+	return len;
+    }
 
-    inline void		clear()
+    inline void		clear()		// Reset length to zero.
     {
 	len = 0;
     }
 
+    void		show_debug();
     int			nlimit( unsigned int  ntran );
     bool		push_dat( uint16_t  value );
     void		print_coeff16_tab();

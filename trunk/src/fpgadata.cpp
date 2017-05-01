@@ -27,7 +27,7 @@ using namespace std;
 // .... .... .... .... ..dd dddd dd.r ....  DATA   bits
 
 //#define DATA_G	0x00ff0000	// DATA
-//#define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
+#define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
 #define READAK_G	0x00000040	// READAK fifo read aknowledge
 
 #define DATA_POS	16		// position of data LSB
@@ -301,7 +301,8 @@ main( int	argc,
 	    rv = clock_gettime( CLKID, &tpA );
 
 	    unsigned	ilevel;
-	    for ( int ii=n_trans;  ii>0;  ii-- )
+//	    for ( int ii=n_trans;  ii>0;  ii-- )
+	    while ( Fdx.get_length() < n_trans )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
 
@@ -311,6 +312,10 @@ main( int	argc,
 		*gpio_set = READAK_G;
 
 		*gpio_clr = READAK_G;
+
+		if ( ilevel & NODATA_G ) {	// fifo empty
+		    continue;
+		}
 		Fdx.push_dat( (ilevel >> DATA_POS) & DATA_MASK );
 	    }
 
@@ -329,23 +334,12 @@ main( int	argc,
 		 <<setw(9) << delta_ns << "  "
 		 <<setw(4) << (delta_ns / n_trans) << " ns/xfer"
 		 <<endl;
-
-//		 <<setw(9) << delta_ns << endl;
 	}
 
 //	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
 //	cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
 //	cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
 //	cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
-
-/*
-	for ( int i = 0;  i<172;  i++ )
-	{
-	    Fdx.push_dat( 0 );
-	    i++;
-	    Fdx.push_dat( i+1 );
-	}
-*/
 
 	if ( Opx.debug ) {
 	    Fdx.show_debug();
