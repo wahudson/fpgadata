@@ -260,6 +260,7 @@ main( int	argc,
     int			rv;
     struct timespec	tpA;
     struct timespec	tpB;
+    int			n_trans;	// loop number of transfers
 
     try {
 	yOptLong		Opx  ( argc, argv );	// constructor
@@ -291,16 +292,24 @@ main( int	argc,
 
 
     // Main Loop
+	n_trans = Fdx.nlimit( Opx.npix_n );
+	cerr << "    n_trans= " << n_trans << endl;
+
 	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )
 	{
 	    Fdx.clear();
 	    rv = clock_gettime( CLKID, &tpA );
 
 	    unsigned	ilevel;
-	    for ( int ii=Fdx.nlimit( Opx.npix_n );  ii>0;  ii-- )
+	    for ( int ii=n_trans;  ii>0;  ii-- )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
+
 		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+
 		*gpio_clr = READAK_G;
 		Fdx.push_dat( (ilevel >> DATA_POS) & DATA_MASK );
 	    }
@@ -317,7 +326,11 @@ main( int	argc,
 	    }
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
-		 <<setw(9) << delta_ns << endl;
+		 <<setw(9) << delta_ns << "  "
+		 <<setw(4) << (delta_ns / n_trans) << " ns/xfer"
+		 <<endl;
+
+//		 <<setw(9) << delta_ns << endl;
 	}
 
 //	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
