@@ -194,6 +194,74 @@ yFramDat::print_coeff16_csv()
 
 
 /*
+* Print data as 16x int16_t coefficients, tabular format.
+*     Big-endian data.
+*/
+void
+yFramDat::print_coeff_int16B_tab()
+{
+    int16_t	coeff;
+
+    cout << " index     c0     c1     c2     c3     c4     c5     c6     c7"
+                  "     c8     c9    c10    c11    c12    c13    c14    c15" << endl;
+    cout << "------ ------ ------ ------ ------ ------ ------ ------ ------"
+                  " ------ ------ ------ ------ ------ ------ ------ ------" << endl;
+    cout <<dec;
+    cout.fill(' ');
+    for ( unsigned int i = 0;  i < len;  )
+    {
+	cout <<setw(6) << i / 32;
+
+	for ( int j = 0;  j < 16;  j++ )
+	{
+	    if ( i >= len ) { break; }
+
+	    coeff = data[i++] & 0xff;
+	    coeff = coeff << 8;
+	    coeff = coeff | (data[i++] & 0xff);
+
+	    cout << " " <<setw(6) << coeff;
+	}
+	cout << endl;
+    }
+    cout << dec;
+}
+
+
+/*
+* Print data as 16x int16_t coefficients, CSV format.
+*     Big-endian data.
+*/
+void
+yFramDat::print_coeff_int16B_csv()
+{
+    int16_t	coeff;
+
+    cout << "index,c0,c1,c2,c3,c4,c5,c6,c7,"
+                  "c8,c9,c10,c11,c12,c13,c14,c15" << endl;
+    cout <<dec;
+    cout.fill(' ');
+    for ( unsigned int i = 0;  i < len;  )
+    {
+	cout << i / 32;
+
+	for ( int j = 0;  j < 16;  j++ )
+	{
+	    if ( i >= len ) { break; }
+
+	    coeff = data[i++] & 0xff;
+	    coeff = coeff << 8;
+	    coeff = coeff | (data[i++] & 0xff);
+
+	    cout << "," << coeff;
+	}
+	cout << endl;
+    }
+    cout << dec;
+}
+
+
+/*
 * Print data as a hex dump.
 *    Output in big-endian, address ascending to the right.
 *    Data is 16-bit words, in hex format.

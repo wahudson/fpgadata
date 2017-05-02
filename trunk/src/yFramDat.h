@@ -37,6 +37,8 @@ class yFramDat {
     bool		push_dat( uint16_t  value );
     void		print_coeff16_tab();
     void		print_coeff16_csv();
+    void		print_coeff_int16B_tab();
+    void		print_coeff_int16B_csv();
     void		print_hex_dump();
     void		print_index_data();
     void		print_delta_data();

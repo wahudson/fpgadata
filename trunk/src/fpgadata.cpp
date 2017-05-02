@@ -346,12 +346,12 @@ main( int	argc,
 	}
 
 	if ( Opx.tab ) {
-	    Fdx.print_coeff16_tab();
+	    Fdx.print_coeff_int16B_tab();
 	    cout << endl;
 	}
 
 	if ( Opx.csv ) {
-	    Fdx.print_coeff16_csv();
+	    Fdx.print_coeff_int16B_csv();
 	    cout << endl;
 	}
 

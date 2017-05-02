@@ -1,0 +1,45 @@
+#!/usr/bin/Rscript --vanilla
+# 2017-05-01  William A. Hudson
+
+# Plot FPGA filter coefficients.
+#
+# usage:  plotc16  inFile.csv
+#
+# inFile:
+#  index    c0    c1    c2    c3    c4    c5    c6    c7    c8    c9 ...   c16
+#      0 11823 12337 12851 13365 13879 14393 14907 15421 15935 16449 ... 16963
+#      1 ...
+#
+#----------------------------------------------------------------------------
+
+    library( lattice )
+
+# Check arguments.
+    arg = commandArgs( trailingOnly=TRUE )
+
+    inFile  <- arg[1]
+    outFile <- arg[2]
+
+    if ( is.na( inFile ) ) {
+        stop( "usage:  plotc16  inFile.csv  [outFile.pdf]" )
+    }
+
+    if ( is.na( outFile ) ) {
+        outFile <- "out.pdf"
+    }
+
+# Read in csv data table.
+    df <- read.csv( inFile, header=TRUE )
+
+# Stack columns of dataframe.
+    st <- stack( df, select=c(c0,c1,c2,c3,c4,c5) )
+
+# Open plot device, make it the default.
+#    X11()
+    pdf( outFile )
+    # dev.list()
+
+    dotplot( st$ind ~ st$values, jitter.y=TRUE )
+
+#    Sys.sleep( 100 )
+
