@@ -4,12 +4,17 @@
 # Plot FPGA filter coefficients.
 #
 # usage:  plotc16  inFile.csv
+#     inFile = input csv file, or literal 'stdin'
 #
 # inFile:
 #  index    c0    c1    c2    c3    c4    c5    c6    c7    c8    c9 ...   c16
 #      0 11823 12337 12851 13365 13879 14393 14907 15421 15935 16449 ... 16963
 #      1 ...
 #
+#
+# % ssh pi@192.168.1.5  '~/bin/fpgadata' --npix=256 --csv | plotc16 stdin
+# % xpdf out.pdf &
+
 #----------------------------------------------------------------------------
 
     library( lattice )
@@ -24,22 +29,41 @@
         stop( "usage:  plotc16  inFile.csv  [outFile.pdf]" )
     }
 
-    if ( is.na( outFile ) ) {
-        outFile <- "out.pdf"
-    }
+#    if ( is.na( outFile ) ) {
+#        outFile <- "out.pdf"
+#    }
 
 # Read in csv data table.
     df <- read.csv( inFile, header=TRUE )
 
 # Stack columns of dataframe.
-    st <- stack( df, select=c(c0,c1,c2,c3,c4,c5) )
+
+    st <- stack( df, select=-index )	# all columns except "index"
+
+    # names(st)
+
+    coeff.f <- factor( st$ind, levels=names(df) )
+    # levels( coeff.f )
+
 
 # Open plot device, make it the default.
-#    X11()
-    pdf( outFile )
+    if ( is.na( outFile ) ) {
+	cat( "    plot_output= X11\n" )
+	X11()
+    } else {
+	cat( "    plot_output= ", outFile, "\n" )
+	pdf( outFile )
+    }
     # dev.list()
 
-    dotplot( st$ind ~ st$values, jitter.y=TRUE )
+    dotplot( coeff.f ~ st$values, jitter.y=TRUE )
 
-#    Sys.sleep( 100 )
+    if ( is.na( outFile ) ) {
+	cat( "    sleep for X11\n" )
+	Sys.sleep( 20 )
+    }
+
+#    h <- c("c0","c1","c2","c3","c4","c5","c6","c7",
+#           "c8","c9","c10","c11","c12"," c13","c14","c15")
+#    st <- stack( df, select=c(c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15) )
 
