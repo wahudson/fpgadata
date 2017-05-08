@@ -1,0 +1,208 @@
+2017-04-30
+		GPIO Connection Wiring
+		----------------------
+
+See also:
+    /home/wah/doc/rpi_gpio.text
+
+    GPIO voltage levels are 3.3 V and are not 5 V tolerant.
+
+References:
+-----------
+BCM2835 ARM Peripherals
+    Ref by RaspberryPi
+    /home/var/ref/BCM2835-ARM-Peripherals.pdf
+    https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/BCM2835-ARM-Peripherals.pdf
+
+Raspberry Pi
+    https://en.wikipedia.org/wiki/Raspberry_Pi
+
+RPi GPIO Interface Circuits
+    Level shifter methods.
+    http://elinux.org/RPi_GPIO_Interface_Circuits
+
+RPi BCM2835 GPIOs (Rpi-2)
+    http://elinux.org/RPi_BCM2835_GPIOs
+
+Altera DE2-115 User Manual
+    /home/var/ref/DE2_115_User_manual_2013.pdf
+
+
+----------------------------------------------------------------------------
+##(2017-04-30)  FPGA Connections
+
+Configure RPi pin modes:
+    % gpio -g mode  6 out
+    % gpio -g mode 27 up
+
+        RPi                               |  FPGA
+    Gpio   Pin Rpi/Alt  Pull  Dir Name     pin  fpga     Color
+    -----  --- -------  ----  --- -------- ---- -------  -----
+    Gpio0   27 ID_SD      Hi  i   .         .   .        .
+    Gpio1   28 ID_SC      Hi  i   .         .   .        .
+    Gpio2   03 iic1_SDA   Hi  i   .         .   .        .
+    Gpio3   05 iic1_SCL   Hi  i   .         .   .        .
+    Gpio4   07 GPCLK0     Hi  i   .         .   .        .
+    Gpio5   29 GPCLK1     Hi  i   .         .   .        .
+    Gpio6   31 GPCLK2     Hi   o  READAK    ??  ??       gray
+    Gpio7   26 spi0_CE1_N Hi  i   .         .   .        .
+    Gpio8   24 spi0_CE0_N Hi  i   .         .   .        .
+    Gpio9   21 spi0_MISO  Lo  i   .         .   .        .
+    Gpio10  19 spi0_MOSI  Lo  i   .         .   .        .
+    Gpio11  23 spi0_SCLK  Lo  i   .         .   .        .
+    Gpio12  32 PWM0       Lo  i   .         .   .        .
+    Gpio13  33 PWM1       Lo  i   .         .   .        .
+    Gpio14  08 u0_TXD     Lo  i   .         .   .        .
+    Gpio15  10 u0_RXD     Lo  i   .         .   .        .
+    Gpio16  36 u0_CTS     Lo  i   d0        01  GPIO[0]  black
+    Gpio17  11 u0_RTS     Lo  i   d1        02  GPIO[1]  brown
+    Gpio18  12 pcm_CLK    Lo  i   d2        03  GPIO[2]  red
+    Gpio19  35 pcm_FS     Lo  i   d3        04  GPIO[3]  orange
+    Gpio20  38 pcm_DIN    Lo  i   d4        05  GPIO[4]  yellow
+    Gpio21  40 pcm_DOUT   Lo  i   d5        06  GPIO[5]  green
+    Gpio22  15 --         Lo  i   d6        07  GPIO[6]  blue
+    Gpio23  16 --         Lo  i   d7        08  GPIO[7]  violet
+    Gpio24  18 --         Lo  i   .         .   .        .
+    Gpio25  22 --         Lo  i   .         .   .        .
+    Gpio26  37 --         Lo  i   .         .   .        .
+    Gpio27  13 --         Hi  i   NODATA    ??  ??       white
+    GND     06 --         -   -   .         .   .        .
+    GND     09 --         -   -   .         .   .        .
+    GND     14 --         -   -   .         .   .        .
+    GND     20 --         -   -   .         .   .        .
+    GND     25 --         -   -   .         .   .        .
+    GND     30 --         -   -   .         .   .        .
+    GND     34 --         -   -   GND       12  GND      black
+    GND     39 --         -   -   .         .   .        .
+    +3.3V   01 --         -   -   .         .   .        .
+    +3.3V   17 --         -   -   .         .   .        .
+    +5V     02 --         -   -   .         .   .        .
+    +5V     04 --         -   -   .         .   .        .
+
+
+----------------------------------------------------------------------------
+##(2017-05-02)  Plotting
+
+On RPi with touch display.
+
+    Local display
+    % export DISPLAY=:0.0
+
+
+----------------------------------------------------------------------------
+##(2017-03-11)  GPIO
+
+General purpose input-output (GPIO) 40-pin connector on RPi-3
+	https://en.wikipedia.org/wiki/Raspberry_Pi
+	(Models A and B have only the first 26 pins.)
+	Names modified.
+
+GPIO#	2nd func.	Pin#	Pin#	2nd func.	GPIO#
+-----	----------	----	----	----------	-----
+--	+3.3 V		1	2	+5 V		--
+2	iic1_SDA1	3	4	+5 V		--
+3	iic1_SCL1	5	6	GND		--
+4	GCLK		7	8	u0_TXD		14
+--	GND		9	10	u0_RXD		15
+17	gpio17     	11	12	gpio18     	18
+27	gpio27     	13	14	GND		--
+22	gpio22     	15	16	gpio23     	23
+--	+3.3 V		17	18	gpio24     	24
+10	spi0_MOSI	19	20	GND		--
+9	spi0_MISO	21	22	gpio25      25
+11	spi0_SCLK	23	24	spi0_CE0_N	8
+--	GND		25	26	spi0_CE1_N	7
+EEPROM	ID_SD		27	28	ID_SC		EEPROM
+5	--		29	30	GND		--
+6	--		31	32	--		12
+13	--		33	34	GND		--
+19	--		35	36	--		16
+26	--		37	38	pcm_DIN		20
+--	GND		39	40	pcm_DOUT	21
+
+
+Gpio   Pin Rpi      Pull  ALT0		ALT3		ALT4		ALT5
+-----  --- -------  ----  ----------    -------------   -------------   -------
+Gpio0	27 ID_SD      Hi  SDA0		**		**		**
+Gpio1	28 ID_SC      Hi  SCL0		**		**		**
+Gpio2	03 iic1_SDA   Hi  SDA1		**		**		**
+Gpio3	05 iic1_SCL   Hi  SCL1		**		**		**
+Gpio4	07 GCLK       Hi  GPCLK0	**		**		ARM_TDI
+Gpio5	29 --         Hi  GPCLK1	**		**		ARM_TDO
+Gpio6	31 --         Hi  GPCLK2	**		**		ARM_RTCK
+Gpio7	26 spi0_CE1_N Hi  SPI0_CE1_N	**		**		**
+Gpio8	24 spi0_CE0_N Hi  SPI0_CE0_N	**		**		**
+Gpio9	21 spi0_MISO  Lo  SPI0_MISO	**		**		**
+Gpio10	19 spi0_MOSI  Lo  SPI0_MOSI	**		**		**
+Gpio11	23 spi0_SCLK  Lo  SPI0_SCLK	**		**		**
+Gpio12	32 --         Lo  PWM0		**		**		ARM_TMS
+Gpio13	33 --         Lo  PWM1		**		**		ARM_TCK
+Gpio14	08 u0_TXD     Lo  u_TXD0	**		**		u_TXD1
+Gpio15	10 u0_RXD     Lo  u_RXD0	**		**		u_RXD1
+Gpio16	36 --         Lo  <res>		u_CTS0		SPI1_CE2_N	u_CTS1
+Gpio17	11 GEN0       Lo  <res>		u_RTS0		SPI1_CE1_N	u_RTS1
+Gpio18	12 GEN1       Lo  PCM_CLK	BSCSL_SDA/MOSI	SPI1_CE0_N	PWM0
+Gpio19	35 --         Lo  PCM_FS	BSCSL_SCL/SCLK	SPI1_MISO	PWM1
+Gpio20	38 pcm_DIN    Lo  PCM_DIN	BSCSL/MISO	SPI1_MOSI	GPCLK0
+Gpio21	40 pcm_DOUT   Lo  PCM_DOUT	BSCSL/CE_N	SPI1_SCLK	GPCLK1
+Gpio22	15 GEN3       Lo  <res>		SD1_CLK		ARM_TRST	**
+Gpio23	16 GEN4       Lo  <res>		SD1_CMD		ARM_RTCK	**
+Gpio24	18 GEN1       Lo  <res>		SD1_DAT0	ARM_TDO		**
+Gpio25	22 GEN6       Lo  <res>		SD1_DAT1	ARM_TCK		**
+Gpio26	37 --         Lo  <res>		SD1_DAT2	ARM_TDI		**
+Gpio27	13 GEN2       Lo  <res>		SD1_DAT3	ARM_TMS		**
+
+Gpio = GPIO number
+Pin  = Rpi 40-pin header number
+Rpi  = RaspberryPi name (modified)
+Pull = default pullup direction?
+ALT* = Alternate function
+
+    GPIO*  = GPIO (p. 89)
+    GEN*   = RaspberryPi general io, deprecated name, use GPIO* instead.
+    u*_    = UART (p. 175)
+    spi*_  = SPI  serial interface (p. 148)
+    iic*_  = I^2C (I squared C) serial interface
+    pcm_   = audio interface, serial format (p. 119)
+
+    GPCLK* = General purpose clock, with MASH dithering.
+    PWM*   = Pulse Width Modulator (p. 138)
+    BSCSL* = BSC slave Data
+    SD1_*  = ???
+    ARM_*  = JTAG port
+
+    Removed ALT1, ALT2 columns, since they are not useful.
+    (p. 102)
+    /home/var/ref/BCM2835-ARM-Peripherals.pdf
+    https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/BCM2835-ARM-Peripherals.pdf
+
+
+----------------------------------------
+GPIO pads control
+    https://www.scribd.com/doc/101830961/GPIO-Pads-Control2 
+    Set Slew rate, Hysteresis, and Drive Strength.
+    Describes driver structure and signal levels.
+
+    Address:  Control is per block of GPIO.
+    0x7e10002c  PADS (GPIO  0-27)
+    0x7e100030  PADS (GPIO 28-45)
+    0x7e100034  PADS (GPIO 46-53)
+
+    Voh_max = 3.3 V High output max, is Vcc
+    Vol_min = 0.0 V Low  output min, is Gnd
+
+    Vih = 1.3 V High input
+    Vil = 0.8 V Low  input
+
+    Voh >= 1.3 V  at Io <= programmed current
+    Vol <= 0.8 V  at Io <= programmed current
+	e.g.  Output levels will meet its own input spec.
+
+    Io_max  = 16 mA max current without damage.
+
+    Io = 2 mA to 16 mA programmable range, in 2 mA steps.
+
+    Io = ~3 mA per GPIO pin average across all GPIO pins.
+    The raspberry-Pi 3V3 supply was designed with a maximum current of
+    ~3mA per GPIO pin.
+
