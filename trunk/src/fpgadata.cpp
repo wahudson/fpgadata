@@ -32,6 +32,7 @@ using namespace std;
 
 #define DATA_POS	16		// position of data LSB
 #define DATA_MASK	0x000000ff	// data width mask, after shift right
+#define FULL_MASK	0x00000fff	// flags plus data, after shift right
 
 
 //--------------------------------------------------------------------------
@@ -306,7 +307,7 @@ main( int	argc,
 	    rv = clock_gettime( CLKID, &tpA );
 
 	    unsigned	ilevel;
-//	    for ( int ii=n_trans;  ii>0;  ii-- )
+//	    for ( int ii=0;  ii<n_trans;  ii++ )
 	    while ( Fdx.get_length() < n_trans )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
@@ -321,7 +322,8 @@ main( int	argc,
 		if ( ilevel & NODATA_G ) {	// fifo empty
 		    continue;
 		}
-		Fdx.push_dat( (ilevel >> DATA_POS) & DATA_MASK );
+//		ilevel = ii << DATA_POS;	// fake data
+		Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
 	    }
 
 	    rv = clock_gettime( CLKID, &tpB );

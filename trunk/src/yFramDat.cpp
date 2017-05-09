@@ -318,35 +318,42 @@ yFramDat::print_index_data()
 
 
 /*
-* Print delta data as 16-bit words, with index.
-*    Show data difference.  For use with a counter.
+* Print data as 16-bit words in decimal, with index and delta.
 *    Data is 16-bit words, in decimal.
+*    Delta in decimal (current - previous).
+*    Intended for use with a counter.
 * call:
 *    self.print_delta_data()
 */
 void
 yFramDat::print_delta_data()
 {
+    int			dd;
+    int			dlast = 0;
+
     cout << " index   data  delta" << endl;
     cout <<dec;
     cout.fill(' ');
-    for ( unsigned int i = 0;  i < len-1;  i++  )
+
+    for ( unsigned int i = 0;  i < len;  i++  )
     {
-	cout <<setw(6) << i << "  "
-	     <<setw(5) << (unsigned int) data[i] << "  "
-	     <<setw(5) << ((int) data[i+1] - (int) data[i])
+	dd = data[i];		// convert from uint16_t
+
+	cout <<setw(6) << i            << "  "
+	     <<setw(5) << dd           << "  "
+	     <<setw(5) << (dd - dlast)
 	     <<endl;
-	// cast from uint16_t
-	//#!! not showing last element used in diff
+	dlast = dd;
     }
     cout <<dec;
 }
 
 
 /*
-* Print data as 8-bit words and flag bits, with index.
+* Print data as 8-bit words with flag bits, index, and delta.
+*    Flag bits in octal.
 *    Data is 8-bit words, in decimal.
-*    Flag bits in octal,
+*    Delta in decimal (current - previous).
 * call:
 *    self.print_flag_data()
 */
@@ -355,18 +362,22 @@ yFramDat::print_flag_data()
 {
     uint32_t		dd;
     uint32_t		ff;
+    int			dlast = 0;
 
-    cout << " index   data  flag" << endl;
+    cout << " index flag   data  delta" << endl;
 
-    for ( unsigned int i = 0;  i < len-1;  i++  )
+    for ( unsigned int i = 0;  i < len;  i++  )
     {
 	dd =   data[i] & 0x00ff;
 	ff = ( data[i] & 0x0f00 ) >> 8;
 
 	cout <<setw(6) <<dec <<setfill(' ') << i  << "  "
-	     <<setw(5)                      << dd << "  "
-	     <<setw(3) <<oct <<setfill('0') << ff
+	     <<setw(3) <<oct <<setfill('0') << ff << "  "
+	     <<setw(5) <<dec <<setfill(' ') << dd << "  "
+	     <<setw(5) <<dec <<setfill(' ') << ((int) dd - dlast)
 	     <<endl;
+
+	dlast = dd;
     }
     cout <<dec;
     cout.fill(' ');
