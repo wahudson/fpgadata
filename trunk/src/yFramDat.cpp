@@ -342,3 +342,33 @@ yFramDat::print_delta_data()
     cout <<dec;
 }
 
+
+/*
+* Print data as 8-bit words and flag bits, with index.
+*    Data is 8-bit words, in decimal.
+*    Flag bits in octal,
+* call:
+*    self.print_flag_data()
+*/
+void
+yFramDat::print_flag_data()
+{
+    uint32_t		dd;
+    uint32_t		ff;
+
+    cout << " index   data  flag" << endl;
+
+    for ( unsigned int i = 0;  i < len-1;  i++  )
+    {
+	dd =   data[i] & 0x00ff;
+	ff = ( data[i] & 0x0f00 ) >> 8;
+
+	cout <<setw(6) <<dec <<setfill(' ') << i  << "  "
+	     <<setw(5)                      << dd << "  "
+	     <<setw(3) <<oct <<setfill('0') << ff
+	     <<endl;
+    }
+    cout <<dec;
+    cout.fill(' ');
+}
+
