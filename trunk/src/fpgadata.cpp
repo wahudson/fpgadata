@@ -316,11 +316,16 @@ main( int	argc,
 		*gpio_set = READAK_G;
 		*gpio_set = READAK_G;
 		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
 
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
 		*gpio_clr = READAK_G;
 
 		if ( ilevel & NODATA_G ) {	// fifo empty
-		    continue;
+//		    continue;
 		}
 //		ilevel = ii << DATA_POS;	// fake data
 		Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );

@@ -63,7 +63,7 @@ Configure RPi pin modes:
     Gpio22  15 --         Lo  i   d6        07  GPIO[6]  blue
     Gpio23  16 --         Lo  i   d7        08  GPIO[7]  violet
     Gpio24  18 --         Lo  i   .         .   .        .
-    Gpio25  22 --         Lo  i   .         .   .        .
+    Gpio25  22 --         Lo  i   FULL      ??  ??       brown
     Gpio26  37 --         Lo  i   .         .   .        .
     Gpio27  13 --         Hi  i   NODATA    ??  ??       white
     GND     06 --         -   -   .         .   .        .
