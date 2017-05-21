@@ -44,7 +44,7 @@ Configure RPi pin modes:
     Gpio3   05 iic1_SCL   Hi  i   .         .   .        .
     Gpio4   07 GPCLK0     Hi  i   .         .   .        .
     Gpio5   29 GPCLK1     Hi  i   .         .   .        .
-    Gpio6   31 GPCLK2     Hi   o  READAK    ??  ??       gray
+    Gpio6   31 GPCLK2     Hi   o  READAK    09  GPIO[8]  gray
     Gpio7   26 spi0_CE1_N Hi  i   .         .   .        .
     Gpio8   24 spi0_CE0_N Hi  i   .         .   .        .
     Gpio9   21 spi0_MISO  Lo  i   .         .   .        .
@@ -63,9 +63,9 @@ Configure RPi pin modes:
     Gpio22  15 --         Lo  i   d6        07  GPIO[6]  blue
     Gpio23  16 --         Lo  i   d7        08  GPIO[7]  violet
     Gpio24  18 --         Lo  i   .         .   .        .
-    Gpio25  22 --         Lo  i   FULL      ??  ??       brown
+    Gpio25  22 --         Lo  i   FULL      13  GPIO[12] brown
     Gpio26  37 --         Lo  i   .         .   .        .
-    Gpio27  13 --         Hi  i   NODATA    ??  ??       white
+    Gpio27  13 --         Hi  i   NODATA    10  GPIO[9]  white rdempty
     GND     06 --         -   -   .         .   .        .
     GND     09 --         -   -   .         .   .        .
     GND     14 --         -   -   .         .   .        .
@@ -79,6 +79,7 @@ Configure RPi pin modes:
     +5V     02 --         -   -   .         .   .        .
     +5V     04 --         -   -   .         .   .        .
 
+    +5V     -- --         -   -   .         11  +5       .  FPGA
 
 ----------------------------------------------------------------------------
 ##(2017-05-02)  Plotting
