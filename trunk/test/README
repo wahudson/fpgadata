@@ -1,0 +1,64 @@
+2017-05-21  William A. Hudson
+
+		fpgadata -- Testing
+		-------------------
+
+Self-checking regression tests.
+
+Files:  (2017-05-21)
+------
+Makefile	run all test suites
+README		this file
+
+bin/		commands for Test
+
+lib/		Test library
+    TestLib1.pm		Library for testing programs.
+
+opt/		External command installations
+
+obj/		compiled .o from src/
+src/		test library source code
+    Makefile		compile unit test library
+    utLib1.cpp		library code
+    utLib1.h		user interface, #define
+
+t_*/		Generic test suite contents
+    Makefile		run/compile the test
+    ref/		reference input/output of the test
+    test.cpp		test program (C++)
+    test.exe		compiled test (may be removed)
+    test.pl		test program (perl)
+    tmp/		where the test program is executed, removed each time
+
+
+Test suites:  (2017-05-21)
+------------
+?       = not committed
+  b     = uses bin/
+   l    = uses lib/
+    o   = uses opt/  (indirectly thru bin/)
+     s  = uses src/
+ u      = Unit test (C++)        utLib1.cpp
+ m      = Module test (perl)     TestLib1.pm
+ p      = Program test (command)
+------  --------------
+ u   s  t_yBuffStat/	yBuffStat  Buffer Statistics class.
+
+
+Test Setup: ??
+-----------
+The local working copy opt/ directory must be set up before some tests
+can be run.  (see  opt/README)
+
+
+Subversion: ??
+-----------
+Ignore temporary directories:
+    % svn proplist  -v -R  t_*
+    % svn propset  svn:ignore 'tmp'  t_*
+
+
+Issues:
+-------
+

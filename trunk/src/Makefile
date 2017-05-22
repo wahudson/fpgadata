@@ -13,6 +13,7 @@ INCS       = \
         Error.h \
         yOption.h \
         yRpiGpio.h \
+        yBuffStat.h \
         yFramDat.h
 
 		# objects not including main()
@@ -20,6 +21,7 @@ OBJS       = \
 	$(OJ)/Error.o \
 	$(OJ)/yOption.o \
 	$(OJ)/yRpiGpio.o \
+	$(OJ)/yBuffStat.o \
 	$(OJ)/yFramDat.o
 
 		# compiler flags
@@ -51,6 +53,9 @@ $(OJ)/fpgadata.o:	fpgadata.cpp  $(INCS)
 
 $(OJ)/yRpiGpio.o:	yRpiGpio.cpp  yRpiGpio.h
 	g++ $(CXXFLAGS) -o $@  -c yRpiGpio.cpp
+
+$(OJ)/yBuffStat.o:	yBuffStat.cpp  yBuffStat.h
+	g++ $(CXXFLAGS) -o $@  -c yBuffStat.cpp
 
 $(OJ)/yFramDat.o:	yFramDat.cpp  yFramDat.h
 	g++ $(CXXFLAGS) -o $@  -c yFramDat.cpp
