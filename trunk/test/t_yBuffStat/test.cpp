@@ -121,6 +121,12 @@ int main()
 	    "        MaxTrue= 3  MinTrue= 3",
 	    bx.text_debug().c_str()
 	);
+	bx.reset();
+	CHECK(
+	    "SampleSize= 4  NumSets= 0  CntTrue= 0  CntCalls= 0\n"
+	    "        MaxTrue= -1  MinTrue= 5",
+	    bx.text_debug().c_str()
+	);
     }
     catch (...) {
 	FAIL( "unexpected exception" );

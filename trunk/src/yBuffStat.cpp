@@ -19,7 +19,8 @@ using namespace std;
 */
 yBuffStat::yBuffStat()
 {
-    this->reset( 100 );
+    SampleSize   = 100;
+    this->reset();
 }
 
 
@@ -30,30 +31,29 @@ yBuffStat::yBuffStat(
     int		size
 )
 {
-    this->reset( size );
+    SampleSize   = size;
+    this->reset();
 }
 
 
 /*
-* Reset object and set new SampleSize.
+* Reset object, SampleSize is unchanged.
 *    Min/Max default set outside of range.  This works, but not the best
-*    indication of uninitialized.
+*        indication of uninitialized.
+*    Decided to not reset SampleSize for anti-bugging.
 * call:
-*    self.reset( 100 )
+*    self.reset()
 */
 void
-yBuffStat::reset(
-    int		size
-)
+yBuffStat::reset()
 {
-    SampleSize   = size;
     NumSets      = 0;
     CntTrue      = 0;
     CntCalls     = 0;
     MaxTrue      = -1;
-    MinTrue      = size + 1;
+    MinTrue      = SampleSize + 1;
     MaxCalls     = -1;
-    MinCalls     = size + 1;
+    MinCalls     = SampleSize + 1;
 }
 
 

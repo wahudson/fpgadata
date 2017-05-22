@@ -33,7 +33,7 @@ class yBuffStat {
 	return SampleSize;
     }
 
-    void		reset( int  size = 100 );
+    void		reset();
 
     std::string		text_debug();
     void		show_debug();
