@@ -22,6 +22,7 @@ using namespace std;
 //   28   24   20   16   12    8    4    0     bit number
 // .... .... dddd dddd .... .... .... ....  i  DATA   bits
 // .... ...m .... .... .... .... .... ....  i  metadata flag ???
+// .... ..f. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
 // .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
 // .... .... .... .... .... .... .r.. ....   o READAK fifo read aknowledge
 
@@ -29,6 +30,7 @@ using namespace std;
 
 //#define DATA_G	0x00ff0000	// DATA
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
+#define OVFLOW_G	0x02000000	// OVFLOW flag, 1= fifo write_full
 #define READAK_G	0x00000040	// READAK fifo read aknowledge
 
 #define DATA_POS	16		// position of data LSB
@@ -284,6 +286,8 @@ main( int	argc,
 	yFramDat		Fdx  ( 10 );	// constructor
 	yBuffStat		Bsx  ( 64 );	// SampleSize
 
+	int			overflow;	// OVFLOW_G
+
 	if ( Error::err() )  return 1;
 
 	yRpiGpio		Gpx;		// constructor
@@ -307,6 +311,7 @@ main( int	argc,
 	{
 	    Fdx.clear();
 	    Bsx.reset();
+	    overflow = 0;
 	    rv = clock_gettime( CLKID, &tpA );
 
 	    unsigned	ilevel;
@@ -329,6 +334,10 @@ main( int	argc,
 
 		Bsx.cnt_by_call( ilevel & NODATA_G );
 
+		if ( ilevel & OVFLOW_G ) {	// fifo overflow
+		    overflow++;
+		}
+
 		if ( ilevel & NODATA_G ) {	// fifo empty
 //		    continue;
 		}
@@ -348,6 +357,7 @@ main( int	argc,
 	    }
 
 	    cerr << "  NoData " << Bsx.text_stats_by_call();
+	    cerr << "    OverFlow= " << overflow <<endl;
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
 		 <<setw(9) << delta_ns << "  "
