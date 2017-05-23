@@ -14,6 +14,7 @@ using namespace std;
 #include "yOption.h"
 #include "yRpiGpio.h"
 #include "yFramDat.h"
+#include "yBuffStat.h"
 
 #define CLKID	CLOCK_MONOTONIC_RAW
 
@@ -281,6 +282,7 @@ main( int	argc,
 	}
 
 	yFramDat		Fdx  ( 10 );	// constructor
+	yBuffStat		Bsx  ( 64 );	// SampleSize
 
 	if ( Error::err() )  return 1;
 
@@ -304,6 +306,7 @@ main( int	argc,
 	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )
 	{
 	    Fdx.clear();
+	    Bsx.reset();
 	    rv = clock_gettime( CLKID, &tpA );
 
 	    unsigned	ilevel;
@@ -324,6 +327,8 @@ main( int	argc,
 		*gpio_clr = READAK_G;
 		*gpio_clr = READAK_G;
 
+		Bsx.cnt_by_call( ilevel & NODATA_G );
+
 		if ( ilevel & NODATA_G ) {	// fifo empty
 //		    continue;
 		}
@@ -341,6 +346,8 @@ main( int	argc,
 		delta_ns += 1000000000;
 		delta_s  -= 1;
 	    }
+
+	    cerr << "  NoData " << Bsx.text_stats_by_call();
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
 		 <<setw(9) << delta_ns << "  "
