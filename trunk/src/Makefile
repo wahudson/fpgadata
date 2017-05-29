@@ -31,25 +31,32 @@ CXXFLAGS   = -Wall  -std=c++11
 
 run	: compile
 	$(BINDIR)/fpgadata --csv --TESTOP
+	$(BINDIR)/rpixel --csv --TESTOP
 
 mkdirs	:
 	mkdir -p $(BINDIR)
 	mkdir -p $(OJ)
 
-compile	: $(BINDIR)/fpgadata  $(OBJS)
+compile	: $(BINDIR)/fpgadata  $(BINDIR)/rpixel  $(OBJS)
 
 clean: 
 	rm -f  $(OJ)/*
 
 clobber:
-	rm -f  $(BINDIR)/fpgadata  $(OJ)/*
+	rm -f  $(BINDIR)/fpgadata  $(BINDIR)/rpixel  $(OJ)/*
 
 $(BINDIR)/fpgadata:	$(OJ)/fpgadata.o  $(OBJS)
 	g++ -o $@       $(OJ)/fpgadata.o  $(OBJS)
 
+$(BINDIR)/rpixel:	$(OJ)/rpixel.o  $(OBJS)
+	g++ -o $@       $(OJ)/rpixel.o  $(OBJS)
+
 
 $(OJ)/fpgadata.o:	fpgadata.cpp  $(INCS)
 	g++ $(CXXFLAGS) -o $@  -c fpgadata.cpp
+
+$(OJ)/rpixel.o:		rpixel.cpp  $(INCS)
+	g++ $(CXXFLAGS) -o $@  -c rpixel.cpp
 
 $(OJ)/yRpiGpio.o:	yRpiGpio.cpp  yRpiGpio.h
 	g++ $(CXXFLAGS) -o $@  -c yRpiGpio.cpp

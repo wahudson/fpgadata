@@ -43,6 +43,7 @@ class yFramDat {
     void		print_index_data();
     void		print_delta_data();
     void		print_flag_data();
+    void		print_flag_hex();
 };
 
 

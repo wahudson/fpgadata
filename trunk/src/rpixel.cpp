@@ -22,16 +22,18 @@ using namespace std;
 //   28   24   20   16   12    8    4    0     bit number
 // .... .... dddd dddd .... .... .... ....  i  DATA   bits
 // .... ...m .... .... .... .... .... ....  i  metadata flag ???
-// .... ..f. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
+// .... .f.. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
 // .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
-// .... .... .... .... .... .... .r.. ....   o READAK fifo read aknowledge
-
-// .... .... .... .... ..dd dddd dd.r ....  DATA   bits
+// .... .... .... .... .... .... .r.. ....   o ReadAck fifo read aknowledge
+// .... .... .... .... .... .... ..g. ....   o GoPixel start one pixel
+// .... .... .... .... .... .... R... ....   o nReset  reset fifo state
 
 //#define DATA_G	0x00ff0000	// DATA
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
-#define OVFLOW_G	0x02000000	// OVFLOW flag, 1= fifo write_full
-#define READAK_G	0x00000040	// READAK fifo read aknowledge
+#define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
+#define READAK_G	0x00000040	// ReadAck fifo read aknowledge
+#define GOPIXEL_G	0x00000020	// GoPixel start one pixel
+#define NRESET_G	0x00000080	// nReset fifo state
 
 #define DATA_POS	16		// position of data LSB
 #define DATA_MASK	0x000000ff	// data width mask, after shift right
@@ -286,7 +288,9 @@ main( int	argc,
 	yFramDat		Fdx  ( 10 );	// constructor
 	yBuffStat		Bsx  ( 64 );	// SampleSize
 
+	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
+	int			nodata_limit;
 
 	if ( Error::err() )  return 1;
 
@@ -304,22 +308,20 @@ main( int	argc,
 
 
     // Main Loop
-	n_trans = Fdx.nlimit( Opx.npix_n );
+	n_trans = Fdx.nlimit( Opx.npix_n * 16 * 4 );	// 16 coeff x 4 nibbles
 	cerr << "    n_trans= " << n_trans << endl;
 
-	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )
+	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )	// time repeats
 	{
 	    Fdx.clear();
 	    Bsx.reset();
 	    overflow = 0;
-	    rv = clock_gettime( CLKID, &tpA );
+	    nodata_limit = 0;
 
-	    unsigned	ilevel;
-//	    for ( int ii=0;  ii<n_trans;  ii++ )
-	    while ( Fdx.get_length() < n_trans )
+	    *gpio_clr = NRESET_G;
+	    for ( int ii=0;  ii<256;  ii++ )	// flush FIFO
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
-
 		*gpio_set = READAK_G;
 		*gpio_set = READAK_G;
 		*gpio_set = READAK_G;
@@ -327,22 +329,60 @@ main( int	argc,
 		*gpio_set = READAK_G;
 
 		*gpio_clr = READAK_G;
-		*gpio_clr = READAK_G;
-		*gpio_clr = READAK_G;
-		*gpio_clr = READAK_G;
-		*gpio_clr = READAK_G;
+	    }
+	    *gpio_set = NRESET_G;
+	    if ( ilevel & NODATA_G ) {	// fifo empty
+		cerr << "Error:  nReset:  NoData not cleared" << endl;
+	    }
 
-		Bsx.cnt_by_call( ilevel & NODATA_G );
+	    rv = clock_gettime( CLKID, &tpA );
 
-		if ( ilevel & OVFLOW_G ) {	// fifo overflow
-		    overflow++;
+	    while ( Fdx.get_length() < n_trans )
+	    {
+		*gpio_set = GOPIXEL_G;
+
+	        for ( int kk=0;  kk<16; )	// each coefficient
+		{
+		    ilevel = *gpio_read;	// Read GPIO level
+
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+
+		    *gpio_clr = READAK_G;
+		    *gpio_clr = READAK_G;
+		    *gpio_clr = READAK_G;
+		    *gpio_clr = READAK_G;
+		    *gpio_clr = READAK_G;
+
+		    Bsx.cnt_by_call( ilevel & NODATA_G );
+
+		    if ( ilevel & OVFLOW_G ) {	// fifo overflow
+			overflow++;
+		    }
+
+		    if ( ilevel & NODATA_G ) {	// fifo empty
+			if ( nodata_limit++ >= 256 ) {
+			    Fdx.push_dat( 0xffff );
+			    break;	// fifo writer not active
+			}
+			else {
+			    continue;
+			}
+		    }
+		    nodata_limit = 0;		// reset count
+
+		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
+		    kk++;
 		}
 
-		if ( ilevel & NODATA_G ) {	// fifo empty
-//		    continue;
-		}
-//		ilevel = ii << DATA_POS;	// fake data
-		Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
+		*gpio_clr = GOPIXEL_G;
+		*gpio_clr = GOPIXEL_G;
+		*gpio_clr = GOPIXEL_G;
+		*gpio_clr = GOPIXEL_G;
+		*gpio_clr = GOPIXEL_G;
 	    }
 
 	    rv = clock_gettime( CLKID, &tpB );
@@ -400,7 +440,7 @@ main( int	argc,
 	}
 
 	if ( Opx.flag ) {
-	    Fdx.print_flag_data();
+	    Fdx.print_flag_hex();
 	    cout << endl;
 	}
 

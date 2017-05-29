@@ -383,3 +383,38 @@ yFramDat::print_flag_data()
     cout.fill(' ');
 }
 
+
+/*
+* Print data as 8-bit hex words with flag bits, index, and delta.
+*    Flag bits in octal.
+*    Data is 8-bit words, in hex.
+*    Delta in decimal (current - previous).
+* call:
+*    self.print_flag_hex()
+*/
+void
+yFramDat::print_flag_hex()
+{
+    uint32_t		dd;
+    uint32_t		ff;
+    int			dlast = 0;
+
+    cout << " index flag  data  delta" << endl;
+
+    for ( unsigned int i = 0;  i < len;  i++  )
+    {
+	dd =   data[i] & 0x00ff;
+	ff = ( data[i] & 0x0f00 ) >> 8;
+
+	cout <<setw(6) <<dec <<setfill(' ') << i  << "  "
+	     <<setw(3) <<oct <<setfill('0') << ff << "  0x"
+	     <<setw(2) <<hex <<setfill('0') << dd << "  "
+	     <<setw(4) <<dec <<setfill(' ') << ((int) dd - dlast)
+	     <<endl;
+
+	dlast = dd;
+    }
+    cout <<dec;
+    cout.fill(' ');
+}
+

@@ -22,15 +22,13 @@ using namespace std;
 //   28   24   20   16   12    8    4    0     bit number
 // .... .... dddd dddd .... .... .... ....  i  DATA   bits
 // .... ...m .... .... .... .... .... ....  i  metadata flag ???
-// .... ..f. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
+// .... .f.. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
 // .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
 // .... .... .... .... .... .... .r.. ....   o READAK fifo read aknowledge
 
-// .... .... .... .... ..dd dddd dd.r ....  DATA   bits
-
 //#define DATA_G	0x00ff0000	// DATA
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
-#define OVFLOW_G	0x02000000	// OVFLOW flag, 1= fifo write_full
+#define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
 #define READAK_G	0x00000040	// READAK fifo read aknowledge
 
 #define DATA_POS	16		// position of data LSB
