@@ -415,12 +415,12 @@ main( int	argc,
 	}
 
 	if ( Opx.tab ) {
-	    Fdx.print_coeff_int16B_tab();
+	    Fdx.print_coeff_nibbleB_tab();
 	    cout << endl;
 	}
 
 	if ( Opx.csv ) {
-	    Fdx.print_coeff_int16B_csv();
+	    Fdx.print_coeff_nibbleB_csv();
 	    cout << endl;
 	}
 

@@ -39,6 +39,8 @@ class yFramDat {
     void		print_coeff16_csv();
     void		print_coeff_int16B_tab();
     void		print_coeff_int16B_csv();
+    void		print_coeff_nibbleB_tab();
+    void		print_coeff_nibbleB_csv();
     void		print_hex_dump();
     void		print_index_data();
     void		print_delta_data();
