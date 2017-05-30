@@ -331,8 +331,8 @@ main( int	argc,
 		*gpio_clr = READAK_G;
 	    }
 	    *gpio_set = NRESET_G;
-	    if ( ilevel & NODATA_G ) {	// fifo empty
-		cerr << "Error:  nReset:  NoData not cleared" << endl;
+	    if ( ! (ilevel & NODATA_G) ) {	// fifo not empty
+		cerr << "Error:  nReset:  fifo not empty (NoData=0)" << endl;
 	    }
 
 	    rv = clock_gettime( CLKID, &tpA );
