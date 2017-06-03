@@ -290,7 +290,6 @@ main( int	argc,
 
 	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
-	int			nodata_limit;
 
 	if ( Error::err() )  return 1;
 
@@ -316,7 +315,6 @@ main( int	argc,
 	    Fdx.clear();
 	    Bsx.reset();
 	    overflow = 0;
-	    nodata_limit = 0;
 
 	    *gpio_clr = NRESET_G;
 	    for ( int ii=0;  ii<256;  ii++ )	// flush FIFO
@@ -364,15 +362,8 @@ main( int	argc,
 		    }
 
 		    if ( ilevel & NODATA_G ) {	// fifo empty
-			if ( nodata_limit++ >= 256 ) {
-			    Fdx.push_dat( 0xffff );
-			    break;	// fifo writer not active
-			}
-			else {
-			    continue;
-			}
+			continue;
 		    }
-		    nodata_limit = 0;		// reset count
 
 		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
 		    kk++;
