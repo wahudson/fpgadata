@@ -29,6 +29,7 @@ using namespace std;
 // .... .... .... .... .... .... R... ....   o nReset  reset fifo state
 
 //#define DATA_G	0x00ff0000	// DATA
+#define COEFF_G		0x00f00000	// Coefficient nibble in data
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
 #define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
 #define READAK_G	0x00000040	// ReadAck fifo read aknowledge
@@ -38,6 +39,10 @@ using namespace std;
 #define DATA_POS	16		// position of data LSB
 #define DATA_MASK	0x000000ff	// data width mask, after shift right
 #define FULL_MASK	0x00000fff	// flags plus data, after shift right
+
+// Currently we intend the FPGA filter to be a free running data stream.
+// Outputs nReset and GoPixel can be used to help identify state of the
+// transfer.
 
 
 //--------------------------------------------------------------------------
@@ -290,6 +295,7 @@ main( int	argc,
 
 	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
+	int			flush_cnt;	// flush fifo cycles
 
 	if ( Error::err() )  return 1;
 
@@ -316,8 +322,9 @@ main( int	argc,
 	    Bsx.reset();
 	    overflow = 0;
 
+	    // Flush fifo
 	    *gpio_clr = NRESET_G;
-	    for ( int ii=0;  ii<256;  ii++ )	// flush FIFO
+	    for ( flush_cnt=0;  flush_cnt<100000;  flush_cnt++ )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
 		*gpio_set = READAK_G;
@@ -327,10 +334,28 @@ main( int	argc,
 		*gpio_set = READAK_G;
 
 		*gpio_clr = READAK_G;
+		if ( ilevel & NODATA_G ) { break; }
 	    }
 	    *gpio_set = NRESET_G;
 	    if ( ! (ilevel & NODATA_G) ) {	// fifo not empty
 		cerr << "Error:  nReset:  fifo not empty (NoData=0)" << endl;
+	    }
+
+	    // Find first coeff
+	    while ( 1 )
+	    {
+		ilevel = *gpio_read;	// Read GPIO level
+		if ( (ilevel & COEFF_G) == 0 ) {
+		    break;	// no read acknowledge
+		}
+
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+
+		*gpio_clr = READAK_G;
 	    }
 
 	    rv = clock_gettime( CLKID, &tpA );
@@ -339,7 +364,7 @@ main( int	argc,
 	    {
 		*gpio_set = GOPIXEL_G;
 
-	        for ( int kk=0;  kk<16; )	// each coefficient
+	        for ( int kk=0;  kk<(16*4); )	// each coefficient nibble
 		{
 		    ilevel = *gpio_read;	// Read GPIO level
 
@@ -387,6 +412,7 @@ main( int	argc,
 		delta_s  -= 1;
 	    }
 
+	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
 	    cerr << "  NoData " << Bsx.text_stats_by_call();
 	    cerr << "    OverFlow= " << overflow <<endl;
 
