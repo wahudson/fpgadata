@@ -14,6 +14,7 @@ using namespace std;
 #include "yOption.h"
 #include "yRpiGpio.h"
 #include "yFramDat.h"
+#include "yCoeffItr.h"
 #include "yBuffStat.h"
 
 #define CLKID	CLOCK_MONOTONIC_RAW
@@ -67,6 +68,7 @@ class yOptLong : public yOption {
     const char*		prefix;
     bool		csv;
     bool		tab;
+    bool		tab2;
     bool		hex;
     bool		raw;
     bool		delta;
@@ -106,6 +108,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     prefix      = "";
     csv         = 0;
     tab         = 0;
+    tab2        = 0;
     hex         = 0;
     raw         = 0;
     delta       = 0;
@@ -133,6 +136,7 @@ yOptLong::parse_options()
 	else if ( is( "--prefix="    )) { prefix     = this->val(); }
 	else if ( is( "--csv"        )) { csv        = 1; }
 	else if ( is( "--tab"        )) { tab        = 1; }
+	else if ( is( "--tab2"       )) { tab2       = 1; }
 	else if ( is( "--hex"        )) { hex        = 1; }
 	else if ( is( "--raw"        )) { raw        = 1; }
 	else if ( is( "--delta"      )) { delta      = 1; }
@@ -179,6 +183,7 @@ yOptLong::print_option_flags()
     cout << "--prefix      = " << prefix       << endl;
     cout << "--csv         = " << csv          << endl;
     cout << "--tab         = " << tab          << endl;
+    cout << "--tab2        = " << tab2         << endl;
     cout << "--hex         = " << hex          << endl;
     cout << "--raw         = " << raw          << endl;
     cout << "--delta       = " << delta        << endl;
@@ -209,6 +214,7 @@ yOptLong::print_usage()
     "  output forms:  (default is none)\n"
     "    --csv               CSV format\n"
     "    --tab               tabular format\n"
+    "    --tab2              tabular format, coeff check\n"
     "    --hex               hex data dump\n"
     "    --raw               raw hex data\n"
     "    --delta             delta data in decimal\n"
@@ -458,6 +464,12 @@ main( int	argc,
 
 	if ( Opx.flag ) {
 	    Fdx.print_flag_hex();
+	    cout << endl;
+	}
+
+	yCoeffItr		Fdit  ( &Fdx );
+	if ( Opx.tab2 ) {
+	    Fdit.print_coeff_tab();
 	    cout << endl;
 	}
 

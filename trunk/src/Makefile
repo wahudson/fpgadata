@@ -14,7 +14,8 @@ INCS       = \
         yOption.h \
         yRpiGpio.h \
         yBuffStat.h \
-        yFramDat.h
+        yFramDat.h \
+        yCoeffItr.h
 
 		# objects not including main()
 OBJS       = \
@@ -22,7 +23,8 @@ OBJS       = \
 	$(OJ)/yOption.o \
 	$(OJ)/yRpiGpio.o \
 	$(OJ)/yBuffStat.o \
-	$(OJ)/yFramDat.o
+	$(OJ)/yFramDat.o \
+	$(OJ)/yCoeffItr.o
 
 		# compiler flags
 	# -std=c++11  needed for std::stoi
@@ -66,6 +68,9 @@ $(OJ)/yBuffStat.o:	yBuffStat.cpp  yBuffStat.h
 
 $(OJ)/yFramDat.o:	yFramDat.cpp  yFramDat.h
 	g++ $(CXXFLAGS) -o $@  -c yFramDat.cpp
+
+$(OJ)/yCoeffItr.o:	yCoeffItr.cpp  yCoeffItr.h
+	g++ $(CXXFLAGS) -o $@  -c yCoeffItr.cpp
 
 $(OJ)/Error.o:		Error.cpp  Error.h
 	g++ $(CXXFLAGS) -o $@  -c Error.cpp
