@@ -330,7 +330,7 @@ main( int	argc,
 
 	    // Flush fifo
 	    *gpio_clr = NRESET_G;
-	    for ( flush_cnt=0;  flush_cnt<100000;  flush_cnt++ )
+	    for ( flush_cnt=0;  flush_cnt<10000;  flush_cnt++ )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
 		*gpio_set = READAK_G;
@@ -340,7 +340,9 @@ main( int	argc,
 		*gpio_set = READAK_G;
 
 		*gpio_clr = READAK_G;
-		if ( ilevel & NODATA_G ) { break; }
+		// if ( ilevel & NODATA_G ) { break; }
+		// The fifo 'rdempty' signal (NoData) seems to be true even
+		// though fifo is full.
 	    }
 	    *gpio_set = NRESET_G;
 	    if ( ! (ilevel & NODATA_G) ) {	// fifo not empty
@@ -393,7 +395,7 @@ main( int	argc,
 		    }
 
 		    if ( ilevel & NODATA_G ) {	// fifo empty
-			continue;
+//			continue;
 		    }
 
 		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
