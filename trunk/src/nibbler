@@ -1,0 +1,111 @@
+#! /usr/bin/perl -w
+# 2017-06-07  William A. Hudson
+# $Id$
+# $Source$
+
+# Read fpgadata --flag output and group into coefficents.
+#    Identify valid group of 4 nibbles where the coeff number changes.
+
+# usage:  nibbler < infile > table
+
+# index flag  data  delta
+#     0  010  0x0f    15
+#  ...
+#  1656  010  0xef     0
+#  1657  010  0xef     0	good
+#  1658  000  0xef     0	good
+#  1659  010  0xed    -2	good
+#  1660  000  0xe8    -5	good
+#  1661  010  0xff    23
+
+my $cold  = 0;
+my @nibs  = ();		# array of all nibbles in a coeff
+my @coeff = ();		# array of 16 coefficients
+
+print_head_tab();
+#print_head_csv();
+
+while ( <> )
+{
+    next  unless ( m/^\s*\d/ );
+
+    my( $index, $flag, $data, $delta ) = split( " ", $_ );
+
+    my( $cnum, $nibval ) = ($data =~ m/0x(.)(.)/);
+
+#    print( "$index  $cnum $nibval\n" );
+
+    if ($cold eq $cnum) {
+	push( @nibs, $nibval );
+    }
+    else {
+	# previous 4 nibbles are valid
+
+	my $coef = $nibs[-4] . $nibs[-3] . $nibs[-2] . $nibs[-1];
+
+	my $val = hex( $coef );
+	if ( $val & 0x8000 ) {		# twos complement
+	    $val = -(~ $val & 0xffff );
+	}
+
+	my $knum = hex( $cold );
+
+	$coeff[$knum] = $val;
+#	print( "$index  $cold  0x$coef $val\n" );
+
+	if ( $knum == 15 ) {
+	    print_coeff_tab( $index, \@coeff );
+#	    print_coeff_csv( $index, \@coeff );
+	    @coeff = ();
+	}
+
+	$cold = $cnum;
+	@nibs = ( $nibval );
+    }
+
+}
+
+
+sub print_head_tab
+{
+    print(
+	" index     c0     c1     c2     c3     c4     c5     c6     c7",
+	      "     c8     c9    c10    c11    c12    c13    c14    c15\n",
+	"------ ------ ------ ------ ------ ------ ------ ------ ------",
+	      " ------ ------ ------ ------ ------ ------ ------ ------\n"
+   );
+}
+
+
+sub print_coeff_tab
+{
+   my( $index, $cp ) = @_;
+
+   printf( "%6d", $index );
+
+   for ( my $i=0;  $i<16;  $i++ )
+   {
+       printf( " %6d", $cp->[$i] );
+   }
+   printf( "\n" );
+}
+
+
+sub print_head_csv
+{
+    print( "index,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15\n" );
+}
+
+sub print_coeff_csv
+{
+   my( $index, $cp ) = @_;
+
+   print( $index );
+
+   for ( my $i=0;  $i<16;  $i++ )
+   {
+       print( ",", $cp->[$i] );
+   }
+   printf( "\n" );
+}
+

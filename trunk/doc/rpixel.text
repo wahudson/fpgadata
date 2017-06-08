@@ -1,0 +1,88 @@
+2017-05-27
+		Read FPGA Pixel
+		---------------
+
+Altera DE2-115 User Manual
+    /home/var/ref/DE2_115_User_manual_2013.pdf
+
+Data thru FIFO to RPi:
+
+    i   NoData      Data read is not valid, from fifo rdempty.
+
+    i   OverFlow    Fifo overflow, previous samples are missing.
+			From fifo wrfull delayed and put into fifo.
+
+    i   d3..d0      Coefficient value, nibbles, Big-endian.
+			4 samples make one coefficient.
+
+    i   d7..d6      Coefficient number.  Same for all 4 samples.
+
+Signals to RPi:
+
+    o   ReadAck     Acknowledge RPi has read this value, fifo should
+			advance to next value.
+			Rising edge active.
+
+    o   GoPixel     Signal fpga to send out one pixel worth of data.
+			Rising edge active.
+
+    o   nReset      Reset FPGA state when low.  Start at first pixel.
+
+
+----------------------------------------------------------------------------
+##(2017-04-30)  FPGA Connections
+
+Configure RPi pin modes:
+    % gpio readall
+    % gpio -g mode  5 out
+    % gpio -g mode  6 out
+    % gpio -g mode  7 out
+
+    % gpio -g mode 27 up
+
+        RPi                               |  FPGA
+    Gpio   Pin Rpi/Alt  Pull  Dir Name     pin  fpga     Color
+    -----  --- -------  ----  --- -------- ---- -------  -----
+    Gpio0   27 ID_SD      Hi  i   .         .   .        .
+    Gpio1   28 ID_SC      Hi  i   .         .   .        .
+    Gpio2   03 iic1_SDA   Hi  i   .         .   .        .
+    Gpio3   05 iic1_SCL   Hi  i   .         .   .        .
+    Gpio4   07 GPCLK0     Hi  i   .         .   .        .
+    Gpio5   29 GPCLK1     Hi   o  GoPixel   .   .        .
+    Gpio6   31 GPCLK2     Hi   o  ReadAck   09  GPIO[8]  gray
+    Gpio7   26 spi0_CE1_N Hi   o  nReset    .   .        .
+    Gpio8   24 spi0_CE0_N Hi  i   .         .   .        .
+    Gpio9   21 spi0_MISO  Lo  i   .         .   .        .
+    Gpio10  19 spi0_MOSI  Lo  i   .         .   .        .
+    Gpio11  23 spi0_SCLK  Lo  i   .         .   .        .
+    Gpio12  32 PWM0       Lo  i   .         .   .        .
+    Gpio13  33 PWM1       Lo  i   .         .   .        .
+    Gpio14  08 u0_TXD     Lo  i   .         .   .        .
+    Gpio15  10 u0_RXD     Lo  i   .         .   .        .
+    Gpio16  36 u0_CTS     Lo  i   d0        01  GPIO[0]  black
+    Gpio17  11 u0_RTS     Lo  i   d1        02  GPIO[1]  brown
+    Gpio18  12 pcm_CLK    Lo  i   d2        03  GPIO[2]  red
+    Gpio19  35 pcm_FS     Lo  i   d3        04  GPIO[3]  orange
+    Gpio20  38 pcm_DIN    Lo  i   d4        05  GPIO[4]  yellow
+    Gpio21  40 pcm_DOUT   Lo  i   d5        06  GPIO[5]  green
+    Gpio22  15 --         Lo  i   d6        07  GPIO[6]  blue
+    Gpio23  16 --         Lo  i   d7        08  GPIO[7]  violet
+    Gpio24  18 --         Lo  i   .         .   .        .
+    Gpio25  22 --         Lo  i   .         .   .        .
+    Gpio26  37 --         Lo  i   OverFlow  13  GPIO[10] brown
+    Gpio27  13 --         Hi  i   NoData    10  GPIO[9]  white rdempty
+    GND     06 --         -   -   .         .   .        .
+    GND     09 --         -   -   .         .   .        .
+    GND     14 --         -   -   .         .   .        .
+    GND     20 --         -   -   .         .   .        .
+    GND     25 --         -   -   .         .   .        .
+    GND     30 --         -   -   .         .   .        .
+    GND     34 --         -   -   GND       12  GND      black
+    GND     39 --         -   -   .         .   .        .
+    +3.3V   01 --         -   -   .         .   .        .
+    +3.3V   17 --         -   -   .         .   .        .
+    +5V     02 --         -   -   .         .   .        .
+    +5V     04 --         -   -   .         .   .        .
+
+    +5V     -- --         -   -   .         11  +5       .  FPGA
+
