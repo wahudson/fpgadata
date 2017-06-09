@@ -3,7 +3,7 @@
 # $Id$
 # $Source$
 
-# Read fpgadata --flag output and group into coefficents.
+# Read 'fpgadata --flag' output and group into coefficents.
 #    Identify valid group of 4 nibbles where the coeff number changes.
 
 # usage:  nibbler < infile > table

@@ -26,7 +26,7 @@ using namespace std;
 // .... .f.. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
 // .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
 // .... .... .... .... .... .... .r.. ....   o ReadAck fifo read aknowledge
-// .... .... .... .... .... .... ..g. ....   o GoPixel start one pixel
+// .... .... .... .... .... .... ..g. ....   o GoPixel start one coefficient
 // .... .... .... .... .... .... R... ....   o nReset  reset fifo state
 
 //#define DATA_G	0x00ff0000	// DATA
@@ -34,7 +34,7 @@ using namespace std;
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
 #define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
 #define READAK_G	0x00000040	// ReadAck fifo read aknowledge
-#define GOPIXEL_G	0x00000020	// GoPixel start one pixel
+#define GOPIXEL_G	0x00000020	// GoPixel start one coefficient
 #define NRESET_G	0x00000080	// nReset fifo state
 
 #define DATA_POS	16		// position of data LSB
@@ -44,6 +44,9 @@ using namespace std;
 // Currently we intend the FPGA filter to be a free running data stream.
 // Outputs nReset and GoPixel can be used to help identify state of the
 // transfer.
+
+// #!! GoPixel now indicates start of a coefficient.  Use to help debug
+// fifo 'rdempty' (NoData) timing problems.  Re-using a gpio pin.
 
 
 //--------------------------------------------------------------------------
@@ -366,12 +369,13 @@ main( int	argc,
 		*gpio_clr = READAK_G;
 	    }
 
+	    unsigned int	coef_num = 0;
+	    unsigned int	coef_old = 0;
+
 	    rv = clock_gettime( CLKID, &tpA );
 
 	    while ( Fdx.get_length() < n_trans )
 	    {
-		*gpio_set = GOPIXEL_G;
-
 	        for ( int kk=0;  kk<(16*4); )	// each coefficient nibble
 		{
 		    ilevel = *gpio_read;	// Read GPIO level
@@ -394,6 +398,18 @@ main( int	argc,
 			overflow++;
 		    }
 
+		    coef_num = ilevel & COEFF_G;
+		    if ( coef_num != coef_old ) {	// signal new coeff
+			*gpio_set = GOPIXEL_G;
+			*gpio_set = GOPIXEL_G;
+			*gpio_set = GOPIXEL_G;
+			*gpio_set = GOPIXEL_G;
+			*gpio_set = GOPIXEL_G;
+
+			coef_old  = coef_num;
+			*gpio_clr = GOPIXEL_G;
+		    }
+
 		    if ( ilevel & NODATA_G ) {	// fifo empty
 //			continue;
 		    }
@@ -401,12 +417,6 @@ main( int	argc,
 		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
 		    kk++;
 		}
-
-		*gpio_clr = GOPIXEL_G;
-		*gpio_clr = GOPIXEL_G;
-		*gpio_clr = GOPIXEL_G;
-		*gpio_clr = GOPIXEL_G;
-		*gpio_clr = GOPIXEL_G;
 	    }
 
 	    rv = clock_gettime( CLKID, &tpB );
