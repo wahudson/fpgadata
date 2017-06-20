@@ -48,7 +48,7 @@ Configure RPi pin modes:
     Gpio2   03 iic1_SDA   Hi  i   .         .   .        .
     Gpio3   05 iic1_SCL   Hi  i   .         .   .        .
     Gpio4   07 GPCLK0     Hi  i   .         .   .        .
-    Gpio5   29 GPCLK1     Hi   o  GoPixel   .   .        .
+    Gpio5   29 GPCLK1     Hi   o  GoPixel   .   .        white
     Gpio6   31 GPCLK2     Hi   o  ReadAck   09  GPIO[8]  gray
     Gpio7   26 spi0_CE1_N Hi   o  nReset    .   .        .
     Gpio8   24 spi0_CE0_N Hi  i   .         .   .        .

@@ -2,9 +2,7 @@
 		fpgadata -- FPGA to Raspberry Pi Data Transfer
 		----------------------------------------------
 
-Revision control:  subversion
-$Id$
-$URL$
+Revision control:  git
 
 This is the "fpgadata" tool.
 Runs on Raspberry Pi (RPi) to transfer data from an FPGA connected to
@@ -15,7 +13,6 @@ Motivation from CSU Jesse Wilson.
 Files:  (2017-04-22)
 ------
 README			this file
-? README.log		Change log  -> ../doc/README.log  convenience link.
 
 ? Makefile		top-level build, test, package
 
@@ -25,16 +22,15 @@ doc/		    Documentation
 ? man/man1/		Manpage dir tree (unmanaged)
 
 src/		    Source code
-?   Makefile		for building the tool
+    Makefile		for building the tool
     Error.cpp		Error handling
     Error.h
-?   ublist.cpp	main program
     yOption.cpp		Option parsing base class
     yOption.h
 
 bin/		    Commands
-    ublist		list usb devices
-    ublist.pod		manpage pod documentation
+    fpgadata		Get FPGA Data.
+    rpixel		Get FPGA Data, pixel signals.
 
   ? linux_rhel40_gcc44x_64/	compiled binary commands
 	opt/
@@ -47,7 +43,7 @@ obj/		    temporary .o object files
 	dbg/
 	    *.o
 
-? test/		    Testing
+test/		    Testing
     Makefile		Run all tests
     t_*/		Test suites
 
@@ -74,7 +70,7 @@ Release directory structure:
 ----------------------------
 
 
-Version numbers:
+Version numbers: ??
 ----------------
 Version number format is:  X.YY.Z
     major.minor.patch
@@ -92,71 +88,13 @@ Release tag name IS the version number.  e.g. tags/1.10
     see also:  ToolVersion.pm
 
 
-Initial Build process: ???
+Initial Build process:
 ----------------------
 
 0)  Set up build directories (only in a new working copy).
     % cd src
     % make mkdirs
     % make compile
-
-
-Release process: ???
-----------------
-The installation directory structure is the same as the trunk/ development
-directory structure.  This allows testing to point at either one.
-
-The process is to svn copy trunk/ to a release tag named by the version
-number.  This tag is then checked-out (or exported) into a versioned
-build directory where the tool is built.  Unmanaged directory trunk/build/ is
-used for this purpose (or any other location).
-
-Process key:
-    +  is unix command to enter
-    >  is svn commit message to enter
-    Note standardized svn commit messages for release tags.
-
-
-0) Inspect existing tags/ and choose a new version number:
-    + URL=file:///home/wah/SVN_tool/usblist
-    + svn ls -v  $URL/tags
-
-1) Snap a release tag, assigning a new version number:
-    + svn copy  $URL/trunk  $URL/tags/X.YY
-    > Release:  tags/X.YY
-
-2) Export svn tag into versioned build dir:
-    + mkdir  build/X.YY
-    + cd     build/X.YY
-    + svn co  $URL/tags/X.YY  .
-
-3) Build the Tool:  (in trunk or in build/X.YY/)
-    + cd src
-    + make mkdirs
-    + make compile
-
-4) Test the Tool:  (in trunk or in build/X.YY/)
-    + cd test
-    + make test
-
-5) Install the Tool:
-    Version number is X.YY
-    Copy to your bin/ directory.
-
-6) Release notes:
-    Put them in $URL/doc/ directory (parallel to trunk/).
-    Name files according to the release tag name.
-    They are outside of trunk/, so they can be revised independently.
-
-    Examine the svn log:
-    + cd ../trunk/
-    + svn log -v -rHEAD:1 > /tmp/_rel_YYYY_MM_DD.svnlog
-
-    + cd  ../doc/
-    + vi  X.YY.txt
-    + svn add     X.YY.txt
-    + svn commit  X.YY.txt
-    > Release notes:  tags/X.YY
 
 
 Primary developers:  (user ID, Email, Working copy)  (2016-05-02)

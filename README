@@ -3,9 +3,10 @@
 		----------------------------------------------
 
 This is the "fpgadata" tool.
+Transfer data from an FPGA to Raspberry Pi (RPi) via GPIO pins.
 
 Content Experts:
-    William Hudson  970-215-8461
+    William Hudson  William.Hudson542@gmail.com
 
 
 Files:
@@ -13,19 +14,14 @@ Files:
 README		this file
 
 trunk/		mainline development
-tags/		release tags
-branches/	development branches
-
-doc/		release notes
 
 
 Repository History:  (newest first)
 ----------------------------------------------------------------------------
 (2017-04-22)  Initial development
+    Local git.
+    Initially modeled after subversion.
 
-???
-URL: file:///home/wah/SVN_tool/usblist
-Repository Root: file:///home/wah/SVN_tool/usblist
-Repository UUID: 9df72383-472d-4259-abf5-522e46aae790
-Revision: 0
+(2017-06-20)  Push repo to GitHub
+    https://github.com/wahudson/fpgadata.git
 
