@@ -22,7 +22,7 @@ using namespace std;
 // GPIO bit postions, in BCM register
 //   28   24   20   16   12    8    4    0     bit number
 // .... .... dddd dddd .... .... .... ....  i  DATA   bits
-// .... ...m .... .... .... .... .... ....  i  metadata flag ???
+// .... ...m .... .... .... .... .... ....  i  MetaRead flag
 // .... .f.. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
 // .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
 // .... .... .... .... .... .... .r.. ....   o ReadAck fifo read aknowledge
@@ -34,6 +34,7 @@ using namespace std;
 #define COEFF_G		0x00f00000	// Coefficient nibble in data
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
 #define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
+#define METAREAD_G	0x01000000	// MetaRead flag, 1= repeated read
 #define READAK_G	0x00000040	// ReadAck fifo read aknowledge
 #define GOPIXEL_G	0x00000020	// GoPixel start one coefficient
 #define NRESET_G	0x00000080	// nReset fifo state
@@ -308,6 +309,7 @@ main( int	argc,
 	int			overflow;	// OVFLOW_G
 	int			flush_cnt;	// flush fifo cycles
 	int			bad_cnt = 0;	// bad NoData block count
+	int			BadMetaRead_cnt = 0;	// bad repeated read
 
 	if ( Error::err() )  return 1;
 
@@ -333,6 +335,8 @@ main( int	argc,
 	    Fdx.clear();
 	    Bsx.reset();
 	    overflow = 0;
+	    bad_cnt         = 0;
+	    BadMetaRead_cnt = 0;
 
 	    // Flush fifo
 	    *gpio_clr = NRESET_G;
@@ -383,6 +387,28 @@ main( int	argc,
 		{
 		    ilevel = *gpio_read;	// Read GPIO level
 //		    cin >>hex >> ilevel;	// Read test data on stdin
+
+		    if ( Opx.debug ) {
+			// Debug repeated read looking for changing NoData.
+			// Runtime about 220ns.
+			unsigned	metaread;
+			int		bad_meta = 0;
+			for ( int i=0;  i<3;  i++ )
+			{
+			    metaread = *gpio_read;
+			    if ( (metaread & 0x0fff000) !=
+				 (ilevel   & 0x0fff000) ) {
+				bad_meta = 1;
+			    }
+			    // Save clashes with BadNoData_cnt detection below.
+			//  metaread |= METAREAD_G;	// flag repeated read
+			//  Fdx.push_dat( (metaread >> DATA_POS) & FULL_MASK );
+			}
+			if ( bad_meta ) {
+			    BadMetaRead_cnt++;
+			    ilevel |= METAREAD_G;	// repeated read fail
+			}
+		    }
 
 		    *gpio_set = READAK_G;
 		    *gpio_set = READAK_G;
@@ -465,6 +491,7 @@ main( int	argc,
 	    cerr << "  NoData " << Bsx.text_stats_by_call();
 	    cerr << "    OverFlow= " << overflow <<endl;
 	    cerr << "    BadNoData_cnt= " << bad_cnt <<endl;
+	    cerr << "    BadMetaRead_cnt= " << BadMetaRead_cnt <<endl;
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
 		 <<setw(9) << delta_ns << "  "
