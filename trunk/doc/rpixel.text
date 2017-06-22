@@ -28,15 +28,19 @@ Signals to RPi:
 
     o   nReset      Reset FPGA state when low.  Start at first pixel.
 
+    o   TrigOut     Trigger event output.  Signal things like a bad
+			block of NoData (fifo rdempty) at coeff change.
+
 
 ----------------------------------------------------------------------------
 ##(2017-04-30)  FPGA Connections
 
 Configure RPi pin modes:
     % gpio readall
-    % gpio -g mode  5 out
-    % gpio -g mode  6 out
-    % gpio -g mode  7 out
+    % gpio -g mode  5 out	# GoPixel
+    % gpio -g mode  6 out	# ReadAck
+    % gpio -g mode  7 out	# nReset
+    % gpio -g mode  8 out	# TrigOut
 
     % gpio -g mode 27 up
 
@@ -51,7 +55,7 @@ Configure RPi pin modes:
     Gpio5   29 GPCLK1     Hi   o  GoPixel   .   .        white
     Gpio6   31 GPCLK2     Hi   o  ReadAck   09  GPIO[8]  gray
     Gpio7   26 spi0_CE1_N Hi   o  nReset    .   .        .
-    Gpio8   24 spi0_CE0_N Hi  i   .         .   .        .
+    Gpio8   24 spi0_CE0_N Hi   o  TrigOut   .   .        ??
     Gpio9   21 spi0_MISO  Lo  i   .         .   .        .
     Gpio10  19 spi0_MOSI  Lo  i   .         .   .        .
     Gpio11  23 spi0_SCLK  Lo  i   .         .   .        .

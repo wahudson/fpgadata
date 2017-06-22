@@ -32,6 +32,11 @@ class yFramDat {
 	len = 0;
     }
 
+    inline uint16_t*	get_dp_minus4()
+    {
+	return  ( (len > 4) ? (data + len - 4) : data );
+    }
+
     void		show_debug();
     int			nlimit( unsigned int  ntran );
     bool		push_dat( uint16_t  value );

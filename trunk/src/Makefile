@@ -32,7 +32,7 @@ CXXFLAGS   = -Wall  -std=c++11
 
 
 run	: compile
-	$(BINDIR)/fpgadata --csv --TESTOP
+##	$(BINDIR)/fpgadata --csv --TESTOP
 	$(BINDIR)/rpixel --csv --TESTOP
 
 mkdirs	:

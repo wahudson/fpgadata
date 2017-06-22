@@ -28,6 +28,7 @@ using namespace std;
 // .... .... .... .... .... .... .r.. ....   o ReadAck fifo read aknowledge
 // .... .... .... .... .... .... ..g. ....   o GoPixel start one coefficient
 // .... .... .... .... .... .... R... ....   o nReset  reset fifo state
+// .... .... .... .... .... ...T .... ....   o TrigOut trigger event
 
 //#define DATA_G	0x00ff0000	// DATA
 #define COEFF_G		0x00f00000	// Coefficient nibble in data
@@ -36,6 +37,7 @@ using namespace std;
 #define READAK_G	0x00000040	// ReadAck fifo read aknowledge
 #define GOPIXEL_G	0x00000020	// GoPixel start one coefficient
 #define NRESET_G	0x00000080	// nReset fifo state
+#define TRIGOUT_G	0x00000100	// TrigOut trigger event
 
 #define DATA_POS	16		// position of data LSB
 #define DATA_MASK	0x000000ff	// data width mask, after shift right
@@ -305,6 +307,7 @@ main( int	argc,
 	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
 	int			flush_cnt;	// flush fifo cycles
+	int			bad_cnt = 0;	// bad NoData block count
 
 	if ( Error::err() )  return 1;
 
@@ -379,6 +382,7 @@ main( int	argc,
 	        for ( int kk=0;  kk<(16*4); )	// each coefficient nibble
 		{
 		    ilevel = *gpio_read;	// Read GPIO level
+//		    cin >>hex >> ilevel;	// Read test data on stdin
 
 		    *gpio_set = READAK_G;
 		    *gpio_set = READAK_G;
@@ -408,6 +412,33 @@ main( int	argc,
 
 			coef_old  = coef_num;
 			*gpio_clr = GOPIXEL_G;
+
+			// Check last 4 data values should all have NoData=0.
+			uint16_t	*dp      = Fdx.get_dp_minus4();
+			int		flag_bad = 0;
+//			cout << "dp= " << dp << "  len= " << Fdx.len << endl;
+			for ( int i=0;  i<4;  i++ )
+			{
+//			    unsigned xx = dp[i] & (NODATA_G >> DATA_POS);
+//			    cout.fill( '0' );
+//			    cout << "dp[" << i
+//				 << "]= 0x" <<hex <<setw(4) << (int)dp[i]
+//				 << "  xx= " << xx
+//				 <<dec << endl;
+			    if ( dp[i] & (NODATA_G >> DATA_POS) ) {
+				flag_bad = 1;
+			    }
+			}
+			if ( flag_bad ) {
+			    *gpio_set = TRIGOUT_G;
+			    *gpio_set = TRIGOUT_G;
+			    *gpio_set = TRIGOUT_G;
+			    *gpio_set = TRIGOUT_G;
+			    *gpio_set = TRIGOUT_G;
+
+			    *gpio_clr = TRIGOUT_G;
+			    bad_cnt++;
+			}
 		    }
 
 		    if ( ilevel & NODATA_G ) {	// fifo empty
@@ -433,6 +464,7 @@ main( int	argc,
 	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
 	    cerr << "  NoData " << Bsx.text_stats_by_call();
 	    cerr << "    OverFlow= " << overflow <<endl;
+	    cerr << "    BadNoData_cnt= " << bad_cnt <<endl;
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
 		 <<setw(9) << delta_ns << "  "

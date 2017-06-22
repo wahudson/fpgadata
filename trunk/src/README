@@ -1,0 +1,30 @@
+2017-06-22
+		Source Files
+		------------
+
+Build from this directory:
+    % make mkdirs
+    % make
+
+Files:
+------
+Error.cpp	Error handling class
+Error.h
+Makefile	Compile and run the main program
+README		this file
+fpgadata.cpp	Get FPGA Data v1
+in.data		input data for testing rpixel
+nibbler		Read 'fpgadata --flag' output and group into coefficents.
+plotc16		Plot FPGA filter coefficients.
+rpixel.cpp	Get FPGA Data v2
+yBuffStat.cpp	Buffer Statistics base class.
+yBuffStat.h
+yCoeffItr.cpp	Coefficient Data Iterator class.
+yCoeffItr.h
+yFramDat.cpp	Frame Data base class.
+yFramDat.h
+yOption.cpp	Option parsing base class.
+yOption.h
+yRpiGpio.cpp	Raspberry Pi GPIO base class.
+yRpiGpio.h
+
