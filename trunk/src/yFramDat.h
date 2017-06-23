@@ -1,18 +1,16 @@
+// 2017-04-22  William A. Hudson
 
 #ifndef yFramDat_P
 #define yFramDat_P
 
-
 //--------------------------------------------------------------------------
 // Frame Data class
 //--------------------------------------------------------------------------
-//!! Public access to *data pointer is dangerous should it get changed!
-// Trying to get started for now.
 
 class yFramDat {
+  friend class yCoeffItr;
+
   private:
-  public:
-//    unsigned char	*data;		// pointer to array
     uint16_t		*data;		// pointer to array
     size_t		size;		// size of data array
     size_t		len;		// current length of data
