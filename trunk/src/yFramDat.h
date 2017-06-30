@@ -8,8 +8,6 @@
 //--------------------------------------------------------------------------
 
 class yFramDat {
-  friend class yCoeffItr;
-
   private:
     uint16_t		*data;		// pointer to array
     size_t		size;		// size of data array
@@ -28,6 +26,16 @@ class yFramDat {
     inline void		clear()		// Reset length to zero.
     {
 	len = 0;
+    }
+
+    inline uint16_t*	data_pointer_begin()	// first element
+    {
+	return  data;
+    }
+
+    inline uint16_t*	data_pointer_end()	// element past the end
+    {
+	return  (data + len);
     }
 
     inline uint16_t*	get_dp_minus4()

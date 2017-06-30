@@ -4,13 +4,13 @@
 #define yCoeffItr_P
 
 //--------------------------------------------------------------------------
-// Coefficient Data Iterator class
+// Coefficient Data Iterator base class
 //--------------------------------------------------------------------------
 
 class yCoeffItr {
-  private:
+  protected:
     yFramDat		*Fdata;		// frame data object
-    unsigned int	DatAddr;	// current address in Fdata[] array
+    uint16_t		*DaPtr;		// current pointer in Fdata[] array
 
 				// Single Pixel data
 //  int			NumCoef;	// number of coefficients
@@ -18,17 +18,13 @@ class yCoeffItr {
     int			PixNum;		// pixel number
     bool		PixErr;		// pixel has an error
 
-
-  public:
-
   public:
     yCoeffItr( yFramDat *fdp );
 
-    int			*next_pixel();
-    bool		get_pixel_nibbles( int  *addr );
-    void		print_coeff_tab();
+    virtual int		*next_pixel();
+    virtual void	print_coeff_tab();
 
-    inline bool		get_error()
+    inline bool		has_error()
     {
 	return PixErr;
     }

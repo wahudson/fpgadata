@@ -1,7 +1,6 @@
 // 2017-05-29  William A. Hudson
 
 // Coefficient Data Iterator class.
-//    Is a friend class of yFramDat.
 //    Intended for extracting coefficients from the raw gpio data array.
 //
 //--------------------------------------------------------------------------
@@ -24,7 +23,7 @@ yCoeffItr::yCoeffItr(
 )
 {
     Fdata   = fdp;
-    DatAddr = 0;
+    DaPtr   = Fdata->data_pointer_begin();
     PixNum  = -1;
     PixErr  = 0;
 
@@ -49,33 +48,29 @@ yCoeffItr::yCoeffItr(
 int*
 yCoeffItr::next_pixel()
 {
-    unsigned int	ii;
-    int			coeff_err = -999999;
+    uint16_t		*max_dp;	// DaPtr past end of source array
 
-    ii = DatAddr;
+    const int		COEFF_ERR = -999999;
 
-    if ( (ii + (16*4)) > Fdata->len ) {
-	return NULL;
-    }
-    //#!! redundant check
+    max_dp = Fdata->data_pointer_end();
+    // Allow array to grow between calls.
+
+//#!! reset PixErr = 0 ?
 
     for ( int jj = 0;  jj < 16;  jj++ )	// each coefficient
     {
 	int		cnum;		// coeff number in data array
-	int16_t		coeff   = 0;	// coeff value
+	int16_t		cvalue  = 0;	// coeff value
 	int		nib_err = 0;	// nibble error
 
-	if ( (ii + 4) > Fdata->len ) {	// at limit
-	    PixCoef[jj] = coeff_err;	// flag value
-	    PixErr      = 1;
-	    continue;
+	if ( DaPtr+4 >= max_dp ) {	// at limit
+	    return  NULL;
 	}
-	//#!! redundant check
 
-	for ( int k = 0;  k < 4;  k++, ii++ )	// each nibble
+	for ( int k = 0;  k < 4;  k++, DaPtr++ )	// each nibble
 	{
-	    coeff = (coeff << 4) | (Fdata->data[ii] & 0xf);
-	    cnum  = (Fdata->data[ii] >> 4) & 0xf;
+	    cvalue = (cvalue << 4) | (*DaPtr & 0xf);
+	    cnum  = (*DaPtr >> 4) & 0xf;
 	    if ( cnum != jj ) {
 		nib_err = 1;
 	    }
@@ -83,19 +78,19 @@ yCoeffItr::next_pixel()
 
 	if ( nib_err ) {
 	    if ( ! PixErr ) {
+		int	ii = DaPtr - Fdata->data_pointer_begin();
 		Error::err( "misaligned coeff nibble at:" );
 		cerr << "    index= " << ii << endl;
 	    }
 	    PixErr = 1;
-	    PixCoef[jj] = coeff_err;	// flag value
+	    PixCoef[jj] = COEFF_ERR;	// flag value
 	}
 	else {
-	    PixCoef[jj] = coeff;
+	    PixCoef[jj] = cvalue;
 	}
     }
 
     PixNum++;
-    DatAddr = ii;
     return  PixCoef;	// array
 }
 
@@ -121,7 +116,7 @@ yCoeffItr::print_coeff_tab()
     while ( (cp = this->next_pixel()) )
     {
 	cout <<setw(6) << PixNum;
-	if ( this->get_error() ) {
+	if ( this->has_error() ) {
 	    cout << "!";
 	}
 	else {
