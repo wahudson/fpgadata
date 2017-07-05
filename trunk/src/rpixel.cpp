@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <string>
 #include <stdlib.h>
+#include <stdexcept>	// std::stdexcept
 
 using namespace std;
 
@@ -80,6 +81,9 @@ class yOptLong : public yOption {
     bool		delta;
     bool		flag;
 
+    const char*		load;
+    const char*		save;
+
     bool		verbose;
     bool		debug;
     bool		TESTOP;
@@ -120,6 +124,9 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     delta       = 0;
     flag        = 0;
 
+    load        = NULL;
+    save        = NULL;
+
     verbose     = 0;
     debug       = 0;
     TESTOP      = 0;
@@ -147,6 +154,9 @@ yOptLong::parse_options()
 	else if ( is( "--raw"        )) { raw        = 1; }
 	else if ( is( "--delta"      )) { delta      = 1; }
 	else if ( is( "--flag"       )) { flag       = 1; }
+
+	else if ( is( "--load="      )) { load       = this->val(); }
+	else if ( is( "--save="      )) { save       = this->val(); }
 
 	else if ( is( "--verbose"    )) { verbose    = 1; }
 	else if ( is( "-v"           )) { verbose    = 1; }
@@ -183,6 +193,8 @@ yOptLong::parse_options()
 void
 yOptLong::print_option_flags()
 {
+    if ( load == NULL ) { load = "-"; }
+    if ( save == NULL ) { save = "-"; }
 
     cout << "--npix        = " << npix         << endl;
     cout << "--repeat      = " << repeat       << endl;
@@ -194,6 +206,8 @@ yOptLong::print_option_flags()
     cout << "--raw         = " << raw          << endl;
     cout << "--delta       = " << delta        << endl;
     cout << "--flag        = " << flag         << endl;
+    cout << "--load        = " << load         << endl;
+    cout << "--save        = " << save         << endl;
     cout << "--verbose     = " << verbose      << endl;
     cout << "--debug       = " << debug        << endl;
 
@@ -225,6 +239,9 @@ yOptLong::print_usage()
     "    --raw               raw hex data\n"
     "    --delta             delta data in decimal\n"
     "    --flag              octal flags with 8-bit data in decimal\n"
+    "  raw data:  one sample per line, with headline\n"
+    "    --load=FILE         load hex words from file\n"
+    "    --save=FILE         save hex words to   file\n"
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
@@ -504,6 +521,14 @@ main( int	argc,
 //	cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
 //	cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
 
+	if ( Opx.load ) {
+	    Fdx.load_hex( Opx.load );
+	}
+
+	if ( Opx.save ) {
+	    Fdx.save_hex( Opx.save );
+	}
+
 	if ( Opx.debug ) {
 	    Fdx.show_debug();
 	}
@@ -515,6 +540,12 @@ main( int	argc,
 
 	if ( Opx.csv ) {
 	    Fdx.print_coeff_nibbleB_csv();
+	    cout << endl;
+	}
+
+	yCoeffItr		Fdit  ( &Fdx );
+	if ( Opx.tab2 ) {
+	    Fdit.print_coeff_tab();
 	    cout << endl;
 	}
 
@@ -538,15 +569,12 @@ main( int	argc,
 	    cout << endl;
 	}
 
-	yCoeffItr		Fdit  ( &Fdx );
-	if ( Opx.tab2 ) {
-	    Fdit.print_coeff_tab();
-	    cout << endl;
-	}
-
+    }
+    catch ( exception& e ) {
+        Error::err( "exception:  ", e.what() );
     }
     catch (...) {
-	cerr << "caught something" << endl;
+        Error::err( "unexpected exception" );
     }
 
     return ( Error::err() ? 1 : 0 );
