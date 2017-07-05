@@ -50,12 +50,12 @@ yCoeffItr::next_pixel()
 {
     uint16_t		*max_dp;	// DaPtr past end of source array
 
-    const int		COEFF_ERR = -999999;
+    const int		COEFF_ERR = -99999;
 
     max_dp = Fdata->data_pointer_end();
     // Allow array to grow between calls.
 
-//#!! reset PixErr = 0 ?
+    PixErr = 0;
 
     for ( int jj = 0;  jj < 16;  jj++ )	// each coefficient
     {
@@ -63,7 +63,7 @@ yCoeffItr::next_pixel()
 	int16_t		cvalue  = 0;	// coeff value
 	int		nib_err = 0;	// nibble error
 
-	if ( DaPtr+4 >= max_dp ) {	// at limit
+	if ( DaPtr+4 > max_dp ) {	// at limit
 	    return  NULL;
 	}
 
@@ -97,6 +97,7 @@ yCoeffItr::next_pixel()
 
 /*
 * Print coefficients, tabular format.
+*    Bad pixel entry marked with '!'.
 *    #!! Perhaps a little strange to put this in the iterator.
 * call:
 *    print_coeff_tab()
@@ -106,10 +107,12 @@ yCoeffItr::print_coeff_tab()
 {
     int			*cp;	// coefficient pointer
 
-    cout << " index     c0     c1     c2     c3     c4     c5     c6     c7"
-                  "     c8     c9    c10    c11    c12    c13    c14    c15" << endl;
-    cout << "------ ------ ------ ------ ------ ------ ------ ------ ------"
-                  " ------ ------ ------ ------ ------ ------ ------ ------" << endl;
+    cout << " index      c0     c1     c2     c3     c4     c5     c6     c7"
+                   "     c8     c9    c10    c11    c12    c13    c14    c15"
+	 << endl;
+    cout << "------  ------ ------ ------ ------ ------ ------ ------ ------"
+                   " ------ ------ ------ ------ ------ ------ ------ ------"
+	 << endl;
     cout <<dec;
     cout.fill(' ');
 
@@ -129,6 +132,39 @@ yCoeffItr::print_coeff_tab()
 	}
 	cout << endl;
     }
-    cout << dec;
+}
+
+
+/*
+* Print coefficients, CSV format.
+*    Bad pixel entry marked with '!'.
+*    #!! Perhaps use a seperate column?
+* call:
+*    print_coeff_csv()
+*/
+void
+yCoeffItr::print_coeff_csv()
+{
+    int			*cp;	// coefficient pointer
+
+    cout << "index,c0,c1,c2,c3,c4,c5,c6,c7,"
+	    "c8,c9,c10,c11,c12,c13,c14,c15" << endl;
+
+    cout <<dec;
+    cout.fill(' ');
+
+    while ( (cp = this->next_pixel()) )
+    {
+	cout << PixNum;
+	if ( this->has_error() ) {
+	    cout << "!";
+	}
+
+	for ( int j = 0;  j < 16;  j++ )
+	{
+	    cout << "," << cp[j];
+	}
+	cout << endl;
+    }
 }
 

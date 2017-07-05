@@ -23,6 +23,7 @@ class yCoeffItr {
 
     virtual int		*next_pixel();
     virtual void	print_coeff_tab();
+    virtual void	print_coeff_csv();
 
     inline bool		has_error()
     {

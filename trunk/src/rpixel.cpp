@@ -234,7 +234,7 @@ yOptLong::print_usage()
     "  output forms:  (default is none)\n"
     "    --csv               CSV format\n"
     "    --tab               tabular format\n"
-    "    --tab2              tabular format, coeff check\n"
+    "    --tab2              tabular format, no check\n"
     "    --hex               hex data dump\n"
     "    --raw               raw hex data\n"
     "    --delta             delta data in decimal\n"
@@ -534,18 +534,19 @@ main( int	argc,
 	}
 
 	if ( Opx.tab ) {
-	    Fdx.print_coeff_nibbleB_tab();
+	    yCoeffItr		dit  ( &Fdx );
+	    dit.print_coeff_tab();
 	    cout << endl;
 	}
 
 	if ( Opx.csv ) {
-	    Fdx.print_coeff_nibbleB_csv();
+	    yCoeffItr		dit  ( &Fdx );
+	    dit.print_coeff_csv();
 	    cout << endl;
 	}
 
-	yCoeffItr		Fdit  ( &Fdx );
-	if ( Opx.tab2 ) {
-	    Fdit.print_coeff_tab();
+	if ( Opx.tab2 ) {	// old method
+	    Fdx.print_coeff_nibbleB_tab();
 	    cout << endl;
 	}
 
@@ -570,7 +571,7 @@ main( int	argc,
 	}
 
     }
-    catch ( exception& e ) {
+    catch ( std::exception& e ) {
         Error::err( "exception:  ", e.what() );
     }
     catch (...) {
