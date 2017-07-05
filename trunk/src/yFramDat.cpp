@@ -6,11 +6,14 @@
 
 #include <iostream>
 #include <iomanip>
-
-using namespace std;
+#include <fstream>	// std::ifstream
+#include <sstream>	// std::ostringstream
+#include <stdexcept>
 
 #include "Error.h"
 #include "yFramDat.h"
+
+using namespace std;
 
 
 /*
@@ -37,6 +40,8 @@ yFramDat::yFramDat( size_t nsize )
 //    data = new( unsigned char [nsize] );
 
     const int	sz = 2 * 1024 * 1024;
+
+    std::string		HeadLine  ( "#yFrameDat" );
 
     len  = 0;
     size = 0;
@@ -122,6 +127,87 @@ yFramDat::push_dat(
     }
 }
 
+
+//--------------------------------------------------------------------------
+// Load/Save data array.
+//--------------------------------------------------------------------------
+
+/*
+* Read hex data file into array.
+*    File format is hexadecimal, one value per line.
+*    First line is a headline.
+* call:
+*    self.load_hex( "infile.dat" )
+*/
+void
+yFramDat::load_hex(
+    const char		*infile
+)
+{
+    std::ifstream	ifs;
+    uint32_t		v;
+
+    ifs.open( infile, std::ifstream::in );
+    if ( ! ifs.is_open() ) {
+	std::ostringstream	css;
+	css << "cannot read file:  " << infile;
+	throw std::runtime_error ( css.str() );
+    }
+
+    std::getline( ifs, HeadLine );
+//    cout << "HeadLine= " << HeadLine << endl;
+//    cout.fill('0');
+
+    this->clear();
+
+    while ( ifs.good() )
+    {
+        ifs >>hex >> v;
+        if ( ifs.eof() ) { break; }
+        this->push_dat( v );
+//        cout << "v= 0x" <<hex <<setw(2) << v <<dec << endl;
+    }
+
+    ifs.close();
+}
+
+
+/*
+* Save array to hex data file.
+*    File format is hexadecimal, one 16-bit value per line.
+*    First line is a headline.
+* call:
+*    self.save_hex( "outfile.dat" )
+*/
+void
+yFramDat::save_hex(
+    const char		*outfile
+)
+{
+    std::ofstream	ofs;
+
+    ofs.open( outfile, std::ofstream::out );
+    if ( ! ofs.is_open() ) {
+	std::ostringstream	css;
+	css << "cannot write file:  " << outfile;
+	throw std::runtime_error ( css.str() );
+    }
+
+    ofs << HeadLine <<endl;
+
+    ofs.fill('0');
+    for ( size_t i=0;  i<len;  i++ )
+    {
+        ofs << "0x" <<hex <<setw(4) << data[i] <<endl;
+    }
+
+    ofs.close();
+}
+
+
+//--------------------------------------------------------------------------
+// Print formated data.
+//--------------------------------------------------------------------------
 
 /*
 * Print data as 16x 16-bit coefficients, tabular format.

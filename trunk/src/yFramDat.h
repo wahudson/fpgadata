@@ -14,6 +14,9 @@ class yFramDat {
     size_t		len;		// current length of data
 
   public:
+    std::string		HeadLine;	// load/save headline
+
+  public:
     yFramDat();
     yFramDat( size_t nsize );
    ~yFramDat();
@@ -46,6 +49,10 @@ class yFramDat {
     void		show_debug();
     int			nlimit( unsigned int  ntran );
     bool		push_dat( uint16_t  value );
+
+    void		load_hex( const char  *infile );
+    void		save_hex( const char  *outfile );
+
     void		print_coeff16_tab();
     void		print_coeff16_csv();
     void		print_coeff_int16B_tab();
