@@ -74,7 +74,7 @@ Configure RPi pin modes:
     Gpio24  18 --         Lo  i   .         .   .        .
     Gpio25  22 --         Lo  i   .         .   .        .
     Gpio26  37 --         Lo  i   OverFlow  13  GPIO[10] brown
-    Gpio27  13 --         Hi  i   NoData    10  GPIO[9]  white rdempty
+    Gpio27  13 --         Hi  i   NoData    14  GPIO[11] white rdempty
     GND     06 --         -   -   .         .   .        .
     GND     09 --         -   -   .         .   .        .
     GND     14 --         -   -   .         .   .        .
@@ -89,4 +89,5 @@ Configure RPi pin modes:
     +5V     04 --         -   -   .         .   .        .
 
     +5V     -- --         -   -   .         11  +5       .  FPGA
+    --      -- --         -   -   .         10  GPIO[9]  .  Dead Vol=1.2V
 
