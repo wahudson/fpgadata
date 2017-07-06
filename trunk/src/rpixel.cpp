@@ -390,7 +390,7 @@ main( int	argc,
 		*gpio_clr = READAK_G;
 	    }
 
-	    unsigned int	coef_num = 0;
+	    unsigned int	coef_num = 0;	// masked in-place
 	    unsigned int	coef_old = 0;
 
 	    rv = clock_gettime( CLKID, &tpA );
@@ -420,7 +420,9 @@ main( int	argc,
 			overflow++;
 		    }
 
-		    coef_num = ilevel & COEFF_G;
+		    if ( ! (ilevel & NODATA_G) ) {
+			coef_num = ilevel & COEFF_G;
+		    }
 		    if ( coef_num != coef_old ) {	// signal new coeff
 			*gpio_set = GOPIXEL_G;
 			*gpio_set = GOPIXEL_G;
