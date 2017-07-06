@@ -351,6 +351,9 @@ main( int	argc,
 	    Bsx.reset();
 	    overflow = 0;
 
+	    // Init outputs
+	    *gpio_clr = READAK_G | TRIGOUT_G | GOPIXEL_G;
+
 	    // Flush fifo
 	    *gpio_clr = NRESET_G;
 	    for ( flush_cnt=0;  flush_cnt<10000;  flush_cnt++ )
@@ -423,19 +426,24 @@ main( int	argc,
 		    if ( ! (ilevel & NODATA_G) ) {
 			coef_num = ilevel & COEFF_G;
 		    }
+
 		    if ( coef_num != coef_old ) {	// signal new coeff
-			*gpio_set = GOPIXEL_G;
-			*gpio_set = GOPIXEL_G;
-			*gpio_set = GOPIXEL_G;
-			*gpio_set = GOPIXEL_G;
-			*gpio_set = GOPIXEL_G;
+			if ( coef_num == 0 ) {		// signal new pixel
+			    *gpio_set = GOPIXEL_G;
+			}
+			*gpio_set = TRIGOUT_G;
+			*gpio_set = TRIGOUT_G;
+			*gpio_set = TRIGOUT_G;
+			*gpio_set = TRIGOUT_G;
+			*gpio_set = TRIGOUT_G;
 
 			coef_old  = coef_num;
-			*gpio_clr = GOPIXEL_G;
+			*gpio_clr = TRIGOUT_G | GOPIXEL_G;
 		    }
+		    // Folded signals for more uniform timing.
 
 		    if ( ilevel & NODATA_G ) {	// fifo empty
-//			continue;
+			continue;
 		    }
 
 		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
