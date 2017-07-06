@@ -376,7 +376,8 @@ main( int	argc,
 	    while ( 1 )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
-		if ( (ilevel & COEFF_G) == 0 ) {
+		if ( ((ilevel & NODATA_G) == 0)   &&
+		     ((ilevel & COEFF_G)  == 0x0) ) {
 		    break;	// no read acknowledge
 		}
 
