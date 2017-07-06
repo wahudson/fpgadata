@@ -325,8 +325,6 @@ main( int	argc,
 	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
 	int			flush_cnt;	// flush fifo cycles
-	int			bad_cnt = 0;	// bad NoData block count
-	int			BadMetaRead_cnt = 0;	// bad repeated read
 
 	if ( Error::err() )  return 1;
 
@@ -352,8 +350,6 @@ main( int	argc,
 	    Fdx.clear();
 	    Bsx.reset();
 	    overflow = 0;
-	    bad_cnt         = 0;
-	    BadMetaRead_cnt = 0;
 
 	    // Flush fifo
 	    *gpio_clr = NRESET_G;
@@ -405,28 +401,6 @@ main( int	argc,
 		    ilevel = *gpio_read;	// Read GPIO level
 //		    cin >>hex >> ilevel;	// Read test data on stdin
 
-		    if ( Opx.debug ) {
-			// Debug repeated read looking for changing NoData.
-			// Runtime about 220ns.
-			unsigned	metaread;
-			int		bad_meta = 0;
-			for ( int i=0;  i<3;  i++ )
-			{
-			    metaread = *gpio_read;
-			    if ( (metaread & 0x0fff000) !=
-				 (ilevel   & 0x0fff000) ) {
-				bad_meta = 1;
-			    }
-			    // Save clashes with BadNoData_cnt detection below.
-			//  metaread |= METAREAD_G;	// flag repeated read
-			//  Fdx.push_dat( (metaread >> DATA_POS) & FULL_MASK );
-			}
-			if ( bad_meta ) {
-			    BadMetaRead_cnt++;
-			    ilevel |= METAREAD_G;	// repeated read fail
-			}
-		    }
-
 		    *gpio_set = READAK_G;
 		    *gpio_set = READAK_G;
 		    *gpio_set = READAK_G;
@@ -455,33 +429,6 @@ main( int	argc,
 
 			coef_old  = coef_num;
 			*gpio_clr = GOPIXEL_G;
-
-			// Check last 4 data values should all have NoData=0.
-			uint16_t	*dp      = Fdx.get_dp_minus4();
-			int		flag_bad = 0;
-//			cout << "dp= " << dp << "  len= " << Fdx.len << endl;
-			for ( int i=0;  i<4;  i++ )
-			{
-//			    unsigned xx = dp[i] & (NODATA_G >> DATA_POS);
-//			    cout.fill( '0' );
-//			    cout << "dp[" << i
-//				 << "]= 0x" <<hex <<setw(4) << (int)dp[i]
-//				 << "  xx= " << xx
-//				 <<dec << endl;
-			    if ( dp[i] & (NODATA_G >> DATA_POS) ) {
-				flag_bad = 1;
-			    }
-			}
-			if ( flag_bad ) {
-			    *gpio_set = TRIGOUT_G;
-			    *gpio_set = TRIGOUT_G;
-			    *gpio_set = TRIGOUT_G;
-			    *gpio_set = TRIGOUT_G;
-			    *gpio_set = TRIGOUT_G;
-
-			    *gpio_clr = TRIGOUT_G;
-			    bad_cnt++;
-			}
 		    }
 
 		    if ( ilevel & NODATA_G ) {	// fifo empty
@@ -507,8 +454,6 @@ main( int	argc,
 	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
 	    cerr << "  NoData " << Bsx.text_stats_by_call();
 	    cerr << "    OverFlow= " << overflow <<endl;
-	    cerr << "    BadNoData_cnt= " << bad_cnt <<endl;
-	    cerr << "    BadMetaRead_cnt= " << BadMetaRead_cnt <<endl;
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
 		 <<setw(9) << delta_ns << "  "
