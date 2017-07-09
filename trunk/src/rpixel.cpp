@@ -406,57 +406,52 @@ main( int	argc,
 
 	    while ( Fdx.get_length() < n_trans )
 	    {
-	        for ( int kk=0;  kk<(16*4); )	// each coefficient nibble
-		{
-		    ilevel = *gpio_read;	// Read GPIO level
-//		    cin >>hex >> ilevel;	// Read test data on stdin
-		    sample_cnt++;
+		ilevel = *gpio_read;	// Read GPIO level
+//		cin >>hex >> ilevel;	// Read test data on stdin
+		sample_cnt++;
 
-		    *gpio_set = READAK_G;
-		    *gpio_set = READAK_G;
-		    *gpio_set = READAK_G;
-		    *gpio_set = READAK_G;
-		    *gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
+		*gpio_set = READAK_G;
 
-		    *gpio_clr = READAK_G;
-		    *gpio_clr = READAK_G;
-		    *gpio_clr = READAK_G;
-		    *gpio_clr = READAK_G;
-		    *gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
+		*gpio_clr = READAK_G;
 
-		    Bsx.cnt_by_call( ilevel & NODATA_G );
+		Bsx.cnt_by_call( ilevel & NODATA_G );
 
-		    if ( ilevel & NODATA_G ) {	// fifo empty
-			NoData_cnt++;
-			continue;
-		    }
-
-		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
-
-		    if ( ilevel & OVFLOW_G ) {	// fifo overflow
-			overflow++;
-		    }
-
-		    coef_num = ilevel & COEFF_G;
-
-		    if ( coef_num != coef_old ) {	// signal new coeff
-			if ( coef_num == 0 ) {		// signal new pixel
-			    *gpio_set = GOPIXEL_G;
-			}
-			*gpio_set = TRIGOUT_G;
-			*gpio_set = TRIGOUT_G;
-			*gpio_set = TRIGOUT_G;
-			*gpio_set = TRIGOUT_G;
-			*gpio_set = TRIGOUT_G;
-
-			coeff_cnt++;
-			coef_old  = coef_num;
-			*gpio_clr = TRIGOUT_G | GOPIXEL_G;
-		    }
-		    // Folded signals for more uniform timing.
-
-		    kk++;
+		if ( ilevel & NODATA_G ) {	// fifo empty
+		    NoData_cnt++;
+		    continue;
 		}
+
+		Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
+
+		if ( ilevel & OVFLOW_G ) {	// fifo overflow
+		    overflow++;
+		}
+
+		coef_num = ilevel & COEFF_G;
+
+		if ( coef_num != coef_old ) {	// signal new coeff
+		    if ( coef_num == 0 ) {	// signal new pixel
+			*gpio_set = GOPIXEL_G;
+		    }
+		    *gpio_set = TRIGOUT_G;
+		    *gpio_set = TRIGOUT_G;
+		    *gpio_set = TRIGOUT_G;
+		    *gpio_set = TRIGOUT_G;
+		    *gpio_set = TRIGOUT_G;
+
+		    coeff_cnt++;
+		    coef_old  = coef_num;
+		    *gpio_clr = TRIGOUT_G | GOPIXEL_G;
+		}
+		// Folded signals for more uniform timing.
 	    }
 
 	    rv = clock_gettime( CLKID, &tpB );
