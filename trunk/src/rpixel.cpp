@@ -320,7 +320,7 @@ main( int	argc,
 	}
 
 	yFramDat		Fdx  ( 10 );	// constructor
-	yBuffStat		Bsx  ( 64 );	// SampleSize
+//	yBuffStat		Bsx  ( 64 );	// SampleSize
 
 	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
@@ -351,7 +351,7 @@ main( int	argc,
 	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )	// time repeats
 	{
 	    Fdx.clear();
-	    Bsx.reset();
+//	    Bsx.reset();
 	    overflow = 0;
 	    sample_cnt = 0;
 	    NoData_cnt = 0;
@@ -422,7 +422,7 @@ main( int	argc,
 		*gpio_clr = READAK_G;
 		*gpio_clr = READAK_G;
 
-		Bsx.cnt_by_call( ilevel & NODATA_G );
+//		Bsx.cnt_by_call( ilevel & NODATA_G );
 
 		if ( ilevel & NODATA_G ) {	// fifo empty
 		    NoData_cnt++;
@@ -473,7 +473,7 @@ main( int	argc,
 	    }
 
 	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
-	    cerr << "  NoData " << Bsx.text_stats_by_call();
+//	    cerr << "  NoData " << Bsx.text_stats_by_call();
 	    cerr << "    OverFlow=   " << overflow   <<endl;
 	    cerr << "    sample_cnt= " << sample_cnt <<endl;
 	    cerr << "    NoData_cnt= " << NoData_cnt <<endl;
