@@ -400,7 +400,9 @@ main( int	argc,
 	    }
 
 	    unsigned int	coef_num = 0;	// masked in-place
-	    unsigned int	coef_old = 0;
+	    unsigned int	coef_old = 0xffffffff & COEFF_G;
+		// Arrange for first 0 coefficient to signal GoPixel and
+		// be counted in coeff_cnt.
 
 	    rv = clock_gettime( CLKID, &tpA );
 
