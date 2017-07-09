@@ -325,6 +325,9 @@ main( int	argc,
 	unsigned		ilevel;		// GPIO read value
 	int			overflow;	// OVFLOW_G
 	int			flush_cnt;	// flush fifo cycles
+	int			sample_cnt;	// total read samples
+	int			NoData_cnt;	// total NoData samples
+	int			coeff_cnt;	// total coefficients read
 
 	if ( Error::err() )  return 1;
 
@@ -350,6 +353,9 @@ main( int	argc,
 	    Fdx.clear();
 	    Bsx.reset();
 	    overflow = 0;
+	    sample_cnt = 0;
+	    NoData_cnt = 0;
+	    coeff_cnt  = 0;
 
 	    // Init outputs
 	    *gpio_clr = READAK_G | TRIGOUT_G | GOPIXEL_G;
@@ -404,6 +410,7 @@ main( int	argc,
 		{
 		    ilevel = *gpio_read;	// Read GPIO level
 //		    cin >>hex >> ilevel;	// Read test data on stdin
+		    sample_cnt++;
 
 		    *gpio_set = READAK_G;
 		    *gpio_set = READAK_G;
@@ -437,12 +444,14 @@ main( int	argc,
 			*gpio_set = TRIGOUT_G;
 			*gpio_set = TRIGOUT_G;
 
+			coeff_cnt++;
 			coef_old  = coef_num;
 			*gpio_clr = TRIGOUT_G | GOPIXEL_G;
 		    }
 		    // Folded signals for more uniform timing.
 
 		    if ( ilevel & NODATA_G ) {	// fifo empty
+			NoData_cnt++;
 			continue;
 		    }
 
@@ -462,13 +471,29 @@ main( int	argc,
 		delta_s  -= 1;
 	    }
 
+	    float		NoData_coeff = -1.0;
+	    int			ns_coeff     = -1;
+	    if ( coeff_cnt ) {
+		NoData_coeff = (float) NoData_cnt / coeff_cnt;
+		ns_coeff     =           delta_ns / coeff_cnt;
+	    }
+
 	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
 	    cerr << "  NoData " << Bsx.text_stats_by_call();
-	    cerr << "    OverFlow= " << overflow <<endl;
+	    cerr << "    OverFlow=   " << overflow   <<endl;
+	    cerr << "    sample_cnt= " << sample_cnt <<endl;
+	    cerr << "    NoData_cnt= " << NoData_cnt <<endl;
+	    cerr << "    coeff_cnt=  " << coeff_cnt  <<endl;
+
+	    cerr << "    NoData per Coeff = "
+		 <<setw(8) <<fixed <<setprecision(2) << NoData_coeff <<endl;
+
+	    cerr << "    Coeff Rate       = "
+		 <<setw(5) << ns_coeff << " ns/coeff" <<endl;
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
-		 <<setw(9) << delta_ns << "  "
-		 <<setw(4) << (delta_ns / n_trans) << " ns/xfer"
+		 <<setw(9) << delta_ns << " ns,  "
+		 <<setw(4) << (delta_ns / sample_cnt) << " ns/sample"
 		 <<endl;
 	}
 
