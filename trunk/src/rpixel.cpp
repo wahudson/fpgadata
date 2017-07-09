@@ -426,13 +426,18 @@ main( int	argc,
 
 		    Bsx.cnt_by_call( ilevel & NODATA_G );
 
+		    if ( ilevel & NODATA_G ) {	// fifo empty
+			NoData_cnt++;
+			continue;
+		    }
+
+		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
+
 		    if ( ilevel & OVFLOW_G ) {	// fifo overflow
 			overflow++;
 		    }
 
-		    if ( ! (ilevel & NODATA_G) ) {
-			coef_num = ilevel & COEFF_G;
-		    }
+		    coef_num = ilevel & COEFF_G;
 
 		    if ( coef_num != coef_old ) {	// signal new coeff
 			if ( coef_num == 0 ) {		// signal new pixel
@@ -450,12 +455,6 @@ main( int	argc,
 		    }
 		    // Folded signals for more uniform timing.
 
-		    if ( ilevel & NODATA_G ) {	// fifo empty
-			NoData_cnt++;
-			continue;
-		    }
-
-		    Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
 		    kk++;
 		}
 	    }
