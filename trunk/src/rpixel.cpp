@@ -49,9 +49,6 @@ using namespace std;
 // Outputs nReset and GoPixel can be used to help identify state of the
 // transfer.
 
-// #!! GoPixel now indicates start of a coefficient.  Use to help debug
-// fifo 'rdempty' (NoData) timing problems.  Re-using a gpio pin.
-
 
 //--------------------------------------------------------------------------
 // Option Handling
@@ -245,8 +242,6 @@ yOptLong::print_usage()
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
-//  " #  --gray=N,N,...      image file coefficient numbers\n"
-//  " #  --prefix=NAME       file name prefix\n"
     "    --help              show this usage\n"
     "    -v, --verbose       verbose output\n"
     "    --debug             debug output\n"
@@ -255,42 +250,6 @@ yOptLong::print_usage()
 
 // Hidden options:
 //       --TESTOP       test mode show all options
-}
-
-
-//--------------------------------------------------------------------------
-// yMain object class
-//--------------------------------------------------------------------------
-
-class yMain {
-  private:
-
-  public:
-    yOptLong		*opx;
-
-  public:
-    yMain();					// constructor
-    yMain( yOptLong *optx );			// constructor
-};
-
-
-/*
-* Constructor.
-*/
-yMain::yMain()
-{
-}
-
-
-/*
-* Constructor.
-*    Pass in reference to option object.
-*    !! Probably refactor this class to build the option object.
-*/
-yMain::yMain( yOptLong *optx )
-{
-    opx          = optx;
-
 }
 
 
@@ -311,8 +270,6 @@ main( int	argc,
 	yOptLong		Opx  ( argc, argv );	// constructor
 
 	Opx.parse_options();
-
-	yMain			Mnx  ( &Opx );	// constructor
 
 	if ( Opx.TESTOP ) {
 	    Opx.print_option_flags();
