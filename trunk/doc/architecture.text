@@ -1,0 +1,139 @@
+2017-07-09
+		fpgadata - Architecture
+		-----------------------
+
+FPGA to Raspberry Pi (RPi) Data Transfer.
+
+Programs:
+    fpgadata	first version, replaced by rpixel
+    rpixel	current version
+
+    Run on Raspberry Pi (RPi) to transfer data from an FPGA connected to
+    the RPi GPIO pins.
+
+This file describes the architecture, ideas, design choices, and
+implementation details of these related programs.  As such it may be
+out-of-date.  The actual code embodies what was implemented, but likely
+does not have the details contained here.
+
+
+References:
+-----------
+BCM2835 ARM Peripherals
+    Ref by RaspberryPi
+    /home/var/ref/BCM2835-ARM-Peripherals.pdf
+    https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/BCM2835-ARM-Peripherals.pdf
+
+
+----------------------------------------------------------------------------
+## Principle of Operation
+----------------------------------------------------------------------------
+
+The basic idea is to connect around 8 to 12 FPGA gpio pins directly to
+the RPi gpio pins and transfer bits in parallel.  A few additional signals
+would control the transfer.
+
+A very rough (factors of 2) performance base is:  #!! need better reference.
+Parallel read rate is ~70 ns/xfer to a memory array.
+Output toggle rate is ~20 ns/toggle, raw set/clear.  Actual usable half
+period is more like 50 ns due to IO pin slew rate and settling.
+
+Experiments with these working programs show a useable full handshake
+transfer rate to a memory array of < 200 ns/transfer (5 Msample/s).
+
+A FIFO (First-In First-Out) buffer is implemented in the FPGA to buffer
+data when the RPi reader process experiences operating system sleeps.
+
+Initial programs pass 8 data bits in parallel, one direction FPGA to RPi.
+Handshake signal ReadAck from RPi tells the FPGA fifo that data has been
+read out.
+
+The fifo sends "read empty" to input signal "NoData" on the RPi.  The RPi
+program continuously polls the inputs from the FPGA fifo, and discards
+any samples where NoData=1.
+
+    FPGA               RPi
+    ---------          ---------
+    data[7:0]   ---->  data[7:0]
+    rdempty     ---->  NoData
+    rdclk       <----  ReadAck
+
+    wrfull      ---->  OverFlow
+
+
+----------------------------------------------------------------------------
+## Discussion
+----------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------
+## rpixel Command
+----------------------------------------------------------------------------
+
+Major operations:
+
+Output format ideas:
+
+
+----------------------------------------------------------------------------
+## Class Structure
+----------------------------------------------------------------------------
+
+The class structure is pretty flat, with most classes directly used by
+the main program.
+
+main() programs:
+    fpgadata.cpp
+    rpixel.cpp
+
+Classes:
+    Error::	Global error handling.  Used by most other classes.
+
+    yOption::	Option parsing helpers, used by main() program.
+
+    yRpiGpio::	Raspberry Pi GPIO base class.
+		Opens "/dev/gpiomem" and runs mmap() to map gpio peripheral
+		IO memory to the user process.
+
+    yFramDat::	Frame Data memory array.  Used to hold all transferred data
+		in memory.
+
+    yCoeffItr:: An iterator to walk the yFramDat buffer and format data
+		into filter coefficients for each pixel.
+
+    yBuffStat::	Buffer Statistics base class.  Used for debug of buffer
+		performance.  Not needed for data transfer.
+
+
+----------------------------------------------------------------------------
+## Error Handling
+----------------------------------------------------------------------------
+
+Exceptions:
+    Exceptions are intended only for error handling.
+    Library functions use exceptions as a way to get an error condition
+    to a level where the program can report it thru the proper channels.
+
+    We are using the C++ library <stdexcept> to classify and throw exceptions.
+
+Error Reporting:
+    Is the process of getting an error message to the user.
+    Most programs will simply write it to stderr.
+
+    A global class is used to report an error message, and to set a flag
+    that an error has occured.  The flag can be later used to see if
+    any error has occured, e.g. for setting program exit code.
+
+Debug:
+    Some classes will have a Debug attribute that can be set to trace
+    function execution on stderr.  It is intended as a simple way for a
+    user to see and verify some internal behavior.  The actual trace
+    output may change.
+
+    Not used much at this time.
+
+
+----------------------------------------------------------------------------
+## yRpiGpio -- Raspberry Pi GPIO base class
+----------------------------------------------------------------------------
+
