@@ -1,0 +1,196 @@
+2017-03-07
+			Hardware Components
+			-------------------
+
+This is the Raspberry Pi hardware used in interfacing to an
+Altera DE2-115 FPGA Development and Education Board.
+
+----------------------------------------------------------------------------
+## Vendors:
+----------------------------------------------------------------------------
+
+    MCM Electronics
+	Official USA distributor of RaspberryPi
+	http://www.mcmelectronics.com/content/en-US/raspberry-pi
+
+    AdaFruit
+	A good Maker supplier, lots of RaspberryPi accessories.
+	They also sell RaspberryPi at a slight markup.
+	Very nice detailed photographs of each component.
+	https://www.adafruit.com
+
+
+----------------------------------------------------------------------------
+## Components
+----------------------------------------------------------------------------
+These are the things I have actually used.  There may be others for similar
+purpose.
+
+The Essential Computer:
+
+    RaspberryPi-3 Model B, 1GB
+	This is the computer itself.
+	$35  MCM Electronics  Sku 83-17300
+	http://www.mcmelectronics.com/content/en-US/raspberry-pi
+
+    Micro SD card
+	Used as the computer disk, holds operating system and user files.
+	Install OS yourself on a blank one, or buy pre-installed.
+	NOOBS (New Out Of Box Software) is a mini-OS on the SD card that can
+	    download/install full OS from the network.
+	    Version v2.3.0, released on 3rd March 2017.
+	You might want a spare card on hand in case of failure.
+	8GB MicroSD Card with NOOBS 2.0, adaptor, $9.95 AdaFruit  pid 3259
+	8GB MicroSD Card with Raspbian Jessie,   $11.95 AdaFruit  pid 2767
+	8GB MicroSDHC with Adapter, class 4 speed,  $9.49 MCM  83-15925
+
+    HDMI to DVI-D cable.
+	6-foot High Speed HDMI to DVI-D Dual Link Cable
+	$5.69  MCM Electronics  Sku 24-11050
+
+    Case - Pibow Coupe - Enclosure for Raspberry Pi 2 / B+ / Pi 3
+	Stacked acrylic allows top hats.
+	I like this one, but there must be a hundred different cases.
+	Some kind of case or mounting is essential for protection.
+	AdaFruit $12.00  pid 2083  Red
+
+    Power AC to DC adapter
+	5.25V 2.4A Switching Power Supply with 20AWG MicroUSB Cable
+	Wall plug with micro-USB connector.
+	$7.50  AdaFruit pid 1995
+
+
+Optional dedicated display monitor:
+    LCD display monitor, 7 inch
+	$60.00  MCM Electronics  Sku 83-16872
+
+    Case - Pimoroni Raspberry Pi 7" Touchscreen Display Case Noir
+	Simple 60degree stand, stacked acrylic.
+	$15.00 AdaFruit  pid 2033
+
+
+Like any desktop computer, you could use:
+    Keyboard with USB connector.
+    Mouse with USB connector.
+    Monitor with HDMI, DVI, or DisplayPort input.
+    OR - Run without and use SSH or VNC to login over the network.
+
+
+Interconnect with FPGA GPIO:
+
+    Header jumper wires.
+	3.0 inch Female/Female, 40ea, $3.95 AdaFruit pid 794
+	3.0 inch Female/Male,   40ea, $3.95 AdaFruit pid 825
+	Good for GPIO to breadboard.
+	Shorter length reduces digital noise.
+	These single wire housings can be removed and wire inserted in
+	the dual row wire housings below.
+
+    Premium Female/Female Raw Custom Jumper Wires - 40 x 6" (150mm)
+	For use with plastic header housing to make custom cables.
+        $2.95  AdaFruit  pid: 3141
+
+    Large Dual Row Wire Housing Pack for DIY Jumper Cables
+        5ea of:  2x7, 2x8, 2x9, 2x10, 2x16, 2x20  (30 total)
+	Use to make custom 40-pin cables between RPi and FPGA.
+        $3.95  AdaFruit  pid: 3144
+
+
+----------------------------------------------------------------------------
+## Reference information
+----------------------------------------------------------------------------
+This is a summary of various things I found useful.
+
+Raspberry Pi
+    https://www.raspberrypi.org/
+    http://elinux.org/RPi_Hub
+    https://en.wikipedia.org/wiki/Raspberry_Pi
+	Be aware of the different versions.  Wikipedia has a good overview.
+	We are using:  Raspberry Pi 3 Model B (the latest version).
+
+Power
+    Rpi-3 powered by a +5.1V micro USB supply.
+    Recommend 2.5A supply.
+
+USB
+    Rpi is USB 2.0 High-speed, 480 Mbit/s.  Has 4 ports.
+    The USB port is an On-The-Go (OTG) host.
+
+    USB ports are from LAN9512 combo hub/Ethernet chip IC3, which is a USB
+    device connected to the BCM2835 processor.  OTG requires software to
+    do more work, compared to typical PC.
+
+    Generally, there are no issues with connecting multiple High-speed USB
+    devices to a Pi.
+    The software overhead incurred when talking to Low- and Full-speed devices
+    means that there are soft limitations on the number of simultaneously
+    active Low- and Full-speed devices. Small numbers of these types of
+    devices connected to a Pi will cause no issues.
+
+LXTerminal - lightweight terminal used on Rpi
+    https://wiki.lxde.org/en/LXTerminal
+
+Rpi - Vidio Interfaces
+    http://elinux.org/RPi_Screens
+    The following display outputs are supported on the board:
+	- HDMI 1.3a standard output.
+	- Display Serial Interface (DSI) - via 15-way flat flex connector.
+	- Composite video (NTSC and PAL) via an RCA plug (the yellow socket
+		on your TV) or SCART socket.
+    These interfaces allow the use of a broad range of displays, including:
+	- Televisions (HDMI or composite).
+	- Computer monitors (HDMI/DVI-D cable)
+	- DLP/Laser Pico Projectors (HDMI/DVI-D cable).
+	- RAW LCD panels (DSI + interfacing hardware)
+	- Composite and HDMI outputs can not be used at the same time.
+	- (VGA monitors would require converter box).
+
+HDMI Compatibility with DVI
+    https://en.wikipedia.org/wiki/HDMI
+    HDMI is backward compatible with single-link Digital Visual Interface
+    digital video (DVI-D or DVI-I, but not DVI-A).
+    Passive adaptor.
+
+7 inch LCD Touchscreen Monitor for Raspberry Pi
+    https://www.raspberrypi.org/products/raspberry-pi-touch-display/
+    https://www.element14.com/community/community/raspberry-pi
+    https://www.element14.com/community/docs/
+	    DOC-78156?ICID=rpiaccsy-access-products
+    Element14.com above has technical detail and installation.
+    800 x 480 display
+    Connects via an adapter board which handles power and signal conversion.
+    Two connections to the Pi are required:
+	Power from the Pi's GPIO port.
+	Ribbon cable that connects to the DSI port.
+
+    Technical Specification:
+    #  7" Touchscreen Display
+    #  Screen Dimensions: 194mm x 110mm x 20mm (including standoffs)
+    #  Viewable screen size: 155mm x 86mm
+    #  Screen Resolution 800 x 480 pixels
+    #  10 finger capacitive touch
+    #  Connect using a ribbon cable to the DSI port.
+    #  Adapter board is used to power the display and convert the parallel
+	signals from the display to the serial (DSI) port on the Raspberry Pi.
+    #  Will require the latest version of Raspbian OS to operate correctly.
+
+    This is a very cute and functional display.  I got it to be more portable
+    and not rely on connecting to a larger external monitor.
+
+    The PiMaroni LCD frame mounts the display upside down so the connectors
+    come out the top (there would not be room at the bottom).  Rotate the
+    display on screen.  Unfortunately rotating the display does not rotate
+    the touch screen sensor, so is now touch is hard to use.  (2017-04-02)
+
+    Rotate display:  /boot/config.txt
+	# Rotate display 180 degrees for LCD display (2017-04-02)
+	display_rotate=2
+
+	# Rotate the display clockwise on the screen (default=0).
+	display_rotate=0        Normal
+	display_rotate=1         90 degrees
+	display_rotate=2        180 degrees
+	display_rotate=3        270 degrees
+	display_rotate=0x10000  horizontal flip
+	display_rotate=0x20000  vertical flip
+
