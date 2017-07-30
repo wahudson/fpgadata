@@ -335,7 +335,8 @@ main( int	argc,
 	    }
 	    *gpio_set = NRESET_G;
 	    if ( ! (ilevel & NODATA_G) ) {	// fifo not empty
-		cerr << "Error:  nReset:  fifo not empty (NoData=0)" << endl;
+		cerr << "Warning:  nReset:  fifo not empty (NoData=0)" << endl;
+		// Warning, not fatal.
 	    }
 
 	    // Find first coeff

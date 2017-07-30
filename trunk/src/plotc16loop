@@ -1,0 +1,86 @@
+#!/usr/bin/Rscript --vanilla
+# 2017-07-29  William A. Hudson
+
+# Live Plot of FPGA filter coefficients.
+# Loop re-reading the input file, which should be a named pipe.
+#    Output to X11.  The input file (pipe) is closed after reading each
+#    data set, then re-opened on the next data set.  This provides the
+#    handshake with the writing process, which similarly opens/closes.
+# Best run with a helper script.
+#
+# See:  runplots	helper script
+# See:  plotc16		generate a single plot
+#
+# usage:  plotc16loop  inFile
+#     inFile = input csv file (named pipe)
+#
+# inFile CSV format:
+# ------------------
+# index,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
+# 0,222,145,88,48,22,4,-9,-18,-18,0,-24,-24,-21,-24,-27,-10
+# 1,225,146,91,54,25,6,-2,-13,-13,-22,0,-14,-17,-17,-21,-8
+# 2,...
+#
+#    First line is column headings.
+#    index    = sample or pixel index number
+#    c0..c16  = coefficient number (e.g. of adaptive filter)
+
+# Example:
+# % mkfifo pipe
+# % ./plotc16loop  pipe &
+# % ssh pi@192.168.1.5  '~/bin/rpixel' --npix=256 --csv > pipe
+# % ssh pi@192.168.1.5  '~/bin/rpixel' --npix=256 --csv > pipe
+# ...  repeat data source
+
+#----------------------------------------------------------------------------
+
+    library( lattice )
+
+# Check arguments.
+    arg = commandArgs( trailingOnly=TRUE )
+
+    inFile  <- arg[1]
+
+    if ( is.na( inFile ) ) {
+        stop( "usage:  plotc16loop  inFile.csv" )
+    }
+
+# Open plot device, make it the default.
+    X11()
+#    dev.list()
+
+# Repeat loop reading input pipe.
+#   for ( ii in c( 1, 2, 3, 4 ) )
+    repeat
+    {
+	cat( "plotc16loop:  read ", inFile, "\n" )
+
+    # Read in csv data table.
+	df <- read.csv( fifo( inFile ), header=TRUE )
+
+	# Note:  A regular file is opened twice.  Use fifo( "file" ) to
+	# get normal open once behavior, e.g. on a named pipe.
+	# Use read.table() for table format.
+
+    # Stack columns of dataframe.
+	st <- stack( df, select=-index )	# all columns except "index"
+	# print( names(st) )
+
+	coeff.f <- factor( st$ind, levels=names(df) )
+	# print( levels( coeff.f ) )
+
+
+	p1 <- dotplot( coeff.f ~ st$values, jitter.y=TRUE )
+	plot( p1 )
+
+	Sys.sleep( 1 )
+	# Helps user <ctl-C> kill this process.
+	# More likely to hit the sleep, than the blocking on pipe open.
+
+    }
+    # Note:  Default print/plot is disabled inside loops.  Must explicitly
+    #        call print() or plot().
+
+    cat( "plotc16loop:  Done\n" )
+    # Typically not reached on <ctl-C>.
+

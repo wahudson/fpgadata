@@ -1,0 +1,70 @@
+#! /usr/bin/perl -w
+# 2017-07-29  William A. Hudson
+
+# Run rpixel command in a loop feeding plotc16loop thru a named pipe.
+#    The intent is to produce live update plots.
+#
+# Expect R read.csv() to close the pipe after each data set in plotc16loop.
+#
+# The plot command is run in background reading from pipe.
+# Then rpixel is repeatedly run writing to the pipe in forground.
+# Each process will block on opening the pipe until both a reader and writer
+# is present, which is what synchronizes the two.
+
+# Note:  <ctl-C> may leave R process on pipe.  Is less likely with a sleep
+# in plotc16loop.
+#---------------------------------------------------------------------------
+
+my $PipeFile   = "/tmp/pipe";
+my $plot_cmd   = "plotc16loop $PipeFile &";
+my $rpixel_cmd = join( " ", @ARGV, ">", $PipeFile );
+
+unless ( @ARGV && ( $ARGV[0] !~ m/^-/ ) ) {
+    warn( "usage:  runplots  rpixel [options] --csv\n" );
+    warn( "usage:  runplots  <cmd>\n" );
+    warn( "   Run rpixel in a loop feeding plotc16loop thru a named pipe.\n" );
+    warn( "   Terminate with <control-C>.  Check with 'ps -f'.\n" );
+    warn( "   % export DISPLAY=:0.0  # set local display\n" );
+    exit( 1 );
+}
+
+unless ( -p $PipeFile ) {
+    do_system( "mkfifo $PipeFile" ) || die;
+}
+
+do_system( $plot_cmd ) || die;
+
+#for ( my $i=0;  $i < 4;  $i++ )
+while ( 1 )
+{
+    do_system( $rpixel_cmd ) || die;
+
+    sleep( 1 );
+    # Give time for R read.csv() to close the pipe.
+}
+
+print( "runplots:  Done\n" );
+do_system( "ps -f" );
+# Typically not reached on <ctl-C>.
+
+exit( 0 );
+
+
+#---------------------------------------------------------------------------
+# Subroutines
+#---------------------------------------------------------------------------
+
+# Run system() command with trace output.
+# call:
+#    do_system( $cmd )
+# return:
+#    ()  : TRUE= success, else fail
+#
+sub do_system
+{
+    my( $cmd ) = @_;
+    warn( "+ $cmd\n" );
+    my $rc = system( $cmd );
+    return( ! $rc );
+}
+
