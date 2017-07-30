@@ -16,7 +16,9 @@ fpgadata.cpp	Get FPGA Data v1
 in.data		input data for testing rpixel
 nibbler		Read 'fpgadata --flag' output and group into coefficents.
 plotc16		Plot FPGA filter coefficients.
+plotc16loop	Live Plot of FPGA filter coefficients.
 rpixel.cpp	Get FPGA Data v2
+runplots	Run rpixel with live update plots from plotc16loop.
 yBuffStat.cpp	Buffer Statistics base class.
 yBuffStat.h
 yCoeffItr.cpp	Coefficient Data Iterator class.

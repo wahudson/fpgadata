@@ -72,6 +72,9 @@ $(OJ)/yFramDat.o:	yFramDat.cpp  yFramDat.h
 $(OJ)/yCoeffItr.o:	yCoeffItr.cpp  yCoeffItr.h
 	g++ $(CXXFLAGS) -o $@  -c yCoeffItr.cpp
 
+$(OJ)/yCoeffItr2.o:	yCoeffItr2.cpp  yCoeffItr2.h  yCoeffItr.h
+	g++ $(CXXFLAGS) -o $@  -c yCoeffItr2.cpp
+
 $(OJ)/Error.o:		Error.cpp  Error.h
 	g++ $(CXXFLAGS) -o $@  -c Error.cpp
 

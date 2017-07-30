@@ -1,23 +1,32 @@
 2017-05-27
-		Read FPGA Pixel
-		---------------
+		rpixel -- Read FPGA Pixel
+		-------------------------
+
+Document application and use of 'rpixel' program on RPi (Raspberry Pi)
+with Altera DE2-115 FPGA Development board.
+Try to keep it current and focused on as-implemented function.
 
 Altera DE2-115 User Manual
     /home/var/ref/DE2_115_User_manual_2013.pdf
+    http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=165&No=502&PartNo=4
 
-Data thru FIFO to RPi:
+----------------------------------------------------------------------------
+##(2017-07-30)  RPi Signals
+
+   RPi
+   Dir  Signal      Description
+   ---  --------    --------------------------------------------------------
 
     i   NoData      Data read is not valid, from fifo rdempty.
 
     i   OverFlow    Fifo overflow, previous samples are missing.
 			From fifo wrfull delayed and put into fifo.
+			Used to flag error, no actual recovery.
 
-    i   d3..d0      Coefficient value, nibbles, Big-endian.
+    i   d3..d0      Coefficient value, big-endian nibble sequence.
 			4 samples make one coefficient.
 
     i   d7..d6      Coefficient number.  Same for all 4 samples.
-
-Signals to RPi:
 
     o   ReadAck     Acknowledge RPi has read this value, fifo should
 			advance to next value.
@@ -25,25 +34,31 @@ Signals to RPi:
 
     o   GoPixel     Signal fpga to send out one pixel worth of data.
 			Rising edge active.
+			Optional.  Currently use for debug.
 
     o   nReset      Reset FPGA state when low.  Start at first pixel.
+			Optional, rpixel flushes fifo by fast reading.
 
     o   TrigOut     Trigger event output.  Signal things like a bad
 			block of NoData (fifo rdempty) at coeff change.
+			Currently signals found start of a new coefficient.
+			Optional.
+
+The FPGA fifo must be in "show-ahead mode", meaning the data out is valid
+whenever fifo 'rdempty' (NoData) is low.  When high, the data is ignored.
 
 
 ----------------------------------------------------------------------------
-##(2017-04-30)  FPGA Connections
+##(2017-07-05)  FPGA Connections
 
-Configure RPi pin modes:
+Configure RPi pin modes:  (after each power-up)
     % gpio readall
     % gpio -g mode  5 out	# GoPixel
-    % gpio -g mode  6 out	# ReadAck
+    % gpio -g mode  6 out	# ReadAck	required
     % gpio -g mode  7 out	# nReset
     % gpio -g mode  8 out	# TrigOut
 
-    % gpio -g mode 27 up
-
+    ----------------------------------------------------------
         RPi                               |  FPGA
     Gpio   Pin Rpi/Alt  Pull  Dir Name     pin  fpga     Color
     -----  --- -------  ----  --- -------- ---- -------  -----
@@ -90,4 +105,27 @@ Configure RPi pin modes:
 
     +5V     -- --         -   -   .         11  +5       .  FPGA
     --      -- --         -   -   .         10  GPIO[9]  .  Dead Vol=1.2V
+
+
+----------------------------------------------------------------------------
+##(2017-07-30)  Live Update Plots
+
+Put symlinks in bin/ directories for the commands.  e.g.
+
+    pi@raspberrypi:/home/pi/bin/
+	plotc16loop -> /home/pi/tmp/fpgadata/trunk/src/plotc16loop
+	rpixel -> /home/pi/tmp/fpgadata/trunk/bin/rpixel
+	runplots -> /home/pi/tmp/fpgadata/trunk/src/runplots
+
+    wah@laptop:/home/wah/bin/
+	plotc16loop -> /home/pi/tmp/fpgadata/trunk/src/plotc16loop
+	runplots -> /home/pi/tmp/fpgadata/trunk/src/runplots
+
+Run on RPi:
+    % DISPLAY=:0.0  runplots rpixel --npix=20 --csv
+
+Run from wah laptop:
+    % runplots  ssh pi@192.168.1.3  /home/pi/bin/rpixel --npix=3 --csv
+    Display is on laptop, rpixel running on RPi.
+    Note ssh does not run user profile.
 
