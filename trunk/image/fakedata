@@ -1,0 +1,261 @@
+#!/usr/bin/perl -w
+# 2017-08-28  William A. Hudson
+
+# fakedata -- Generate fake pixel data.
+#---------------------------------------------------------------------------
+
+use strict;
+
+use Getopt::Long  ();
+use Pod::Usage    ( 'pod2usage' );
+
+use FindBin qw($RealBin);
+
+our $ToolDir;
+BEGIN
+{
+    $ToolDir = $RealBin;
+}
+
+use lib "$ToolDir";		# Libraries from this tool installation.
+
+
+our $ProgFile = $0;	# this program
+our $ProgName = $0;
+    $ProgName =~ s:^.*/:: ;
+
+#---------------------------------------------------------------------------
+## Main program usage
+#---------------------------------------------------------------------------
+
+# Print program usage.
+#    May show configuration defaults.
+# call:
+#    print_usage()
+# return:
+#    ()  = unused
+#    Does NOT exit, let main program decide that.
+#
+sub print_usage
+{
+    pod2usage( {
+	-message => "Stream FPGA data into an image display",
+	-exitval => "NOEXIT",
+	-verbose => 0,
+    } );
+
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Main program
+#---------------------------------------------------------------------------
+
+{
+    select( STDOUT );  $| = 1;	# autoflush
+    select( STDERR );  $| = 1;
+    # Leave STDERR selected to protect data stream.
+
+## Option processing.
+
+    my $op_verbose      = 0;
+    my $op_TESTOP       = 0;
+    my $op_npix         = 10;
+    my $op_nx           = 32;
+    my $op_ny           = 64;
+
+    Getopt::Long::Configure(
+	'posix_default',
+    #	'bundling',		# enable -rN, require --word
+    #	'bundling_override',	# good for -r3, clash --vx -v -x
+	'no_ignore_case',
+    );
+
+    Getopt::Long::GetOptions(
+	"--help"         => sub { print_usage();      exit( 0 ) },
+	"--man"          => sub { do_man();           exit( 0 ) },
+
+	"--npix=i"       => \$op_npix,
+	"--nx=i"         => \$op_nx,
+	"--ny=i"         => \$op_ny,
+	"--verbose|v"    => \$op_verbose,
+	"--TESTOP"       => \$op_TESTOP,
+
+#		# experimental:
+#	# 'bundling_override'  long options clash with bundle options -v -x
+#	"vx"             => sub { print( "Test vx =$_[0]:$_[1]=\n" ) },
+#	"--test=s"       => sub { print( "=$_[0]:$_[1]=\n" ); die("!FINISH") },
+#	"--stuf"         => sub { do_stuf();         die("!FINISH") },
+
+    ) || do {	# GetOptions() returns false on errors in option parsing.
+	Error( "Type '$ProgName --help' for usage.\n" );
+	exit( 2 );
+	# Do not show usage longer than 5 lines, let user see argument error.
+    };
+
+#    print( "ProgFile= $ProgFile\n" );
+#    print( "ProgName= $ProgName\n" );
+
+
+    if ( @ARGV ) {
+	Error( "extra arguments:  $ARGV[0]\n" );
+    }
+
+    unless ( $op_nx ) {
+	Error( "require:  --nx > 0\n" );
+    }
+
+    last  if ( Error() );
+
+    if ( $op_TESTOP ) {
+	print( "--npix         = $op_npix\n" );
+	print( "--nx           = $op_nx\n" );
+	print( "--ny           = $op_ny\n" );
+	last;
+    }
+
+    for ( my $jj=0;  $jj<$op_ny;  $jj++ )
+    {
+	if ( $jj == 0 ) {
+	    for ( my $ii=0;  $ii<$op_nx;  $ii++ )
+	    {
+		print( STDOUT  "#ff0000\n" );
+	    }
+	    next;
+	}
+	else {
+	    for ( my $ii=0;  $ii<$op_nx;  $ii++ )
+	    {
+		if ( $ii == 0 ) {
+		    print( STDOUT  "#00ff00\n" );
+		}
+		else {
+		    print( STDOUT  "#000000\n" );
+		}
+	    }
+	}
+    }
+
+}
+
+exit( (Error()) ? 1 : 0 );
+
+
+#---------------------------------------------------------------------------
+## functions
+#---------------------------------------------------------------------------
+
+# Show man page.
+#
+sub do_man
+{
+    my $pager = $ENV{'PAGER'} || "less";
+
+    open( STDOUT, "| $pager" );
+
+    {
+	unless ( -r $ProgFile ) {   # message embedded in output
+	    print( "Error:  file not found:  $ProgFile\n\n" );
+	    last;
+	}
+
+#	system( "pod2text -s < $ProgFile" );
+	system( "pod2man -s 1 -n $ProgName --center='User Contrib' $ProgFile | nroff -man" );
+    }
+
+    close( STDOUT );
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Error Handling
+#---------------------------------------------------------------------------
+
+our $Error_cnt = 0;	# (private)
+
+# Error message reporting.
+# call:
+#    Error( @text )	Print error message, increment error count.
+#    Error()		Get error count.
+# return:
+#    ()  = Error count, false if no errors were recorded.
+#
+sub Error
+{
+    if ( @_ ) {
+	warn( "Error:  ", @_ );
+	$Error_cnt ++;
+    }
+    return( $Error_cnt );
+}
+
+
+__END__
+
+#---------------------------------------------------------------------------
+## Man page
+#---------------------------------------------------------------------------
+# See also:  perlpod(1)  perlpodstyle(1)
+
+=head1		NAME
+
+fakedata -- Generate fake pixel data.
+
+=head1		SYNOPSIS
+
+ fakedata  [options]
+    --nx=N            image N pixels wide
+    --ny=N            image N pixels high
+  options:
+    --help            show command usage and exit
+    --man             show man page and exit
+
+
+=head1		DESCRIPTION
+
+Generate fake pixel data.
+
+
+=head1		OPTIONS
+
+=over 8
+
+=item B<--help>             - Show command usage and exit.
+
+=item B<--man>              - Show man page and exit.
+
+Prints the manual page and exits.
+
+=back
+
+
+=head1		RETURN VALUE
+
+0= success, otherwise errors
+
+
+=head1		EXAMPLES
+
+
+=head1		ENVIRONMENT
+
+=over 8
+
+=item B<PAGER>
+
+Value defines an output filter used to display manual pages.
+By default, less(1) is used.  If PAGER='', stdout is written with no paging.
+
+=back
+
+
+=head1		FILES
+
+none
+
+=head1		SEE ALSO
+
+=cut
+
