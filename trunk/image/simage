@@ -138,11 +138,10 @@ sub print_usage
 	print( "    Top:\n" );
     }
 
+# Image stream object.
     my $sx = ImStream->new(
 	Error_sub    => sub{ Error( @_ ) },
     ) || last;
-
-    last  if ( Error() );
 
     $sx->Init_attrib(
 	Npix         => $op_npix,
@@ -150,6 +149,20 @@ sub print_usage
 	Ny           => $op_ny,
     );
 
+    last  if ( Error() );
+
+# Read data stream header.
+    my $header = <STDIN>;
+    my $want   = "Ys,Xs,color";
+
+    unless ( $header =~ m/^$want/ ) {
+	Error( "unexpected header line:\n",
+	    "    have:  $header",
+	    "    want:  $want\n"
+	);
+    }
+
+# Stream data to image.
     $tx->go_flow( $sx );
 
 }
@@ -221,6 +234,7 @@ simage -- Stream data into an image display.
 =head1		SYNOPSIS
 
  simage  [options]
+    --npix=N          number of pixels per read burst
     --nx=N            image N pixels wide
     --ny=N            image N pixels high
   options:

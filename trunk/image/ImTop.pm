@@ -197,6 +197,8 @@ sub go_flow
 {
     my( $self, $sx ) = @_;
 
+    Tk::CmdLine::SetArguments( qw(-geometry +0+0 ) );
+
     my $mw = MainWindow->new();
 
     my $lab1 = $mw->Label(-text => 'Hello, world!');

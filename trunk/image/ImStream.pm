@@ -45,6 +45,8 @@ use Error_mixi (	# Error handling functions, mix-in
 #
 #    Nx           => 0,		# Image N pixels wide.
 #    Ny           => 0,		# Image N pixels high.
+#
+#    AutoWrap     => 0,		# Wrap if image width is exceeded.
 # }
 
 
@@ -84,6 +86,7 @@ sub new
 	Npix         => undef,
 	Nx           => undef,
 	Ny           => undef,
+	AutoWrap     => 0,
     };
 
     bless( $self, $package );
@@ -203,6 +206,14 @@ sub Init_attrib
 
 # Stream a set of Npix pixels.
 #    Intended to be called repeatedly in MainLoop as part of data pipeline.
+#    Any header on stdin should have been removed earlier.
+# stdin:
+#    Ys,Xs,Color
+#    0,0,#rrggbb
+# where:
+#    Xs    = X sync, 1= reset Xloc
+#    Ys    = Y sync, 1= reset Yloc
+#    Color = X11 color specification, e.g. #0088ff
 # call:
 #    $self->stream_pixels()
 # return:
@@ -217,7 +228,6 @@ sub stream_pixels
     for ( my $i = $self->{Npix};  $i > 0;  $i-- )
     {
 	my $line = <STDIN>;
-#	my $line = "#010101";
 
 	unless ( defined( $line ) ) {
 	    warn( "Warning:  EOF on stdin\n" );
@@ -225,19 +235,35 @@ sub stream_pixels
 	}
 
 	chomp( $line );
+	my( $ys, $xs, $color ) = split( ',', $line );
 
-	$self->{Xloc}++;
-	if ( $self->{Xloc} >= $self->{Nx} ) {
+	if ( $xs ) {
 	    $self->{Xloc} = 0;
 	    $self->{Yloc}++;
-	    if ( $self->{Yloc} >= $self->{Ny} ) {
-		$self->{Yloc} = 0;
+	}
+
+	if ( $ys ) {
+	    $self->{Yloc} = 0;
+	}
+
+	#!! Should we wrap if no marks?
+	if ( $self->{AutoWrap} ) {
+	    if ( $self->{Xloc} >= $self->{Nx} ) {
+		$self->{Xloc} = 0;
+		$self->{Yloc}++;
+		if ( $self->{Yloc} >= $self->{Ny} ) {
+		    $self->{Yloc} = 0;
+		}
 	    }
 	}
 
-	$iw->put( $line,
+	$iw->put( $color,
 	    -to      => $self->{Xloc}, $self->{Yloc},
 	);
+
+#	print( "$self->{Xloc},$self->{Yloc}  $color\n" );
+
+	$self->{Xloc}++;
     }
 
     1;

@@ -1,7 +1,10 @@
 #!/usr/bin/perl -w
-# 2017-08-28  William A. Hudson
+# 2017-09-03  William A. Hudson
 
-# fakedata -- Generate fake pixel data.
+# rpix_stream -- Convert rpixel coefficient data into an data stream for
+# 'simage' display.
+#
+# Maintenance comments:  #!!
 #---------------------------------------------------------------------------
 
 use strict;
@@ -18,7 +21,6 @@ BEGIN
 }
 
 use lib "$ToolDir";		# Libraries from this tool installation.
-
 
 our $ProgFile = $0;	# this program
 our $ProgName = $0;
@@ -39,7 +41,7 @@ our $ProgName = $0;
 sub print_usage
 {
     pod2usage( {
-	-message => "Stream FPGA data into an image display",
+	-message => "Convert rpixel coefficient data into an image data stream",
 	-exitval => "NOEXIT",
 	-verbose => 0,
     } );
@@ -60,10 +62,17 @@ sub print_usage
 ## Option processing.
 
     my $op_verbose      = 0;
+    my $op_debug        = 0;
     my $op_TESTOP       = 0;
-    my $op_npix         = 10;
-    my $op_nx           = 32;
-    my $op_ny           = 64;
+
+    my $op_coeff        = 0;
+    my $op_scale        = 1;
+    my $op_offset       = 0;
+
+    my $op_xrise        = undef;
+    my $op_xfall        = undef;
+    my $op_yrise        = undef;
+    my $op_yfall        = undef;
 
     Getopt::Long::Configure(
 	'posix_default',
@@ -76,17 +85,18 @@ sub print_usage
 	"--help"         => sub { print_usage();      exit( 0 ) },
 	"--man"          => sub { do_man();           exit( 0 ) },
 
-	"--npix=i"       => \$op_npix,
-	"--nx=i"         => \$op_nx,
-	"--ny=i"         => \$op_ny,
-	"--verbose|v"    => \$op_verbose,
-	"--TESTOP"       => \$op_TESTOP,
+	"--coeff=i"      => \$op_coeff,
+	"--scale=f"      => \$op_scale,
+	"--offset=f"     => \$op_offset,
 
-#		# experimental:
-#	# 'bundling_override'  long options clash with bundle options -v -x
-#	"vx"             => sub { print( "Test vx =$_[0]:$_[1]=\n" ) },
-#	"--test=s"       => sub { print( "=$_[0]:$_[1]=\n" ); die("!FINISH") },
-#	"--stuf"         => sub { do_stuf();         die("!FINISH") },
+	"--xrise"        => \$op_xrise,
+	"--xfall"        => \$op_xfall,
+	"--yrise"        => \$op_yrise,
+	"--yfall"        => \$op_yfall,
+
+	"--verbose|v"    => \$op_verbose,
+	"--debug"        => \$op_debug,
+	"--TESTOP"       => \$op_TESTOP,
 
     ) || do {	# GetOptions() returns false on errors in option parsing.
 	Error( "Type '$ProgName --help' for usage.\n" );
@@ -102,44 +112,76 @@ sub print_usage
 	Error( "extra arguments:  $ARGV[0]\n" );
     }
 
-    unless ( $op_nx ) {
-	Error( "require:  --nx > 0\n" );
+    unless ( (0 <= $op_coeff) && ($op_coeff < 15) ) {
+	Error( "out of range:  --coeff=$op_coeff\n" );
     }
+
+    if ( defined( $op_xrise ) && defined( $op_xfall ) ) {
+	Error( "use one of --xrise or --xfall\n" );
+    }
+
+    if ( defined( $op_yrise ) && defined( $op_yfall ) ) {
+	Error( "use one of --yrise or --yfall\n" );
+    }
+
+    # output option choice and default
+    $op_xrise = ( $op_xfall ) ? 0 : 1;
+    $op_yrise = ( $op_yfall ) ? 0 : 1;
 
     last  if ( Error() );
 
     if ( $op_TESTOP ) {
-	print( "--npix         = $op_npix\n" );
-	print( "--nx           = $op_nx\n" );
-	print( "--ny           = $op_ny\n" );
+	print( "--coeff        = $op_coeff\n" );
+	print( "--scale        = $op_scale\n" );
+	print( "--offset       = $op_offset\n" );
+	print( "--xrise        = $op_xrise\n" );
+#	print( "--xfall        = $op_xfall\n" );
+	print( "--yrise        = $op_yrise\n" );
+#	print( "--yfall        = $op_yfall\n" );
 	last;
     }
 
-    print( STDOUT  "Ys,Xs,color\n" );		# header
+## Main Loop
 
-    for ( my $jj=0;  $jj<$op_ny;  $jj++ )
+    my $xmold = 0;
+    my $ymold = 0;
+
+    my $header = <STDIN>;
+    unless ( $header =~ m/^index,Ym,Xm,/ ) {
+	Error( "unexpected header line:\n",
+	    "    have:  $header",
+	    "    want:  index,Ym,Xm,...\n"
+	);
+    }
+
+    print( STDOUT  "Ys,Xs,color\n" );	# Header
+
+    while ( <STDIN> )
     {
-	if ( $jj == 0 ) {
-	    for ( my $ii=0;  $ii<$op_nx;  $ii++ )
-	    {
-		print( STDOUT  "0,0,#ff0000\n" );
-	    }
-	    next;
+	chomp();
+	next  if ( m/^\s*$/ );
+	my( $index, $ym, $xm, @coeff ) = split( ',', $_ );
+
+	my $rc = $coeff[$op_coeff];
+	$rc = ($rc * $op_scale) + $op_offset;
+	if ( $rc > 255 ) { $rc = 255 }
+	if ( $rc <   0 ) { $rc =   0 }
+
+	my $color = sprintf( "#%02x0000", $rc );
+
+	#!! hardwire --xrise
+	my $xs = ( $xm > $xmold ) ? 1 : 0;
+	my $ys = ( $ym > $ymold ) ? 1 : 0;
+
+	$xmold = $xm;
+	$ymold = $ym;
+
+	if ( $op_debug ) {
+	    printf( "$index  $ym,$xm  %6d %4d\n", $coeff[$op_coeff], $rc );
+	    #print( "$index  $ym,$xm  $coeff[$op_coeff]  $rc\n" );
 	}
-	else {
-	    for ( my $ii=0;  $ii<$op_nx;  $ii++ )
-	    {
-		if ( $ii == 0 ) {
-		    print( STDOUT  "0,0,#00ff00\n" );
-		}
-		elsif ( $ii == 9 ) {
-		    print( STDOUT  "0,1,#ff0000\n" );
-		}
-		else {
-		    print( STDOUT  "0,0,#000000\n" );
-		}
-	    }
-	}
+
+	print( STDOUT  "$ys,$xs,$color\n" );
     }
 
 }
@@ -206,21 +248,54 @@ __END__
 
 =head1		NAME
 
-fakedata -- Generate fake pixel data.
+rpix_stream -- Convert rpixel coefficient data into an image data stream
 
 =head1		SYNOPSIS
 
- fakedata  [options]
-    --nx=N            image N pixels wide
-    --ny=N            image N pixels high
+ rpix_stream  [options]
+    --coeff=N         coefficient number to image
+    --scale=F         scale factor multiply coeff
+    --offset=F        offset   color = (coeff * scale) + offset
+                  sweep reset on scan mark edge
+    --xrise           Xm rising edge
+    --xfall           Xm falling edge
+    --yrise           Ym rising edge
+    --yfall           Ym falling edge
   options:
+    --debug           show debug output on stderr
     --help            show command usage and exit
     --man             show man page and exit
 
 
 =head1		DESCRIPTION
 
-Generate fake pixel data.
+The idea is to process a series of coefficient data points into a stream
+of image pixel data.  
+Intended to operate as a filter between 'rpixel' and 'simage'.
+There are two transformations to manage:
+
+1) Coefficient data transform into RGB pixel value.
+
+2) Scan marks transform into Xloc and Yloc scan reset points.
+
+It is intended the user customize this program (or a copy) to create the
+desired data visualization as an image.
+
+ Input:  (stdin)
+ index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
+ 0,1,0,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
+ 1,0,1,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
+
+ Output:  (stdout)
+ Ys,Xs,pixel
+ 1,0,#150000
+ 0,1,#150000
+
+Input Xm,Ym are the raw scan mark signals from the physical scanning system.
+Options select which edge to use for sweep reset in the image scanning.
+
+Output Xs,Ys are 1 only when the sweep should reset to the left edge (Xs)
+or top edge (Ys) of the image, otherwise 0.
 
 
 =head1		OPTIONS
