@@ -23,6 +23,9 @@ Altera DE2-115 User Manual
 			From fifo wrfull delayed and put into fifo.
 			Used to flag error, no actual recovery.
 
+    i   MarkX       X scan mark signal.
+    i   MarkY       Y scan mark signal.
+
     i   d3..d0      Coefficient value, big-endian nibble sequence.
 			4 samples make one coefficient.
 
@@ -86,8 +89,8 @@ Configure RPi pin modes:  (after each power-up)
     Gpio21  40 pcm_DOUT   Lo  i   d5        06  GPIO[5]  green
     Gpio22  15 --         Lo  i   d6        07  GPIO[6]  blue
     Gpio23  16 --         Lo  i   d7        08  GPIO[7]  violet
-    Gpio24  18 --         Lo  i   .         .   .        .
-    Gpio25  22 --         Lo  i   .         .   .        .
+    Gpio24  18 --         Lo  i   MarkX     .   .        .
+    Gpio25  22 --         Lo  i   MarkY     .   .        .
     Gpio26  37 --         Lo  i   OverFlow  13  GPIO[10] brown
     Gpio27  13 --         Hi  i   NoData    14  GPIO[11] white rdempty
     GND     06 --         -   -   .         .   .        .

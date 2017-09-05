@@ -23,7 +23,8 @@ using namespace std;
 // GPIO bit postions, in BCM register
 //   28   24   20   16   12    8    4    0     bit number
 // .... .... dddd dddd .... .... .... ....  i  DATA   bits
-// .... ...m .... .... .... .... .... ....  i  MetaRead flag
+// .... ...x .... .... .... .... .... ....  i  MarkX scan mark
+// .... ..y. .... .... .... .... .... ....  i  MarkY scan mark
 // .... .f.. .... .... .... .... .... ....  i  OVFLOW flag (fifo write_full)
 // .... n... .... .... .... .... .... ....  i  NODATA flag (fifo empty)
 // .... .... .... .... .... .... .r.. ....   o ReadAck fifo read aknowledge
@@ -35,7 +36,8 @@ using namespace std;
 #define COEFF_G		0x00f00000	// Coefficient nibble in data
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
 #define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
-#define METAREAD_G	0x01000000	// MetaRead flag, 1= repeated read
+// #define MARKY_G	0x02000000	// MarkY scan mark
+// #define MARKX_G	0x01000000	// MarkX scan mark
 #define READAK_G	0x00000040	// ReadAck fifo read aknowledge
 #define GOPIXEL_G	0x00000020	// GoPixel start one coefficient
 #define NRESET_G	0x00000080	// nReset fifo state
@@ -44,6 +46,9 @@ using namespace std;
 #define DATA_POS	16		// position of data LSB
 #define DATA_MASK	0x000000ff	// data width mask, after shift right
 #define FULL_MASK	0x00000fff	// flags plus data, after shift right
+
+// Scan marks MARKY_G, MARKX_G are included in FULL_MASK, and are not
+// used directly.  Here for documentation.
 
 // Currently we intend the FPGA filter to be a free running data stream.
 // Outputs nReset and GoPixel can be used to help identify state of the

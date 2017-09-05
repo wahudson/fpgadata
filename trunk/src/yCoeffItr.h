@@ -12,11 +12,15 @@ class yCoeffItr {
     yFramDat		*Fdata;		// frame data object
     uint16_t		*DaPtr;		// current pointer in Fdata[] array
 
+  public:
 				// Single Pixel data
 //  int			NumCoef;	// number of coefficients
     int			PixCoef[16];	// array of coefficients
     int			PixNum;		// pixel number
     bool		PixErr;		// pixel has an error
+
+    bool		PixMarkX;	// X scan mark
+    bool		PixMarkY;	// Y scan mark
 
   public:
     yCoeffItr( yFramDat *fdp );

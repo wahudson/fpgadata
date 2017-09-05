@@ -60,10 +60,127 @@ any samples where NoData=1.
 
     wrfull      ---->  OverFlow
 
+    MarkX       ---->  MarkX
+    MarkY       ---->  MarkY
+
 
 ----------------------------------------------------------------------------
 ## Discussion
 ----------------------------------------------------------------------------
+
+----------------------------------------------------------------------------
+## Scan Image Formation
+----------------------------------------------------------------------------
+
+    A scanning system can be used to make measurements at a series of points.
+    The data set at each point is called a "pixel".  In the case of an
+    adaptive filter, the pixel data set is the set of 16 filter coefficients.
+
+    Scanning is typically faster in the X-direction (scan row), with
+    successinve rows forming a scan Frame.  Scanning can be uni-directional
+    (i.e. with a fast retrace), or bi-directional (e.g. scan a row
+    left-to-right, then scan the next row right-to-left).
+
+    The scan position is typicaly marked by an X and Y sync signals that can
+    be used to mark a known position in each scan direction.  The signals
+    could be a pulse one pixel (or less) in duration, or could be a square
+    wave marking each half of the image.  In other words, there are a lot of
+    different ways to do it.
+
+    We want to come up with a fairly simple way to form an image to get
+    started, and worry about sync options later.
+
+    The pixel stream is essentially a linear stream in time.  The sync
+    signals mark certain pixels as being at a particular point in the
+    2-dimensional surface being scanned.
+
+    On the image display side, the sync signals need only indicate when to
+    reset the Xloc and Yloc pixel position.
+
+    On the physical scanner side, the sync signals can be almost anything
+    related to the physical scanning process (e.g. Galvanometer scanning
+    in a laser system).
+
+Bi-directional scan:
+
+            /\        /\
+           /  \      /  \
+      0 --/----\----/----\---		Galvanometer drive signal.
+         /      \  /      \
+        /        \/        \
+
+           ____      ____
+    A)  __|    |____|    |____		Zero crossing comparator.
+
+    B)  1_________1_________1_		Pulse at beginning of scan.
+
+    Note a pulse at each end of scan looses information about scan
+    direction.
+
+
+Uni-directional scan:
+
+            /|    /|    /|
+           / |   / |   / |
+      0 --/--|--/--|--/--|-		Galvanometer drive signal.
+         /   | /   | /   |
+        /    |/    |/    |
+
+           __    __    __
+    A)  __|  |__|  |__|  |_		Zero crossing comparator.
+
+    B)  1_____1_____1_____1___		Pulse at beginning of scan.
+
+
+Data Flow of Scan Marks:
+
+    Physical scan system input to FPGA, thru fifo to RPi
+	Ymark, Xmark
+
+    RPi data output in coefficient pixels
+	Index, Ym, Xm, c0, c1, c2, ...
+
+    Input to spixel image display
+	Ys, Xs, pixA, pixB, ...
+
+
+    Possibly combine the two scan marks into YXmark, making a single
+    field of two digits.
+    + A single handle for both scan marks, fewer fields.
+    - More complex to decode.
+  > Decided to keep seperate Ym, Xm in the data tables.
+
+    The coefficients for a single pixel are distributed over the duration
+    of the pixel.  Thus the scan mark edge may come part way thru a pixel.
+    Thus the marks (Ym,Xm) are quantized to a full pixel, resulting in
+    jitter over successive rows.
+    A future enhancement may capture the fractional pixel where the scan
+    mark occures.  Resolution to 1/8 or 1/4 pixel may be good enough.
+
+    The code formatting the pixel data may sample the scan marks only
+    on the first nibble of the first pixel.  If the scan mark is a pulse
+    shorter than one pixel, then it may be missed.
+
+
+Command pipeline:
+
+    FPGA -> rpixel | rpix_stream | simage
+
+
+simage:  Command to generat the image display.
+    The scan marks could be very simple here, and would exist for a
+    single pixel.
+
+    One possibility is to combine Ys,Xs into a single value:
+	0= continuation pixels, no reset
+	1= reset Xloc
+	3= reset Xloc and Yloc
+
+	It is implied that Xloc is reset whenever Yloc is reset.
+	Encoding values this way is compact, but more confusing,
+	especially when extending Xs to a fractional pixel.
+
+	> Decided NOT to do this.
 
 
 ----------------------------------------------------------------------------

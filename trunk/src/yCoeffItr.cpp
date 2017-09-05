@@ -14,6 +14,11 @@ using namespace std;
 #include "yFramDat.h"	// frame data
 #include "yCoeffItr.h"
 
+		//#!! Might be better if this was centralized.
+		// Scan mark bit positions in *DaPtr
+#define X_MARK_BIT	8
+#define Y_MARK_BIT	9
+
 
 /*
 * Constructor.
@@ -26,6 +31,8 @@ yCoeffItr::yCoeffItr(
     DaPtr   = Fdata->data_pointer_begin();
     PixNum  = -1;
     PixErr  = 0;
+    PixMarkX   = 0;
+    PixMarkY   = 0;
 
     for ( int jj = 0;  jj < 16;  jj++ )	// each coefficient
     {
@@ -55,6 +62,10 @@ yCoeffItr::next_pixel()
     max_dp = Fdata->data_pointer_end();
     // Allow array to grow between calls.
 
+    // Look at only first coefficient, first nibble MSB, for scan mark.
+    PixMarkX = ((*DaPtr) >> X_MARK_BIT) & 0x1;
+    PixMarkY = ((*DaPtr) >> Y_MARK_BIT) & 0x1;
+
     PixErr = 0;
 
     for ( int jj = 0;  jj < 16;  jj++ )	// each coefficient
@@ -76,7 +87,7 @@ yCoeffItr::next_pixel()
 	    }
 	}
 
-	if ( nib_err ) {
+	if ( nib_err ) {		// report only first error
 	    if ( ! PixErr ) {
 		int	ii = DaPtr - Fdata->data_pointer_begin();
 		Error::err( "misaligned coeff nibble at:" );
@@ -107,11 +118,13 @@ yCoeffItr::print_coeff_tab()
 {
     int			*cp;	// coefficient pointer
 
-    cout << " index      c0     c1     c2     c3     c4     c5     c6     c7"
-                   "     c8     c9    c10    c11    c12    c13    c14    c15"
+    cout << " index Ym X"
+	"m    c0     c1     c2     c3     c4     c5     c6     c7"
+	"     c8     c9    c10    c11    c12    c13    c14    c15"
 	 << endl;
-    cout << "------  ------ ------ ------ ------ ------ ------ ------ ------"
-                   " ------ ------ ------ ------ ------ ------ ------ ------"
+    cout << "------  - -"
+	" ------ ------ ------ ------ ------ ------ ------ ------"
+	" ------ ------ ------ ------ ------ ------ ------ ------"
 	 << endl;
     cout <<dec;
     cout.fill(' ');
@@ -125,6 +138,9 @@ yCoeffItr::print_coeff_tab()
 	else {
 	    cout << " ";
 	}
+
+	cout << " " << PixMarkY;
+	cout << " " << PixMarkX;
 
 	for ( int j = 0;  j < 16;  j++ )
 	{
@@ -147,7 +163,7 @@ yCoeffItr::print_coeff_csv()
 {
     int			*cp;	// coefficient pointer
 
-    cout << "index,c0,c1,c2,c3,c4,c5,c6,c7,"
+    cout << "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,"
 	    "c8,c9,c10,c11,c12,c13,c14,c15" << endl;
 
     cout <<dec;
@@ -159,6 +175,9 @@ yCoeffItr::print_coeff_csv()
 	if ( this->has_error() ) {
 	    cout << "!";
 	}
+
+	cout << "," << PixMarkY;
+	cout << "," << PixMarkX;
 
 	for ( int j = 0;  j < 16;  j++ )
 	{
