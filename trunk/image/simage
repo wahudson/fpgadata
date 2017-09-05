@@ -70,8 +70,8 @@ sub print_usage
     my $op_verbose      = 0;
     my $op_TESTOP       = 0;
     my $op_npix         = 10;
-    my $op_nx           = 32;
-    my $op_ny           = 64;
+    my $op_nx           = 256;
+    my $op_ny           = 256;
     my $op_magnify      = 1;
     my $op_wrap         = 1;
 
@@ -142,7 +142,6 @@ sub print_usage
 	Nx           => $op_nx,
 	Ny           => $op_ny,
     );
-    #!! needed?
 
     if ( $op_verbose ) {
 	print( "    Top:\n" );

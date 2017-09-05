@@ -201,8 +201,10 @@ sub go_flow
 
     my $mw = MainWindow->new();
 
-    my $lab1 = $mw->Label(-text => 'Hello, world!');
-    $lab1->pack();
+    my $lab1 = $mw->Label(
+	-text => sprintf( "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" ),
+    );
+	$lab1->pack();
 
     my $but1 = $mw->Button(
 	-text    => 'Quit',
@@ -222,19 +224,21 @@ sub go_flow
     );
     $but2->pack();
 
-    my $im1 = $mw->Photo( 'earth',
-	#-file => "/usr/lib/perl5/Tk/demos/images/earth.gif"
-	-file => "/usr/lib/perl5/Tk/demos/images/teapot.ppm"
-    );
-    my $lab2 = $mw->Label( -image => 'earth' );
-    $lab2->pack();
+#    my $im1 = $mw->Photo( 'earth',
+#	-file => "/usr/lib/perl5/Tk/demos/images/earth.gif"
+#	#-file => "/usr/lib/perl5/Tk/demos/images/teapot.ppm"
+#    );
+#    my $lab2 = $mw->Label( -image => 'earth' );
+#    $lab2->pack();
 
 
     my $im2 = $mw->Photo( 'mydat',	# make empty photo
 	-width  => $self->{Nx},
 	-height => $self->{Ny},
     );
-    my $lab3 = $mw->Label( -image => 'mydat' );
+    my $lab3 = $mw->Label( -image => 'mydat',
+	-relief => 'solid',
+    );
     $lab3->pack();
 
     # mark corners of image
