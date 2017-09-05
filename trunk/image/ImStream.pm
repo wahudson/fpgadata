@@ -46,7 +46,8 @@ use Error_mixi (	# Error handling functions, mix-in
 #    Nx           => 0,		# Image N pixels wide.
 #    Ny           => 0,		# Image N pixels high.
 #
-#    AutoWrap     => 0,		# Wrap if image width is exceeded.
+#    MagFactor    => 1,		# Magnification factor (int).
+#    AutoWrap     => 0,		# Wrap if image width is exceeded (bool).
 # }
 
 
@@ -86,6 +87,7 @@ sub new
 	Npix         => undef,
 	Nx           => undef,
 	Ny           => undef,
+	MagFactor    => 1,
 	AutoWrap     => 0,
     };
 
@@ -257,8 +259,14 @@ sub stream_pixels
 	    }
 	}
 
+	my $mag = $self->{MagFactor};
+	my $Ax = $self->{Xloc} * $mag;
+	my $Ay = $self->{Yloc} * $mag;
+	my $Bx = $Ax + $mag;
+	my $By = $Ay + $mag;
+
 	$iw->put( $color,
-	    -to      => $self->{Xloc}, $self->{Yloc},
+	    -to      => $Ax,$Ay, $Bx,$By,
 	);
 
 #	print( "$self->{Xloc},$self->{Yloc}  $color\n" );

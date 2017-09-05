@@ -215,7 +215,7 @@ sub go_flow
 #	-command => sub { $sx->stream_pixels() },
 #	-command => sub { $mw->repeat( 50, sub{ $sx->stream_pixels() } ) },
 	-command => sub {
-	    $sx->{AfterID} = $mw->repeat( 50,
+	    $sx->{AfterID} = $mw->repeat( 10,
 		sub{ $sx->stream_pixels() || $sx->{AfterID}->cancel() }
 	    )
 	},
@@ -229,45 +229,24 @@ sub go_flow
     my $lab2 = $mw->Label( -image => 'earth' );
     $lab2->pack();
 
-    my $height = $im1->height();
-    my $width  = $im1->width();
-    print( "height= $height,  width= $width\n" );
 
-    my $data = $im1->data(
-#        -format  => "ppm",
-	-from    => 10,10,20,15,
-    );
-    print( "data_len= ", length( $data ), "\n" );
-    print( "data:", $data, "\n" );
-    # Output string default format:
-    # {#135cc0 #135cc0 #135cc0 ...} {#135cc0 #135cc0 #135cc0 ...} ...
-
-
-    my $v = "#ff0000";
-    my $data2 =
-	"{$v $v $v $v $v $v $v $v $v $v} " .
-	"{$v $v $v $v $v $v $v $v $v $v} " .
-	"{$v $v $v $v $v $v $v $v $v $v} " .
-	"{$v $v $v $v $v $v $v $v $v $v} " .
-	"{$v $v $v $v $v $v $v $v $v $v} " ;
-#    $data2 = "#010101";
-
-    my $im2 = $mw->Photo( 'mydat',
-	-width  => 64,
-	-height => 127,
-#	-format => "ppm",
-#	-data   => $data2,
+    my $im2 = $mw->Photo( 'mydat',	# make empty photo
+	-width  => $self->{Nx},
+	-height => $self->{Ny},
     );
     my $lab3 = $mw->Label( -image => 'mydat' );
     $lab3->pack();
 
-    $im2->put( $data2,
-	-to      => 10,10,20,15,
-    );
+    # mark corners of image
+    my $nx = $self->{Nx};
+    my $ny = $self->{Ny};
+    $im2->put( "#cf00ff", -to =>     0,    0,   4,4   );
+    $im2->put( "#cf00ff", -to => $nx-4,    0, $nx,4   );
+    $im2->put( "#cf00ff", -to =>     0,$ny-4,   4,$ny );
+    $im2->put( "#cf00ff", -to => $nx-4,$ny-4, $nx,$ny );
 
-#    $im2->write(  "xx.tmp",
-#	-format => "ppm",
-#    );
+    print( "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" );
+
 
     my $but3 = $mw->Button(
 	-text    => 'Save',

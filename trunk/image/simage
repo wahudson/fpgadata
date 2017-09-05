@@ -72,6 +72,8 @@ sub print_usage
     my $op_npix         = 10;
     my $op_nx           = 32;
     my $op_ny           = 64;
+    my $op_magnify      = 1;
+    my $op_wrap         = 1;
 
     Getopt::Long::Configure(
 	'posix_default',
@@ -87,6 +89,8 @@ sub print_usage
 	"--npix=i"       => \$op_npix,
 	"--nx=i"         => \$op_nx,
 	"--ny=i"         => \$op_ny,
+	"--magnify=i"    => \$op_magnify,
+	"--wrap=i"       => \$op_wrap,
 	"--verbose|v"    => \$op_verbose,
 	"--TESTOP"       => \$op_TESTOP,
 
@@ -110,8 +114,12 @@ sub print_usage
 	Error( "extra arguments:  $ARGV[0]\n" );
     }
 
-    unless ( $op_nx ) {
-	Error( "require:  --nx > 0\n" );
+    unless ( ($op_magnify > 0) && ($op_magnify <= 20) ) {
+	Error( "require [1..20]:  --magnify= $op_magnify\n" );
+    }
+
+    unless ( ($op_wrap == 0) || ($op_wrap == 1) ) {
+	Error( "require boolean:  --wrap= $op_wrap\n" );
     }
 
     last  if ( Error() );
@@ -120,6 +128,8 @@ sub print_usage
 	print( "--npix         = $op_npix\n" );
 	print( "--nx           = $op_nx\n" );
 	print( "--ny           = $op_ny\n" );
+	print( "--magnify      = $op_magnify\n" );
+	print( "--wrap         = $op_wrap\n" );
 	last;
     }
 
@@ -147,6 +157,8 @@ sub print_usage
 	Npix         => $op_npix,
 	Nx           => $op_nx,
 	Ny           => $op_ny,
+	MagFactor    => $op_magnify,
+	AutoWrap     => $op_wrap,
     );
 
     last  if ( Error() );
@@ -237,6 +249,8 @@ simage -- Stream data into an image display.
     --npix=N          number of pixels per read burst
     --nx=N            image N pixels wide
     --ny=N            image N pixels high
+    --magnify=1       magnify pixel size by integer factor
+    --wrap=0          wrap scan lines at window size (bool)
   options:
     --help            show command usage and exit
     --man             show man page and exit
@@ -254,6 +268,12 @@ Intended to build the image in real time as data comes in.
 =head1		OPTIONS
 
 =over 8
+
+=item B<--magnify=N>        - Magnify pixel size by integer factor.
+
+Magnification affects only the pixel size, the window size (nx,ny) is not
+scaled.
+Typically is a small integer (1..4).
 
 =item B<--help>             - Show command usage and exit.
 

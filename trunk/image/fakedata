@@ -115,6 +115,8 @@ sub print_usage
 	last;
     }
 
+    print( "Fake:  Nx= $op_nx, Ny= $op_ny\n" );
+
     print( STDOUT  "Ys,Xs,color\n" );		# header
 
     for ( my $jj=0;  $jj<$op_ny;  $jj++ )
@@ -130,10 +132,10 @@ sub print_usage
 	    for ( my $ii=0;  $ii<$op_nx;  $ii++ )
 	    {
 		if ( $ii == 0 ) {
-		    print( STDOUT  "0,0,#00ff00\n" );
-		}
-		elsif ( $ii == 9 ) {
 		    print( STDOUT  "0,1,#ff0000\n" );
+		}
+		elsif ( $ii == 10 ) {
+		    print( STDOUT  "0,0,#00ff00\n" );
 		}
 		else {
 		    print( STDOUT  "0,0,#000000\n" );
