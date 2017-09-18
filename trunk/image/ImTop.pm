@@ -197,32 +197,27 @@ sub go_flow
 {
     my( $self, $sx ) = @_;
 
+    my $save_file = "xx.tmp";
+
     Tk::CmdLine::SetArguments( qw(-geometry +0+0 ) );
 
     my $mw = MainWindow->new();
 
     my $lab1 = $mw->Label(
-	-text => sprintf( "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" ),
+	-text => "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n",
     );
-	$lab1->pack();
+    $lab1->pack();
 
-    my $but1 = $mw->Button(
+    # Use a Frame to group buttons independent of photos.
+    my $bframe = $mw->Frame();
+    $bframe->pack();
+
+    my $but1 = $bframe->Button(
 	-text    => 'Quit',
 	-command => sub { exit },
     );
-    $but1->pack();
+    $but1->pack( -side => 'left' );
 
-    my $but2 = $mw->Button(
-	-text    => 'Go',
-#	-command => sub { $sx->stream_pixels() },
-#	-command => sub { $mw->repeat( 50, sub{ $sx->stream_pixels() } ) },
-	-command => sub {
-	    $sx->{AfterID} = $mw->repeat( 10,
-		sub{ $sx->stream_pixels() || $sx->{AfterID}->cancel() }
-	    )
-	},
-    );
-    $but2->pack();
 
 #    my $im1 = $mw->Photo( 'earth',
 #	-file => "/usr/lib/perl5/Tk/demos/images/earth.gif"
@@ -239,7 +234,7 @@ sub go_flow
     my $lab3 = $mw->Label( -image => 'mydat',
 	-relief => 'solid',
     );
-    $lab3->pack();
+    $lab3->pack( -side => 'top' );
 
     # mark corners of image
     my $nx = $self->{Nx};
@@ -252,19 +247,24 @@ sub go_flow
     print( "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" );
 
 
-    my $but3 = $mw->Button(
-	-text    => 'Save',
+    my $but3 = $bframe->Button(
+	-text    => "Save:  $save_file",
 	-command => sub {
-	    $im2->write(  "xx.tmp",
+	    $im2->write(  $save_file,
 		-format => "ppm",
 	    );
-	    print( "Saved:  xx.tmp\n" );
+	    print( "Saved:  $save_file\n" );
 	},
     );
-    $but3->pack();
+    $but3->pack( -side => 'left' );
 
 
     $sx->Init_attrib( ImPhoto => $im2 );
+
+    # start streaming data
+    $sx->{AfterID} = $mw->repeat( 10,
+	sub{ $sx->stream_pixels() || $sx->{AfterID}->cancel() }
+    );
 
     MainLoop();
     # Window is not shown until now.
