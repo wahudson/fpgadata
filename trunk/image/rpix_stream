@@ -85,7 +85,7 @@ sub print_usage
 	"--help"         => sub { print_usage();      exit( 0 ) },
 	"--man"          => sub { do_man();           exit( 0 ) },
 
-	"--coeff=i"      => \$op_coeff,
+	"--coeff=s"      => \$op_coeff,
 	"--scale=f"      => \$op_scale,
 	"--offset=f"     => \$op_offset,
 
@@ -112,8 +112,13 @@ sub print_usage
 	Error( "extra arguments:  $ARGV[0]\n" );
     }
 
-    unless ( (0 <= $op_coeff) && ($op_coeff < 15) ) {
-	Error( "out of range:  --coeff=$op_coeff\n" );
+    my @op_coeff = split( ",", $op_coeff );
+
+    foreach my $ic ( @op_coeff )
+    {
+	unless ( (0 <= $ic) && ($ic < 15) ) {
+	    Error( "out of range 0..15:  --coeff=$ic\n" );
+	}
     }
 
     if ( defined( $op_xrise ) && defined( $op_xfall ) ) {
@@ -154,20 +159,18 @@ sub print_usage
 	);
     }
 
-    print( STDOUT  "Ys,Xs,color\n" );	# Header
+    print( STDOUT  "Ys,Xs" );		# Header
+    foreach my $ic ( @op_coeff )
+    {
+	printf( STDOUT  ",c${ic}" );
+    }
+    print( STDOUT  "\n" );
 
     while ( <STDIN> )
     {
 	chomp();
 	next  if ( m/^\s*$/ );
 	my( $index, $ym, $xm, @coeff ) = split( ',', $_ );
-
-	my $rc = $coeff[$op_coeff];
-	$rc = ($rc * $op_scale) + $op_offset;
-	if ( $rc > 255 ) { $rc = 255 }
-	if ( $rc <   0 ) { $rc =   0 }
-
-	my $color = sprintf( "#%02x0000", $rc );
 
 	#!! hardwire --xrise
 	my $xs = ( $xm > $xmold ) ? 1 : 0;
@@ -176,12 +179,25 @@ sub print_usage
 	$xmold = $xm;
 	$ymold = $ym;
 
-	if ( $op_debug ) {
-	    printf( "$index  $ym,$xm  %6d %4d\n", $coeff[$op_coeff], $rc );
-	    #print( "$index  $ym,$xm  $coeff[$op_coeff]  $rc\n" );
-	}
+	print( STDOUT  "$ys,$xs" );
 
-	print( STDOUT  "$ys,$xs,$color\n" );
+	foreach my $ic ( @op_coeff )
+	{
+	    my $rc = $coeff[$ic];
+	    $rc = ($rc * $op_scale) + $op_offset;
+	    if ( $rc > 255 ) { $rc = 255 }
+	    if ( $rc <   0 ) { $rc =   0 }
+
+	    printf( STDOUT  ",#%02x0000", $rc );
+	}
+	print( STDOUT  "\n" );
+
+#	if ( $op_debug ) {
+#	    printf( "$index  $ym,$xm  %6d %4d\n", $coeff[$op_coeff], $rc );
+#	    #print( "$index  $ym,$xm  $coeff[$op_coeff]  $rc\n" );
+#	}
+	#!!
+
     }
 
 }
@@ -253,14 +269,14 @@ rpix_stream -- Convert rpixel coefficient data into an image data stream
 =head1		SYNOPSIS
 
  rpix_stream  [options]
-    --coeff=N         coefficient number to image
+    --coeff=N,N,N,..  coefficient numbers to image
     --scale=F         scale factor multiply coeff
-    --offset=F        offset   color = (coeff * scale) + offset
+    --offset=F        offset;   color = (coeff * scale) + offset
                   sweep reset on scan mark edge
-    --xrise           Xm rising edge
-    --xfall           Xm falling edge
-    --yrise           Ym rising edge
-    --yfall           Ym falling edge
+ #  --xrise           Xm rising edge
+ #  --xfall           Xm falling edge
+ #  --yrise           Ym rising edge
+ #  --yfall           Ym falling edge
   options:
     --debug           show debug output on stderr
     --help            show command usage and exit
@@ -287,20 +303,26 @@ desired data visualization as an image.
  1,0,1,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
 
  Output:  (stdout)
- Ys,Xs,pixel
- 1,0,#150000
- 0,1,#150000
+ Ys,Xs,c0,c1,c2
+ 1,0,#0f0000,#000000,#ff0000
+ 0,1,#0f0000,#000000,#ff0000
 
 Input Xm,Ym are the raw scan mark signals from the physical scanning system.
 Options select which edge to use for sweep reset in the image scanning.
 
-Output Xs,Ys are 1 only when the sweep should reset to the left edge (Xs)
-or top edge (Ys) of the image, otherwise 0.
+Output Xs,Ys are 1 only on the pixel where the sweep should reset to the
+left edge (Xs) or top edge (Ys) of the image, otherwise 0.
 
 
 =head1		OPTIONS
 
 =over 8
+
+=item B<--coeff=N,N,N,..>   - Coefficient numbers to image.
+
+Select these coefficient numbers to ouput image data.
+The numbers are coefficient column numbers, not heading names.
+e.g. 0 is "c0" in the above example input.
 
 =item B<--help>             - Show command usage and exit.
 
@@ -318,6 +340,7 @@ Prints the manual page and exits.
 
 =head1		EXAMPLES
 
+ % rpix_stream  --coeff=0,1,8,9  < in.csv
 
 =head1		ENVIRONMENT
 

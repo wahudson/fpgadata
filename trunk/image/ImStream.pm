@@ -36,7 +36,7 @@ use Error_mixi (	# Error handling functions, mix-in
 #    Error_sub    => sub {},	# Error message reporting subroutine.
 #    Error_cnt    => 0,		# Number of errors reported.
 #
-#    ImPhoto      => {Photo},	# Image object.
+#    ImPhotos     => [{Photo},..],	# List of Tk Image objects.
 #
 #    Xloc         => 0,		# Current pixel X location.
 #    Yloc         => 0,		# Current pixel Y location.
@@ -62,7 +62,6 @@ use Error_mixi (	# Error handling functions, mix-in
 # call:
 #    Package->new( key=> value, ..	# class method call only
 #			    # required:
-#    ImPhoto      => {Photo},	# Image object.
 #			    # optional:
 #    Error_sub    => sub {},	# Reference to error subroutine.
 #    )
@@ -81,7 +80,7 @@ sub new
 	Error_sub    => sub { warn( "Error:  ", @_ ) },
 		# initialize
 	Error_cnt    => 0,
-	ImPhoto      => undef,
+	ImPhotos     => [],
 	Xloc         => 0,
 	Yloc         => 0,
 	Npix         => undef,
@@ -210,8 +209,8 @@ sub Init_attrib
 #    Intended to be called repeatedly in MainLoop as part of data pipeline.
 #    Any header on stdin should have been removed earlier.
 # stdin:
-#    Ys,Xs,Color
-#    0,0,#rrggbb
+#    Ys,Xs,ColorA,ColorB,..
+#    0,0,#rrggbb,#rrggbb,..
 # where:
 #    Xs    = X sync, 1= reset Xloc
 #    Ys    = Y sync, 1= reset Yloc
@@ -225,7 +224,8 @@ sub stream_pixels
 {
     my( $self ) = @_;
 
-    my $iw = $self->{ImPhoto};		# image object
+    my @iwlist = @{$self->{ImPhotos}};	# Tk image objects
+    my $mag    = $self->{MagFactor};
 
     for ( my $i = $self->{Npix};  $i > 0;  $i-- )
     {
@@ -237,7 +237,7 @@ sub stream_pixels
 	}
 
 	chomp( $line );
-	my( $ys, $xs, $color ) = split( ',', $line );
+	my( $ys, $xs, @colors ) = split( ',', $line );
 
 	if ( $xs ) {
 	    $self->{Xloc} = 0;
@@ -259,17 +259,19 @@ sub stream_pixels
 	    }
 	}
 
-	my $mag = $self->{MagFactor};
 	my $Ax = $self->{Xloc} * $mag;
 	my $Ay = $self->{Yloc} * $mag;
 	my $Bx = $Ax + $mag;
 	my $By = $Ay + $mag;
 
-	$iw->put( $color,
-	    -to      => $Ax,$Ay, $Bx,$By,
-	);
-
-#	print( "$self->{Xloc},$self->{Yloc}  $color\n" );
+	my $ii = 0;			# ImPhotos list index
+	foreach my $iw ( @iwlist )
+	{
+	    $iw->put( $colors[$ii++],
+		-to      => $Ax,$Ay, $Bx,$By,
+	    );
+	}
+	#!! Assuming @colors read is same length as ImPhotos list.
 
 	$self->{Xloc}++;
     }

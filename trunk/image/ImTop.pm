@@ -33,6 +33,8 @@ use Error_mixi (	# Error handling functions, mix-in
 #    Error_sub    => sub {},	# Error message reporting subroutine.
 #    Error_cnt    => 0,		# Number of errors reported.
 #
+#    CoeffHeads   => [head,..],	# Coefficient headings for image names.
+#
 #    Nx           => 0,		# Image N pixels wide.
 #    Ny           => 0,		# Image N pixels high.
 # }
@@ -67,6 +69,7 @@ sub new
 	Error_sub    => sub { warn( "Error:  ", @_ ) },
 		# initialize
 	Error_cnt    => 0,
+	CoeffHeads   => [],
 	Nx           => undef,
 	Ny           => undef,
     };
@@ -197,7 +200,7 @@ sub go_flow
 {
     my( $self, $sx ) = @_;
 
-    my $save_file = "xx.tmp";
+    my $save_base = "xx";
 
     Tk::CmdLine::SetArguments( qw(-geometry +0+0 ) );
 
@@ -226,40 +229,57 @@ sub go_flow
 #    my $lab2 = $mw->Label( -image => 'earth' );
 #    $lab2->pack();
 
+    unless ( @{$self->{CoeffHeads}} ) {
+	$self->Error( "internal:  go_flow() no CoeffHeads\n" )
+    }
 
-    my $im2 = $mw->Photo( 'mydat',	# make empty photo
-	-width  => $self->{Nx},
-	-height => $self->{Ny},
-    );
-    my $lab3 = $mw->Label( -image => 'mydat',
-	-relief => 'solid',
-    );
-    $lab3->pack( -side => 'top' );
+    my @im_list = ();
+    foreach my $head ( @{$self->{CoeffHeads}} )
+    {
+	my $im_name = "Im_$head";
+	my $im2 = $mw->Photo( $im_name,		# make empty photo
+	    -width  => $self->{Nx},
+	    -height => $self->{Ny},
+	);
+	my $lab2 = $mw->Label( -image => $im_name,
+	    -relief => 'solid',
+	);
+	$lab2->pack( -side => 'left' );
 
-    # mark corners of image
-    my $nx = $self->{Nx};
-    my $ny = $self->{Ny};
-    $im2->put( "#cf00ff", -to =>     0,    0,   4,4   );
-    $im2->put( "#cf00ff", -to => $nx-4,    0, $nx,4   );
-    $im2->put( "#cf00ff", -to =>     0,$ny-4,   4,$ny );
-    $im2->put( "#cf00ff", -to => $nx-4,$ny-4, $nx,$ny );
+	# mark corners of image
+	my $nx = $self->{Nx};
+	my $ny = $self->{Ny};
+	$im2->put( "#cf00ff", -to =>     0,    0,   4,4   );
+	$im2->put( "#cf00ff", -to => $nx-4,    0, $nx,4   );
+	$im2->put( "#cf00ff", -to =>     0,$ny-4,   4,$ny );
+	$im2->put( "#cf00ff", -to => $nx-4,$ny-4, $nx,$ny );
+
+	push( @im_list, $im2 );
+	print( "simage:  im_name= $im_name\n" );
+    }
+
+    $sx->Init_attrib( ImPhotos => \@im_list );
 
     print( "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" );
 
 
     my $but3 = $bframe->Button(
-	-text    => "Save:  $save_file",
+	-text    => "Save:  ${save_base}.0.ppm",
 	-command => sub {
-	    $im2->write(  $save_file,
-		-format => "ppm",
-	    );
-	    print( "Saved:  $save_file\n" );
+	    my $ii = 0;
+	    foreach my $im ( @im_list )
+	    {
+		my $head = $self->{CoeffHeads}->[$ii++];
+		my $save_file = "${save_base}.${head}.ppm";
+		print( "Save:  $save_file\n" );
+		$im->write(  $save_file,
+		    -format => "ppm",
+		);
+	    }
 	},
     );
     $but3->pack( -side => 'left' );
 
-
-    $sx->Init_attrib( ImPhoto => $im2 );
 
     # start streaming data
     $sx->{AfterID} = $mw->repeat( 10,

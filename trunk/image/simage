@@ -83,8 +83,8 @@ sub print_usage
     );
 
     Getopt::Long::GetOptions(
-	"--help"         => sub { print_usage();      exit( 0 ) },
-	"--man"          => sub { do_man();           exit( 0 ) },
+	"--help"         => sub { print_usage();      CORE::exit( 0 ) },
+	"--man"          => sub { do_man();           CORE::exit( 0 ) },
 
 	"--npix=i"       => \$op_npix,
 	"--nx=i"         => \$op_nx,
@@ -102,7 +102,7 @@ sub print_usage
 
     ) || do {	# GetOptions() returns false on errors in option parsing.
 	Error( "Type '$ProgName --help' for usage.\n" );
-	exit( 2 );
+	CORE::exit( 2 );
 	# Do not show usage longer than 5 lines, let user see argument error.
     };
 
@@ -133,6 +133,22 @@ sub print_usage
 	last;
     }
 
+# Read data stream header.
+    my $want   = "Ys,Xs,";
+    my $header = <STDIN>;
+    last  unless( defined( $header ) );
+    chomp( $header );
+
+    unless ( $header =~ m/^$want/ ) {
+	Error( "unexpected header line:\n",
+	    "    have:  $header\n",
+	    "    want:  $want\n"
+	);
+	last;
+    }
+
+    my( $Ys, $Xs, @coeff_name ) = split( ',', $header );
+
 # Top-level object.
     my $tx = ImTop->new(
 	Error_sub    => sub{ Error( @_ ) },
@@ -141,6 +157,10 @@ sub print_usage
     $tx->Init_required(
 	Nx           => $op_nx,
 	Ny           => $op_ny,
+    );
+
+    $tx->Init_attrib(
+	CoeffHeads   => [@coeff_name],
     );
 
     if ( $op_verbose ) {
@@ -162,23 +182,12 @@ sub print_usage
 
     last  if ( Error() );
 
-# Read data stream header.
-    my $header = <STDIN>;
-    my $want   = "Ys,Xs,color";
-
-    unless ( $header =~ m/^$want/ ) {
-	Error( "unexpected header line:\n",
-	    "    have:  $header",
-	    "    want:  $want\n"
-	);
-    }
-
 # Stream data to image.
     $tx->go_flow( $sx );
 
 }
 
-exit( (Error()) ? 1 : 0 );
+CORE::exit( (Error()) ? 1 : 0 );
 
 
 #---------------------------------------------------------------------------
@@ -249,7 +258,7 @@ simage -- Stream data into an image display.
     --nx=N            image N pixels wide
     --ny=N            image N pixels high
     --magnify=1       magnify pixel size by integer factor
-    --wrap=0          wrap scan lines at window size (bool)
+    --wrap=1          wrap scan lines at window size (bool)
   options:
     --help            show command usage and exit
     --man             show man page and exit
@@ -260,9 +269,20 @@ simage -- Stream data into an image display.
 Stream data into an image display.  The data stream is one pixel per line,
 usually from an FPGA to RaspberryPi program.
 
-Output is a PerlTk window with the image displayd.
+Output is a PerlTk window with the image displayed.
 Intended to build the image in real time as data comes in.
 
+ Input:  (stdin)
+ Ys,Xs,c0,c1,c2
+ 1,0,#0f0000,#000000,#ff0000
+ 0,1,#0f0000,#000000,#ff0000
+
+Input data is in CSV format.
+The image columns (c0,c1,..) are in X11 RGB color format "#rrggbb", and
+one image will be produced for each column.
+
+Input Xs,Ys should be 1 only on the pixel where the sweep should reset to
+the left edge (Xs) or top edge (Ys) of the image, otherwise 0.
 
 =head1		OPTIONS
 
