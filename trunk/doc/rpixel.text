@@ -89,8 +89,8 @@ Configure RPi pin modes:  (after each power-up)
     Gpio21  40 pcm_DOUT   Lo  i   d5        06  GPIO[5]  green
     Gpio22  15 --         Lo  i   d6        07  GPIO[6]  blue
     Gpio23  16 --         Lo  i   d7        08  GPIO[7]  violet
-    Gpio24  18 --         Lo  i   MarkX     .   .        .
-    Gpio25  22 --         Lo  i   MarkY     .   .        .
+    Gpio24  18 --         Lo  i   MarkX     15  GPIO[12] orange
+    Gpio25  22 --         Lo  i   MarkY     16  GPIO[13] yellow
     Gpio26  37 --         Lo  i   OverFlow  13  GPIO[10] brown
     Gpio27  13 --         Hi  i   NoData    14  GPIO[11] white rdempty
     GND     06 --         -   -   .         .   .        .
@@ -106,8 +106,13 @@ Configure RPi pin modes:  (after each power-up)
     +5V     02 --         -   -   .         .   .        .
     +5V     04 --         -   -   .         .   .        .
 
-    +5V     -- --         -   -   .         11  +5       .  FPGA
+    --      -- --         -   -   fifoX     17  GPIO[14] .  green  FPGA-in
+    --      -- --         -   -   fifoY     18  GPIO[15] .  blue   FPGA-in
+    --      -- --         -   -   .         29  +3.3V    .  red    FPGA
+    --      -- --         -   -   .         30  GND      .  white  FPGA
+
     --      -- --         -   -   .         10  GPIO[9]  .  Dead Vol=1.2V
+    --      -- --         -   -   .         11  +5V      .  FPGA
 
 
 ----------------------------------------------------------------------------
