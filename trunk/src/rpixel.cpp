@@ -434,7 +434,8 @@ main( int	argc,
 	    int			ns_coeff     = -1;
 	    if ( coeff_cnt ) {
 		NoData_coeff = (float) NoData_cnt / coeff_cnt;
-		ns_coeff     =           delta_ns / coeff_cnt;
+		ns_coeff     =         ( delta_ns / coeff_cnt ) +
+				       ( delta_s  / coeff_cnt );
 	    }
 
 	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
