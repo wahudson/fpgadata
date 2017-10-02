@@ -129,9 +129,10 @@ sub print_usage
 	Error( "use one of --yrise or --yfall\n" );
     }
 
-    # output option choice and default
-    $op_xrise = ( $op_xfall ) ? 0 : 1;
-    $op_yrise = ( $op_yfall ) ? 0 : 1;
+    # sync edge is (new_level - old_level), default is falling
+    #     +1 = rising, -1 = falling
+    my $x_edge = ( $op_xrise ) ? +1 : -1;
+    my $y_edge = ( $op_yrise ) ? +1 : -1;
 
     last  if ( Error() );
 
@@ -139,10 +140,8 @@ sub print_usage
 	print( "--coeff        = $op_coeff\n" );
 	print( "--scale        = $op_scale\n" );
 	print( "--offset       = $op_offset\n" );
-	print( "--xrise        = $op_xrise\n" );
-#	print( "--xfall        = $op_xfall\n" );
-	print( "--yrise        = $op_yrise\n" );
-#	print( "--yfall        = $op_yfall\n" );
+	print( "x_edge         = $x_edge\n"    );
+	print( "y_edge         = $y_edge\n"    );
 	last;
     }
 
@@ -172,9 +171,8 @@ sub print_usage
 	next  if ( m/^\s*$/ );
 	my( $index, $ym, $xm, @coeff ) = split( ',', $_ );
 
-	#!! hardwire --xrise
-	my $xs = ( $xm > $xmold ) ? 1 : 0;
-	my $ys = ( $ym > $ymold ) ? 1 : 0;
+	my $xs = ( ($xm - $xmold) == $x_edge ) ? 1 : 0;
+	my $ys = ( ($ym - $ymold) == $y_edge ) ? 1 : 0;
 
 	$xmold = $xm;
 	$ymold = $ym;
@@ -192,11 +190,11 @@ sub print_usage
 	}
 	print( STDOUT  "\n" );
 
-#	if ( $op_debug ) {
-#	    printf( "$index  $ym,$xm  %6d %4d\n", $coeff[$op_coeff], $rc );
-#	    #print( "$index  $ym,$xm  $coeff[$op_coeff]  $rc\n" );
-#	}
-	#!!
+	if ( $op_debug ) {
+	    my $ii = $op_coeff[0];
+	    printf( STDERR "$index  $ym,$xm  %6d\n", $coeff[$ii] );
+	}
+	# Show origanal coeff, first one only.
 
     }
 
@@ -270,13 +268,13 @@ rpix_stream -- Convert rpixel coefficient data into an image data stream
 
  rpix_stream  [options]
     --coeff=N,N,N,..  coefficient numbers to image
-    --scale=F         scale factor multiply coeff
-    --offset=F        offset;   color = (coeff * scale) + offset
+    --scale=1.0       scale factor multiply coeff
+    --offset=0.0      offset;   color = (coeff * scale) + offset
                   sweep reset on scan mark edge
- #  --xrise           Xm rising edge
- #  --xfall           Xm falling edge
- #  --yrise           Ym rising edge
- #  --yfall           Ym falling edge
+    --xrise           Xm rising edge
+    --xfall           Xm falling edge (default)
+    --yrise           Ym rising edge
+    --yfall           Ym falling edge (default)
   options:
     --debug           show debug output on stderr
     --help            show command usage and exit
@@ -294,9 +292,6 @@ There are two transformations to manage:
 
 2) Scan marks transform into Xloc and Yloc scan reset points.
 
-It is intended the user customize this program (or a copy) to create the
-desired data visualization as an image.
-
  Input:  (stdin)
  index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
  0,1,0,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
@@ -309,9 +304,32 @@ desired data visualization as an image.
 
 Input Xm,Ym are the raw scan mark signals from the physical scanning system.
 Options select which edge to use for sweep reset in the image scanning.
+This allows the input pulse to be of any duration, since only the edge is used.
 
 Output Xs,Ys are 1 only on the pixel where the sweep should reset to the
 left edge (Xs) or top edge (Ys) of the image, otherwise 0.
+
+Coefficient values are expected to be signed integers.
+They are transformed into unsigned 8-bit intensity values by the equation
+
+    intensity = (coeff * scale) + offset
+
+where scale and offset are provided by options --scale and --offset.
+Default values --scale=1.0 and --offset=0.0 leave the value unchanged.
+
+The intensity is then clipped - any value above 255 is set to 255, and
+any value below zero is set to 0.  It is then applied to the Red channel
+and output in X11 RGB hexadecimal format.
+
+Both input and output are in CSV (comma seperated value) format.
+The input column "index" is ignored.  The input columns "Ym" and "Xm" are
+the scan mark signals.  The coefficient heading names "c0", etc. are
+transferred to the output, and can be any names since they are selected
+by column position with option --coeff.
+
+It is intended the user customize this program (or a copy) to create the
+desired data visualization as an image (please change this man page
+accordingly).
 
 
 =head1		OPTIONS
@@ -323,6 +341,25 @@ left edge (Xs) or top edge (Ys) of the image, otherwise 0.
 Select these coefficient numbers to ouput image data.
 The numbers are coefficient column numbers, not heading names.
 e.g. 0 is "c0" in the above example input.
+
+
+=item B<--scale=1.0>        - Scale factor multiplies coefficient.
+
+=item B<--offset=0.0>       - Offset factor added.
+
+intensity = (coeff * scale) + offset
+
+=item B<--xrise>            - Xm rising edge
+
+=item B<--xfall>            - Xm falling edge (default)
+
+Select which edge of the X input scan mark for output as Xs.
+
+=item B<--yrise>            - Ym rising edge
+
+=item B<--yfall>            - Ym falling edge (default)
+
+Select which edge of the Y input scan mark for output as Ys.
 
 =item B<--help>             - Show command usage and exit.
 
@@ -340,7 +377,15 @@ Prints the manual page and exits.
 
 =head1		EXAMPLES
 
+ Generate data for coefficients c0, c1, c8, c9.
  % rpix_stream  --coeff=0,1,8,9  < in.csv
+
+ Reset scan on rising edge for both X and Y scan marks.
+ % rpix_stream  --coeff=3,4  --xrise --yrise  < in.csv
+
+ Compute color value as (coeff * 0.2) + 200
+ % rpix_stream  --scale=0.2 --offset=200  < in.csv
+
 
 =head1		ENVIRONMENT
 
