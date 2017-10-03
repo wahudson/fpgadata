@@ -423,19 +423,18 @@ main( int	argc,
 
 	    if ( rv ) { cerr << "Error:  clock_gettime() failed" << endl; }
 
-	    long int	delta_s  = tpB.tv_sec  - tpA.tv_sec;
-	    long int	delta_ns = tpB.tv_nsec - tpA.tv_nsec;
-	    if ( delta_ns < 0 ) {
-		delta_ns += 1000000000;
-		delta_s  -= 1;
-	    }
+	    int64_t	delta_ns = ((1000000000L * tpB.tv_sec) + tpB.tv_nsec) -
+				   ((1000000000L * tpA.tv_sec) + tpA.tv_nsec);
 
 	    float		NoData_coeff = -1.0;
 	    int			ns_coeff     = -1;
+	    int			ns_sample    = -1;
 	    if ( coeff_cnt ) {
 		NoData_coeff = (float) NoData_cnt / coeff_cnt;
-		ns_coeff     =         ( delta_ns / coeff_cnt ) +
-				       ( delta_s  / coeff_cnt );
+		ns_coeff     =         ( delta_ns / coeff_cnt );
+	    }
+	    if ( sample_cnt ) {
+		ns_sample    =         ( delta_ns / sample_cnt );
 	    }
 
 	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
@@ -452,8 +451,8 @@ main( int	argc,
 		 <<setw(5) << ns_coeff << " ns/coeff" <<endl;
 
 	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
-		 <<setw(9) << delta_ns << " ns,  "
-		 <<setw(4) << (delta_ns / sample_cnt) << " ns/sample"
+		 <<setw(10) << delta_ns  << " ns,  "
+		 <<setw(4)  << ns_sample << " ns/sample"
 		 <<endl;
 	}
 
