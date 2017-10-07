@@ -39,7 +39,7 @@ yFramDat::yFramDat( size_t nsize )
 // warning: ISO C++ does not support variable-length array types [-Wvla]
 //    data = new( unsigned char [nsize] );
 
-    const int	sz = 2 * 1024 * 1024;
+    const int	sz = 4 * 1024 * 1024;
 
     std::string		HeadLine  ( "#yFrameDat" );
 

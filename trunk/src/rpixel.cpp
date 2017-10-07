@@ -423,8 +423,8 @@ main( int	argc,
 
 	    if ( rv ) { cerr << "Error:  clock_gettime() failed" << endl; }
 
-	    int64_t	delta_ns = ((1000000000L * tpB.tv_sec) + tpB.tv_nsec) -
-				   ((1000000000L * tpA.tv_sec) + tpA.tv_nsec);
+	    int64_t	delta_ns = ((tpB.tv_sec  - tpA.tv_sec) * 1000000000L) +
+				    (tpB.tv_nsec - tpA.tv_nsec);
 
 	    float		NoData_coeff = -1.0;
 	    int			ns_coeff     = -1;
@@ -454,12 +454,12 @@ main( int	argc,
 		 <<setw(10) << delta_ns  << " ns,  "
 		 <<setw(4)  << ns_sample << " ns/sample"
 		 <<endl;
-	}
 
-//	cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
-//	cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
-//	cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
-//	cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
+//	    cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
+//	    cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
+//	    cout << "    B.tv_sec  = " << tpB.tv_sec  << endl;
+//	    cout << "    B.tv_nsec = " << tpB.tv_nsec << endl;
+	}
 
 	if ( Opx.load ) {
 	    Fdx.load_hex( Opx.load );
