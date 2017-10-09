@@ -73,6 +73,7 @@ class yOptLong : public yOption {
   public:	// option values
 
     const char*		npix;
+    const char*		stream;
     const char*		repeat;
     const char*		prefix;
     bool		csv;
@@ -93,6 +94,7 @@ class yOptLong : public yOption {
   public:	// data values
 
     int			npix_n;			// number of pixels
+    int			stream_n;		// number of pixels
     int			repeat_n;		// repeat loop
 
   public:
@@ -116,6 +118,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     : yOption( argc, argv )
 {
     npix        = "";
+    stream      = "";
     repeat      = "";
     prefix      = "";
     csv         = 0;
@@ -134,6 +137,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     TESTOP      = 0;
 
     npix_n      = 64;
+    stream_n    = 0;		// default must be no streaming
     repeat_n    = 1;
 }
 
@@ -147,6 +151,7 @@ yOptLong::parse_options()
     while ( this->next() )
     {
 	if      ( is( "--npix="      )) { npix       = this->val(); }
+	else if ( is( "--stream="    )) { stream     = this->val(); }
 	else if ( is( "--repeat="    )) { repeat     = this->val(); }
 	else if ( is( "--prefix="    )) { prefix     = this->val(); }
 	else if ( is( "--csv"        )) { csv        = 1; }
@@ -173,15 +178,25 @@ yOptLong::parse_options()
     }
 
     string	npix_s    ( npix );
+    string	stream_s  ( stream );
     string	repeat_s  ( repeat );
 
     if ( npix_s.length() ) {
 	npix_n = stoi( npix_s );
     }
 
+    if ( stream_s.length() ) {
+	stream_n = stoi( stream_s );
+    }
+
     if ( repeat_s.length() ) {
 	repeat_n = stoi( repeat_s );
     }
+
+    if ( stream_n && ( tab || tab2 ) ) {
+	Error::err( "--stream only outputs CSV format" );
+    }
+    // --stream not intended with other outputs, but allow for debug.
 
     if ( get_argc() > 0 ) {
 	Error::err( "extra arguments:  ", next_arg() );
@@ -199,6 +214,7 @@ yOptLong::print_option_flags()
     if ( save == NULL ) { save = "-"; }
 
     cout << "--npix        = " << npix         << endl;
+    cout << "--stream      = " << stream       << endl;
     cout << "--repeat      = " << repeat       << endl;
     cout << "--prefix      = " << prefix       << endl;
     cout << "--csv         = " << csv          << endl;
@@ -220,6 +236,7 @@ yOptLong::print_option_flags()
     }
 
     cout << "npix_n        = " << npix_n       << endl;
+    cout << "stream_n      = " << stream_n     << endl;
     cout << "repeat_n      = " << repeat_n     << endl;
 }
 
@@ -246,6 +263,7 @@ yOptLong::print_usage()
     "    --save=FILE         save hex words to   file\n"
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
+    "    --stream=N          stream N pixels at a time to CSV output\n"
     "    --repeat=N          repeat data read loop N times\n"
     "    --help              show this usage\n"
     "    -v, --verbose       verbose output\n"
@@ -290,8 +308,16 @@ main( int	argc,
 	int			sample_cnt;	// total read samples
 	int			NoData_cnt;	// total NoData samples
 	int			coeff_cnt;	// total coefficients read
+	int			pixel_cnt;	// total pixels read
+
+	int			stream_ii;	// stream burst pixel count
+	yCoeffItr		stream_itr  ( &Fdx );
 
 	if ( Error::err() )  return 1;
+
+	if ( Opx.stream_n ) {
+	    stream_itr.print_coeff_csv_head();
+	}
 
 	yRpiGpio		Gpx;		// constructor
 
@@ -318,6 +344,10 @@ main( int	argc,
 	    sample_cnt = 0;
 	    NoData_cnt = 0;
 	    coeff_cnt  = 0;
+	    pixel_cnt  = 0;
+	    stream_ii  = 0;
+	    //#!! stream_itr reset?
+//	    stream_itr.restart();	// restart Fcx pointer
 
 	    // Init outputs
 	    *gpio_clr = READAK_G | TRIGOUT_G | GOPIXEL_G;
@@ -369,7 +399,7 @@ main( int	argc,
 
 	    rv = clock_gettime( CLKID, &tpA );
 
-	    while ( Fdx.get_length() < n_trans )
+	    while ( (pixel_cnt <= Opx.npix_n) && (Fdx.get_length() < n_trans) )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
 //		cin >>hex >> ilevel;	// Read test data on stdin
@@ -394,8 +424,6 @@ main( int	argc,
 		    continue;
 		}
 
-		Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
-
 		if ( ilevel & OVFLOW_G ) {	// fifo overflow
 		    overflow++;
 		}
@@ -405,6 +433,16 @@ main( int	argc,
 		if ( coef_num != coef_old ) {	// signal new coeff
 		    if ( coef_num == 0 ) {	// signal new pixel
 			*gpio_set = GOPIXEL_G;
+			pixel_cnt++;
+
+			if ( Opx.stream_n && ((++stream_ii) >= Opx.stream_n) ) {
+//			    cout << "stream_ii=" << stream_ii << endl;
+			    stream_ii = 0;
+			    stream_itr.print_coeff_csv_body();
+			    stream_itr.restart();	// restart Fcx pointer
+			}
+			// Stream old data before saving start of new pixel.
+			//#!! Note first set is short one pixel.
 		    }
 		    *gpio_set = TRIGOUT_G;
 		    *gpio_set = TRIGOUT_G;
@@ -417,11 +455,19 @@ main( int	argc,
 		    *gpio_clr = TRIGOUT_G | GOPIXEL_G;
 		}
 		// Folded signals for more uniform timing.
+
+		Fdx.push_dat( (ilevel >> DATA_POS) & FULL_MASK );
 	    }
 
 	    rv = clock_gettime( CLKID, &tpB );
 
 	    if ( rv ) { cerr << "Error:  clock_gettime() failed" << endl; }
+
+	    if ( Opx.stream_n ) {		// remainder of burst
+//		cout << "stream remainder" << endl;
+		stream_itr.print_coeff_csv_body();
+		stream_itr.restart();
+	    }
 
 	    int64_t	delta_ns = ((tpB.tv_sec  - tpA.tv_sec) * 1000000000L) +
 				    (tpB.tv_nsec - tpA.tv_nsec);

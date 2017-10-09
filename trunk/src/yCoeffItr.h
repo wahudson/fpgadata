@@ -25,8 +25,12 @@ class yCoeffItr {
   public:
     yCoeffItr( yFramDat *fdp );
 
+    virtual void	restart();
     virtual int		*next_pixel();
     virtual void	print_coeff_tab();
+
+    virtual void	print_coeff_csv_head();
+    virtual void	print_coeff_csv_body();
     virtual void	print_coeff_csv();
 
     inline bool		has_error()

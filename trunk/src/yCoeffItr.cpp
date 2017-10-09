@@ -42,6 +42,19 @@ yCoeffItr::yCoeffItr(
 
 
 /*
+* Restart Fdata array.
+*    Restart collecting Fdata, and restart the iterator.  Is NOT a full reset.
+*    Used in pixel streaming.
+*/
+void
+yCoeffItr::restart()
+{
+    Fdata->clear();
+    DaPtr = Fdata->data_pointer_begin();
+}
+
+
+/*
 * Get next pixel set of coefficients from Big-endian 4-bit nibbles.
 *    Big-endian data.
 *    Assume there are no NoData entries.
@@ -149,6 +162,54 @@ yCoeffItr::print_coeff_tab()
 	cout << endl;
     }
 }
+
+
+/*
+* Print coefficients CSV header.
+* call:
+*    print_coeff_csv_head()
+*/
+void
+yCoeffItr::print_coeff_csv_head()
+{
+    cout << "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,"
+	    "c8,c9,c10,c11,c12,c13,c14,c15" << endl;
+}
+
+
+/*
+* Print coefficients CSV body.
+*    Bad pixel entry marked with '!'.
+*    #!! Perhaps use a seperate column?
+* call:
+*    print_coeff_csv_body()
+*/
+void
+yCoeffItr::print_coeff_csv_body()
+{
+    int			*cp;	// coefficient pointer
+
+    cout <<dec;
+    cout.fill(' ');
+
+    while ( (cp = this->next_pixel()) )
+    {
+	cout << PixNum;
+	if ( this->has_error() ) {
+	    cout << "!";
+	}
+
+	cout << "," << PixMarkY;
+	cout << "," << PixMarkX;
+
+	for ( int j = 0;  j < 16;  j++ )
+	{
+	    cout << "," << cp[j];
+	}
+	cout << endl;
+    }
+}
+
 
 
 /*
