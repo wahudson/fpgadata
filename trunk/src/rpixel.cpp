@@ -193,7 +193,7 @@ yOptLong::parse_options()
 	repeat_n = stoi( repeat_s );
     }
 
-    if ( stream_n && ( tab || tab2 ) ) {
+    if ( stream_n && ( csv || tab || tab2 ) ) {
 	Error::err( "--stream only outputs CSV format" );
     }
     // --stream not intended with other outputs, but allow for debug.
@@ -251,6 +251,7 @@ yOptLong::print_usage()
     "    FPGA data transfer on Raspberry Pi\n"
     "usage:  " << ProgName << " [options]\n"
     "  output forms:  (default is none)\n"
+    "    --stream=N          stream N pixels at a time to CSV output\n"
     "    --csv               CSV format\n"
     "    --tab               tabular format\n"
     "    --tab2              tabular format, no check\n"
@@ -263,7 +264,6 @@ yOptLong::print_usage()
     "    --save=FILE         save hex words to   file\n"
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
-    "    --stream=N          stream N pixels at a time to CSV output\n"
     "    --repeat=N          repeat data read loop N times\n"
     "    --help              show this usage\n"
     "    -v, --verbose       verbose output\n"
@@ -350,8 +350,7 @@ main( int	argc,
 	    trans_cnt  = 0;
 	    coeff_cnt  = 0;
 	    stream_ii  = 0;
-	    //#!! stream_itr reset?
-//	    stream_itr.restart();	// restart Fcx pointer
+	    stream_itr.restart();	// restart Fcx data pointer
 
 	    // Init outputs
 	    *gpio_clr = READAK_G | TRIGOUT_G | GOPIXEL_G;
@@ -447,7 +446,7 @@ main( int	argc,
 			    stream_itr.restart();	// restart Fcx pointer
 			}
 			// Stream old data before saving start of new pixel.
-			//#!! Note first set is short one pixel.
+			// Note first set is short one pixel, not important.
 		    }
 		    *gpio_set = TRIGOUT_G;
 		    *gpio_set = TRIGOUT_G;
@@ -561,6 +560,10 @@ main( int	argc,
 	    cout << endl;
 	}
 
+	if ( overflow ) {
+//#!!	    Error::err( "Fifo overflow count= ", overflow );
+	    cerr << "Error:  Fifo overflow count= " << overflow << endl;
+	}
     }
     catch ( std::exception& e ) {
         Error::err( "exception:  ", e.what() );
