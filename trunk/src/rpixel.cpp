@@ -307,8 +307,8 @@ main( int	argc,
 	int			flush_cnt;	// flush fifo cycles
 	int			sample_cnt;	// total read samples
 	int			NoData_cnt;	// total NoData samples
+	int			trans_cnt;	// total valid transfers
 	int			coeff_cnt;	// total coefficients read
-	int			pixel_cnt;	// total pixels read
 
 	int			stream_ii;	// stream burst pixel count
 	yCoeffItr		stream_itr  ( &Fdx );
@@ -333,8 +333,12 @@ main( int	argc,
 
 
     // Main Loop
-	n_trans = Fdx.nlimit( Opx.npix_n * 16 * 4 );	// 16 coeff x 4 nibbles
+	n_trans = Opx.npix_n * 16 * 4;		// 16 coeff x 4 nibbles
+	if ( ! Opx.stream_n ) {
+	    n_trans = Fdx.nlimit( n_trans );	// limit to array size
+	}
 	cerr << "    n_trans= " << n_trans << endl;
+	// Count valid transfers so pixel identification is not required.
 
 	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )	// time repeats
 	{
@@ -343,8 +347,8 @@ main( int	argc,
 	    overflow = 0;
 	    sample_cnt = 0;
 	    NoData_cnt = 0;
+	    trans_cnt  = 0;
 	    coeff_cnt  = 0;
-	    pixel_cnt  = 0;
 	    stream_ii  = 0;
 	    //#!! stream_itr reset?
 //	    stream_itr.restart();	// restart Fcx pointer
@@ -399,7 +403,7 @@ main( int	argc,
 
 	    rv = clock_gettime( CLKID, &tpA );
 
-	    while ( (pixel_cnt <= Opx.npix_n) && (Fdx.get_length() < n_trans) )
+	    while ( trans_cnt < n_trans )
 	    {
 		ilevel = *gpio_read;	// Read GPIO level
 //		cin >>hex >> ilevel;	// Read test data on stdin
@@ -428,12 +432,13 @@ main( int	argc,
 		    overflow++;
 		}
 
+		trans_cnt++;
+
 		coef_num = ilevel & COEFF_G;
 
 		if ( coef_num != coef_old ) {	// signal new coeff
 		    if ( coef_num == 0 ) {	// signal new pixel
 			*gpio_set = GOPIXEL_G;
-			pixel_cnt++;
 
 			if ( Opx.stream_n && ((++stream_ii) >= Opx.stream_n) ) {
 //			    cout << "stream_ii=" << stream_ii << endl;
