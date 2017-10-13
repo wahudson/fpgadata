@@ -473,8 +473,11 @@ main( int	argc,
 		stream_itr.restart();
 	    }
 
-	    int64_t	delta_ns = ((tpB.tv_sec  - tpA.tv_sec) * 1000000000L) +
-				    (tpB.tv_nsec - tpA.tv_nsec);
+	    int64_t	delta_ns =
+		((tpB.tv_sec  - tpA.tv_sec) * ((int64_t) 1000000000)) +
+		 (tpB.tv_nsec - tpA.tv_nsec);
+		// Note 4 seconds overflows a 32-bit int.
+		// Use careful promotion to 64-bit integer to avoid overflow.
 
 	    float		NoData_coeff = -1.0;
 	    int			ns_coeff     = -1;
