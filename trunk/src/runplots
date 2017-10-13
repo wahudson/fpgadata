@@ -37,7 +37,8 @@ do_system( $plot_cmd ) || die;
 #for ( my $i=0;  $i < 4;  $i++ )
 while ( 1 )
 {
-    do_system( $rpixel_cmd ) || die;
+    do_system( $rpixel_cmd );
+    # No die - help recover from Fifo overflow.
 
     sleep( 1 );
     # Give time for R read.csv() to close the pipe.
