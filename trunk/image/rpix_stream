@@ -116,7 +116,7 @@ sub print_usage
 
     foreach my $ic ( @op_coeff )
     {
-	unless ( (0 <= $ic) && ($ic < 15) ) {
+	unless ( (0 <= $ic) && ($ic <= 15) ) {
 	    Error( "out of range 0..15:  --coeff=$ic\n" );
 	}
     }

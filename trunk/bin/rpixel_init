@@ -1,0 +1,10 @@
+#! /bin/bash
+
+# Initialize Raspberry Pi gpio for use with rpixel.
+#     Assume all pins are input (after reboot), so set only output pins.
+
+    set -x
+
+    gpio -g mode  6 out		# ReadAck       required
+    gpio readall
+
