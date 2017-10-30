@@ -1,0 +1,172 @@
+# 2017-10-15  William A. Hudson
+
+# rpixel -- Man page
+#---------------------------------------------------------------------------
+# See also:  perlpod(1)  perlpodstyle(1)
+
+=head1		NAME
+
+rpixel -- FPGA data transfer on Raspberry Pi
+
+=head1		SYNOPSIS
+
+ rpixel [options]
+  output forms:  (default is none)
+    --stream=N          stream N pixels at a time to CSV output
+    --csv               CSV format
+    --tab               tabular format
+    --tab2              tabular format, no check
+    --hex               hex data dump
+    --raw               raw hex data
+    --delta             delta data in decimal
+    --flag              octal flags with 8-bit data in decimal
+  raw data:  one sample per line, with headline
+    --load=FILE         load hex words from file
+    --save=FILE         save hex words to   file
+  options:
+    --npix=N            number of pixel to collect
+    --repeat=N          repeat data read loop N times
+    --help              show this usage
+    --man               show manpage and exit
+ #  -v, --verbose       verbose output
+ #  --debug             debug output
+  (options with GNU= only)
+
+
+=head1		DESCRIPTION
+
+Transfer data from an FPGA Fifo buffer to this program running on a
+Raspberry Pi3.
+
+=head2			Setup
+
+The GPIO pin directions must be initialized external to this program.
+On reboot, the RPi (Raspberry Pi) sets all pins to Input, thus it is really
+only necessary to set Output pin directions.
+Use the 'gpio' utility command provided by default in the RPi Raspbian
+distribution:
+
+    % gpio readall              # view all pin configuration
+    % gpio -g mode  5 out       # GoPixel
+    % gpio -g mode  6 out       # ReadAck (required)
+    % gpio -g mode  7 out       # nReset
+    % gpio -g mode  8 out       # TrigOut
+
+Companion script 'rpixel_init' does this.
+
+The ReadAck output signal is essential for handshake with the FPGA fifo.
+The other outputs (nReset, GoPixel, and TrigOut) are optional and need not
+be configured if they are not used by the FPGA.  Regardless, 'rpixel' will
+toggle these GPIO output register bits.
+
+The resistor pull up/down need not be configured in any special way.
+Note the RPi does remember the resistor pull setting thru power down.
+It is best to not fiddle with these.
+
+See:  doc/rpixel.text  User Guide for GPIO pin connections to FPGA.
+
+See:  src/rpixel.cpp  for GPIO pins used by this program.
+
+
+=head2			Essential Operation
+
+1)  Flush fifo:  By reading 10000 samples in a tight loop, ignoring the
+NoData signal.
+The last sample is checked and a Warning issued if the fifo was not empty
+(NoData=0).
+
+2)  Find first coefficient:  Discard samples until coefficient 0 is found.
+
+3)  Collect the dataset in memory:  The number of samples in the dataset is
+defined as ( --npix pixels * 16 coefficients/pixel * 4 samples/coeff ).
+This inner loop repeatedly reads the GPIO pins, discarding invalid samples
+where NoData=1.  Valid samples are stored in a memory array as raw 12-bit
+values.  There are
+no other IO operations in this loop, thus avoiding potential process blocking
+on IO.
+This step is timed in nano-seconds (ns) using the Linux CLOCK_MONOTONIC_RAW
+timer (see clock_gettime(3)).
+
+4)  Output statistics on stderr.
+
+5)  Repeat loop:  Steps 1 to 4 are repeated --repeat=M times.  The memory
+array contents are overwritten each time, so only the last repetition is
+available for output.  This is primarily used to let the rpixel process
+settle down (perhaps for more efficient running with shorter process sleeps)
+and to see statistics from each repetition.
+
+6)  Output data on stdout:  The memory data is formatted and output for each
+output form option.  The memory is not cleared, so the same data can be
+output in multiple forms.
+
+
+=head1		OPTIONS
+
+=over 8
+
+=item B<--csv>              - Output CSV format.
+
+=item B<--tab>              - Output tabular format.
+
+
+=item B<--help>             - Show command usage and exit.
+
+=item B<--man>              - Show manpage and exit.
+
+=back
+
+
+=head1		RETURN VALUE
+
+0= success, otherwise errors
+
+
+=head1		EXAMPLES
+
+ Just show statistics for 2000 pixels repeated 3 times.
+ % rpixel --npix=2000  --repeat=3
+
+ Output tabular data.
+ % rpixel --tab
+
+ Output CSV data for 2000 pixels.
+ % rpixel --csv  --npix=2000
+
+ Stream pixels to CSV output in chunks of 10 pixels.
+ Note number of pixels can be arbitrarily large.
+ % rpixel --stream=10  --npix=2000000
+
+ Output raw data with flag field in octal.  Useful for debug.
+ % rpixel --flag
+
+ Output the collected memory image in multiple formats.
+ % rpixel --tab --csv --flag
+
+ Save raw data to a file for later loading, and output CSV format.
+ % rpixel --save=outfile.raw  --csv
+
+ Load raw data and output it as CSV format.
+ % rpixel --load=infile.raw  --csv
+
+=head1		ENVIRONMENT
+
+none
+
+
+=head1		FILES
+
+ /dev/gpiomem	Kernel memory map for parallel GPIO pins.
+    Allows access for normal users belonging to group 'gpio'.
+
+=head1		SEE ALSO
+
+In the source directory tree:
+
+ doc/rpixel.text	User Guide.
+ src/rpixel.cpp		Main program, table of GPIO pins used.
+ bin/rpixel_init	Initialize Raspberry Pi gpio for use with rpixel.
+
+B<clock_gettime>(3)
+
+=cut
+

@@ -12,6 +12,7 @@ OJ         = ../obj
 INCS       = \
         Error.h \
         yOption.h \
+        yMan.h \
         yRpiGpio.h \
         yBuffStat.h \
         yFramDat.h \
@@ -21,6 +22,7 @@ INCS       = \
 OBJS       = \
 	$(OJ)/Error.o \
 	$(OJ)/yOption.o \
+	$(OJ)/yMan.o \
 	$(OJ)/yRpiGpio.o \
 	$(OJ)/yBuffStat.o \
 	$(OJ)/yFramDat.o \
@@ -80,4 +82,7 @@ $(OJ)/Error.o:		Error.cpp  Error.h
 
 $(OJ)/yOption.o:	yOption.cpp  yOption.h  Error.h
 	g++ $(CXXFLAGS) -o $@  -c yOption.cpp
+
+$(OJ)/yMan.o:		yMan.cpp  yMan.h
+	g++ $(CXXFLAGS) -o $@  -c yMan.cpp
 

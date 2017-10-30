@@ -25,6 +25,8 @@ yCoeffItr.cpp	Coefficient Data Iterator class.
 yCoeffItr.h
 yFramDat.cpp	Frame Data base class.
 yFramDat.h
+yMan.cpp	Manpage Display class.
+yMan.h
 yOption.cpp	Option parsing base class.
 yOption.h
 yRpiGpio.cpp	Raspberry Pi GPIO base class.

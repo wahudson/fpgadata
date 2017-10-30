@@ -208,6 +208,9 @@ Classes:
 
     yOption::	Option parsing helpers, used by main() program.
 
+    yMan::	Manpage Display class.  Used by option --man.
+
+
     yRpiGpio::	Raspberry Pi GPIO base class.
 		Opens "/dev/gpiomem" and runs mmap() to map gpio peripheral
 		IO memory to the user process.
@@ -251,6 +254,69 @@ Debug:
 
 
 ----------------------------------------------------------------------------
-## yRpiGpio -- Raspberry Pi GPIO base class
+## Manpages and Documentation
 ----------------------------------------------------------------------------
+
+The idea is to keep manpages and documentation close to the source code,
+so they are more likely to be updated as the code changes.  It is also
+helpful to have appropriate places to capture thoughts as they occur.
+
+--help
+    Command line help.  Usually just the command synopsis.
+    This is embedded in the main C-program file closest to the option parsing,
+    and thus most likely correct.
+
+--man
+    Command line manpage.
+    Intended to find the manpage that goes with the version of the currently
+    executing program.  Most helpful in an environment where there are
+    multiple versions of the same program.
+    Is not just a user convinence feature.
+
+Manpage
+    Gives details about the use and operation of the program.  Is the primary
+    user documentation and thus can be large and well structured.
+    I like Perl POD (Plain Old Documentation) to provide simple source
+    formatting, and use 'pod2man' to generate the actual manpage.
+
+User Guide - doc/rpixel.text
+    A place to put even more detail about each program.
+    It also covers how the collection of programs are used together.
+
+Developer Guide - doc/architecture.text
+    Explain how the internals work.
+    Capture thoughts about alternative methods and future features.
+
+Issues log - doc/Issues.text
+    Record notes about issues and defects noted in the programs.
+
+
+----------------------------------------------------------------------------
+## yRpiGpio::  Raspberry Pi GPIO base class
+----------------------------------------------------------------------------
+
+----------------------------------------------------------------------------
+## yMan::  Manpage Display class
+----------------------------------------------------------------------------
+
+    Methods to show a man page for this executing program.
+
+    This class mostly provides encapsulation for the show_manpage() function.
+    It is structured as an instance method, though there is no object data.
+    Future enhancements might add a TESTMODE or Debug to show the 'pod2man'
+    command as an aid for user debug.
+
+    The idea is to have the manpage source be a Perl POD file and use
+    'pod2man' to generate the actual manpage.  The file is placed beside
+    the program executable as an easy method for locating it.
+
+    Perl programs have $0, which is the full path to the program file,
+    which often contains the embedded POD text.
+
+    In C-programs, argv[0] is the program name, but may not have the full
+    path to the executable.  One solution is to use a Perl wrapper script.
+
+    Here we use the Linux /proc/self/exe, which is a symbolic link containing
+    the actual pathname of the executed command.  The suffix ".pod" is
+    appended to form the actual POD file name.
 

@@ -13,6 +13,7 @@ using namespace std;
 
 #include "Error.h"
 #include "yOption.h"
+#include "yMan.h"
 #include "yRpiGpio.h"
 #include "yFramDat.h"
 #include "yCoeffItr.h"
@@ -90,6 +91,7 @@ class yOptLong : public yOption {
     bool		verbose;
     bool		debug;
     bool		TESTOP;
+    bool		man;
 
   public:	// data values
 
@@ -135,6 +137,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     verbose     = 0;
     debug       = 0;
     TESTOP      = 0;
+    man         = 0;
 
     npix_n      = 64;
     stream_n    = 0;		// default must be no streaming
@@ -169,6 +172,7 @@ yOptLong::parse_options()
 	else if ( is( "-v"           )) { verbose    = 1; }
 	else if ( is( "--debug"      )) { debug      = 1; }
 	else if ( is( "--TESTOP"     )) { TESTOP     = 1; }
+	else if ( is( "--man"        )) { man        = 1; }
 	else if ( is( "--help"       )) { this->print_usage();  exit( 0 ); }
 	else if ( is( "-"            )) {                break; }
 	else if ( is( "--"           )) { this->next();  break; }
@@ -266,6 +270,7 @@ yOptLong::print_usage()
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
     "    --help              show this usage\n"
+    "    --man               show manpage and exit\n"
     "    -v, --verbose       verbose output\n"
     "    --debug             debug output\n"
     "  (options with GNU= only)\n"
@@ -297,6 +302,12 @@ main( int	argc,
 	if ( Opx.TESTOP ) {
 	    Opx.print_option_flags();
 	    return ( Error::err() ? 1 : 0 );
+	}
+
+	if ( Opx.man ) {
+	    yMan		Manx;
+	    Manx.show_manpage( Opx.ProgName );
+	    return ( 0 );
 	}
 
 	yFramDat		Fdx  ( 10 );	// constructor
@@ -569,7 +580,7 @@ main( int	argc,
 	}
     }
     catch ( std::exception& e ) {
-        Error::err( "exception:  ", e.what() );
+	Error::err( e.what() );
     }
     catch (...) {
         Error::err( "unexpected exception" );
