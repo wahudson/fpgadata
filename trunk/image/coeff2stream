@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # 2017-09-03  William A. Hudson
 
-# rpix_stream -- Convert rpixel coefficient data into an data stream for
+# coeff2stream -- Convert rpixel coefficient data into a data stream for
 # 'simage' display.
 #
 # Maintenance comments:  #!!
@@ -74,6 +74,8 @@ sub print_usage
     my $op_yrise        = undef;
     my $op_yfall        = undef;
 
+    my $op_palette      = "";
+
     Getopt::Long::Configure(
 	'posix_default',
     #	'bundling',		# enable -rN, require --word
@@ -94,6 +96,8 @@ sub print_usage
 	"--yrise"        => \$op_yrise,
 	"--yfall"        => \$op_yfall,
 
+	"--palette=s"    => \$op_palette,
+
 	"--verbose|v"    => \$op_verbose,
 	"--debug"        => \$op_debug,
 	"--TESTOP"       => \$op_TESTOP,
@@ -104,6 +108,7 @@ sub print_usage
 	# Do not show usage longer than 5 lines, let user see argument error.
     };
 
+#    print( "ToolDir= $ToolDir\n" );
 #    print( "ProgFile= $ProgFile\n" );
 #    print( "ProgName= $ProgName\n" );
 
@@ -134,6 +139,10 @@ sub print_usage
     my $x_edge = ( $op_xrise ) ? +1 : -1;
     my $y_edge = ( $op_yrise ) ? +1 : -1;
 
+    unless ( $op_palette ) {
+	$op_palette = "${ToolDir}/palette/cubeYF.rgb";
+    }
+
     last  if ( Error() );
 
     if ( $op_TESTOP ) {
@@ -142,6 +151,30 @@ sub print_usage
 	print( "--offset       = $op_offset\n" );
 	print( "x_edge         = $x_edge\n"    );
 	print( "y_edge         = $y_edge\n"    );
+	print( "--palette      = $op_palette\n" );
+	last;
+    }
+
+## Load color palette
+
+    open( my $pfh, "<", $op_palette ) || do {
+	Error( "cannot read palette file:  $op_palette\n" );
+	last;
+    };
+
+    my @Cmap;		# color map, index by 0..255 gray scale
+    while ( <$pfh> )
+    {
+	chomp( $_ );
+	# next  if ( m/^\s*#/ );	#!! ignore comments
+	next  if ( m/^\s*$/ );	# ignore blank lines
+	push( @Cmap, $_ );
+    }
+
+    unless ( scalar( @Cmap ) == 256 ) {
+	Error( "require 256 entries in palette file:  $op_palette\n",
+	       "    have only ", scalar( @Cmap ), "\n"
+	);
 	last;
     }
 
@@ -186,7 +219,7 @@ sub print_usage
 	    if ( $rc > 255 ) { $rc = 255 }
 	    if ( $rc <   0 ) { $rc =   0 }
 
-	    printf( STDOUT  ",#%02x0000", $rc );
+	    print( STDOUT  ",", $Cmap[$rc] );
 	}
 	print( STDOUT  "\n" );
 
@@ -262,11 +295,11 @@ __END__
 
 =head1		NAME
 
-rpix_stream -- Convert rpixel coefficient data into an image data stream
+coeff2stream -- Convert rpixel coefficient data into an image data stream
 
 =head1		SYNOPSIS
 
- rpix_stream  [options]
+ coeff2stream  [options]
     --coeff=N,N,N,..  coefficient numbers to image
     --scale=1.0       scale factor multiply coeff
     --offset=0.0      offset;   color = (coeff * scale) + offset
@@ -276,6 +309,7 @@ rpix_stream -- Convert rpixel coefficient data into an image data stream
     --yrise           Ym rising edge
     --yfall           Ym falling edge (default)
   options:
+    --palette=FILE    rgb palette file in #rrggbb format
     --debug           show debug output on stderr
     --help            show command usage and exit
     --man             show man page and exit
@@ -318,8 +352,8 @@ where scale and offset are provided by options --scale and --offset.
 Default values --scale=1.0 and --offset=0.0 leave the value unchanged.
 
 The intensity is then clipped - any value above 255 is set to 255, and
-any value below zero is set to 0.  It is then applied to the Red channel
-and output in X11 RGB hexadecimal format.
+any value below zero is set to 0.  It is then mapped into an rgb color
+using the palette file.
 
 Both input and output are in CSV (comma seperated value) format.
 The input column "index" is ignored.  The input columns "Ym" and "Xm" are
@@ -361,6 +395,12 @@ Select which edge of the X input scan mark for output as Xs.
 
 Select which edge of the Y input scan mark for output as Ys.
 
+=item B<--palette=FILE>     - RGB palette file in #rrggbb format.
+
+One color entry per line.  Ordered in a linear scale 0 to 256.
+Requre 256 entries for 8-bit color.
+Colors can be any X11 color names - See X(7) COLOR NAMES.
+
 =item B<--help>             - Show command usage and exit.
 
 =item B<--man>              - Show man page and exit.
@@ -378,13 +418,16 @@ Prints the manual page and exits.
 =head1		EXAMPLES
 
  Generate data for coefficients c0, c1, c8, c9.
- % rpix_stream  --coeff=0,1,8,9  < in.csv
+ % coeff2stream  --coeff=0,1,8,9  < in.csv
 
  Reset scan on rising edge for both X and Y scan marks.
- % rpix_stream  --coeff=3,4  --xrise --yrise  < in.csv
+ % coeff2stream  --coeff=3,4  --xrise --yrise  < in.csv
 
  Compute color value as (coeff * 0.2) + 200
- % rpix_stream  --scale=0.2 --offset=200  < in.csv
+ % coeff2stream  --scale=0.2 --offset=200  < in.csv
+
+ Specify an alternate color map palette.
+ % coeff2stream  --palette=./mymap.rgb  < in.csv
 
 
 =head1		ENVIRONMENT
@@ -401,9 +444,14 @@ By default, less(1) is used.  If PAGER='', stdout is written with no paging.
 
 =head1		FILES
 
-none
+In the source directory tree:
+
+ palette/cubeYF.rgb	Default color palette.  Derived from
+    https://mycarta.wordpress.com/2013/03/06/perceptual-rainbow-palette-the-goodies/
 
 =head1		SEE ALSO
+
+B<X>(7)  X Window System
 
 =cut
 
