@@ -1,0 +1,409 @@
+#!/usr/bin/perl -w
+# 2017-09-03  William A. Hudson
+
+# rpix_stream -- Convert rpixel coefficient data into an data stream for
+# 'simage' display.
+#
+# Maintenance comments:  #!!
+#---------------------------------------------------------------------------
+
+use strict;
+
+use Getopt::Long  ();
+use Pod::Usage    ( 'pod2usage' );
+
+use FindBin qw($RealBin);
+
+our $ToolDir;
+BEGIN
+{
+    $ToolDir = $RealBin;
+}
+
+use lib "$ToolDir";		# Libraries from this tool installation.
+
+our $ProgFile = $0;	# this program
+our $ProgName = $0;
+    $ProgName =~ s:^.*/:: ;
+
+#---------------------------------------------------------------------------
+## Main program usage
+#---------------------------------------------------------------------------
+
+# Print program usage.
+#    May show configuration defaults.
+# call:
+#    print_usage()
+# return:
+#    ()  = unused
+#    Does NOT exit, let main program decide that.
+#
+sub print_usage
+{
+    pod2usage( {
+	-message => "Convert rpixel coefficient data into an image data stream",
+	-exitval => "NOEXIT",
+	-verbose => 0,
+    } );
+
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Main program
+#---------------------------------------------------------------------------
+
+{
+    select( STDOUT );  $| = 1;	# autoflush
+    select( STDERR );  $| = 1;
+    # Leave STDERR selected to protect data stream.
+
+## Option processing.
+
+    my $op_verbose      = 0;
+    my $op_debug        = 0;
+    my $op_TESTOP       = 0;
+
+    my $op_coeff        = 0;
+    my $op_scale        = 1;
+    my $op_offset       = 0;
+
+    my $op_xrise        = undef;
+    my $op_xfall        = undef;
+    my $op_yrise        = undef;
+    my $op_yfall        = undef;
+
+    Getopt::Long::Configure(
+	'posix_default',
+    #	'bundling',		# enable -rN, require --word
+    #	'bundling_override',	# good for -r3, clash --vx -v -x
+	'no_ignore_case',
+    );
+
+    Getopt::Long::GetOptions(
+	"--help"         => sub { print_usage();      exit( 0 ) },
+	"--man"          => sub { do_man();           exit( 0 ) },
+
+	"--coeff=s"      => \$op_coeff,
+	"--scale=f"      => \$op_scale,
+	"--offset=f"     => \$op_offset,
+
+	"--xrise"        => \$op_xrise,
+	"--xfall"        => \$op_xfall,
+	"--yrise"        => \$op_yrise,
+	"--yfall"        => \$op_yfall,
+
+	"--verbose|v"    => \$op_verbose,
+	"--debug"        => \$op_debug,
+	"--TESTOP"       => \$op_TESTOP,
+
+    ) || do {	# GetOptions() returns false on errors in option parsing.
+	Error( "Type '$ProgName --help' for usage.\n" );
+	exit( 2 );
+	# Do not show usage longer than 5 lines, let user see argument error.
+    };
+
+#    print( "ProgFile= $ProgFile\n" );
+#    print( "ProgName= $ProgName\n" );
+
+
+    if ( @ARGV ) {
+	Error( "extra arguments:  $ARGV[0]\n" );
+    }
+
+    my @op_coeff = split( ",", $op_coeff );
+
+    foreach my $ic ( @op_coeff )
+    {
+	unless ( (0 <= $ic) && ($ic <= 15) ) {
+	    Error( "out of range 0..15:  --coeff=$ic\n" );
+	}
+    }
+
+    if ( defined( $op_xrise ) && defined( $op_xfall ) ) {
+	Error( "use one of --xrise or --xfall\n" );
+    }
+
+    if ( defined( $op_yrise ) && defined( $op_yfall ) ) {
+	Error( "use one of --yrise or --yfall\n" );
+    }
+
+    # sync edge is (new_level - old_level), default is falling
+    #     +1 = rising, -1 = falling
+    my $x_edge = ( $op_xrise ) ? +1 : -1;
+    my $y_edge = ( $op_yrise ) ? +1 : -1;
+
+    last  if ( Error() );
+
+    if ( $op_TESTOP ) {
+	print( "--coeff        = $op_coeff\n" );
+	print( "--scale        = $op_scale\n" );
+	print( "--offset       = $op_offset\n" );
+	print( "x_edge         = $x_edge\n"    );
+	print( "y_edge         = $y_edge\n"    );
+	last;
+    }
+
+## Main Loop
+
+    my $xmold = 0;
+    my $ymold = 0;
+
+    my $header = <STDIN>;
+    unless ( $header =~ m/^index,Ym,Xm,/ ) {
+	Error( "unexpected header line:\n",
+	    "    have:  $header",
+	    "    want:  index,Ym,Xm,...\n"
+	);
+    }
+
+    print( STDOUT  "Ys,Xs" );		# Header
+    foreach my $ic ( @op_coeff )
+    {
+	printf( STDOUT  ",c${ic}" );
+    }
+    print( STDOUT  "\n" );
+
+    while ( <STDIN> )
+    {
+	chomp();
+	next  if ( m/^\s*$/ );
+	my( $index, $ym, $xm, @coeff ) = split( ',', $_ );
+
+	my $xs = ( ($xm - $xmold) == $x_edge ) ? 1 : 0;
+	my $ys = ( ($ym - $ymold) == $y_edge ) ? 1 : 0;
+
+	$xmold = $xm;
+	$ymold = $ym;
+
+	print( STDOUT  "$ys,$xs" );
+
+	foreach my $ic ( @op_coeff )
+	{
+	    my $rc = $coeff[$ic];
+	    $rc = ($rc * $op_scale) + $op_offset;
+	    if ( $rc > 255 ) { $rc = 255 }
+	    if ( $rc <   0 ) { $rc =   0 }
+
+	    printf( STDOUT  ",#%02x0000", $rc );
+	}
+	print( STDOUT  "\n" );
+
+	if ( $op_debug ) {
+	    my $ii = $op_coeff[0];
+	    printf( STDERR "$index  $ym,$xm  %6d\n", $coeff[$ii] );
+	}
+	# Show origanal coeff, first one only.
+
+    }
+
+}
+
+exit( (Error()) ? 1 : 0 );
+
+
+#---------------------------------------------------------------------------
+## functions
+#---------------------------------------------------------------------------
+
+# Show man page.
+#
+sub do_man
+{
+    my $pager = $ENV{'PAGER'} || "less";
+
+    open( STDOUT, "| $pager" );
+
+    {
+	unless ( -r $ProgFile ) {   # message embedded in output
+	    print( "Error:  file not found:  $ProgFile\n\n" );
+	    last;
+	}
+
+#	system( "pod2text -s < $ProgFile" );
+	system( "pod2man -s 1 -n $ProgName --center='User Contrib' $ProgFile | nroff -man" );
+    }
+
+    close( STDOUT );
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Error Handling
+#---------------------------------------------------------------------------
+
+our $Error_cnt = 0;	# (private)
+
+# Error message reporting.
+# call:
+#    Error( @text )	Print error message, increment error count.
+#    Error()		Get error count.
+# return:
+#    ()  = Error count, false if no errors were recorded.
+#
+sub Error
+{
+    if ( @_ ) {
+	warn( "Error:  ", @_ );
+	$Error_cnt ++;
+    }
+    return( $Error_cnt );
+}
+
+
+__END__
+
+#---------------------------------------------------------------------------
+## Man page
+#---------------------------------------------------------------------------
+# See also:  perlpod(1)  perlpodstyle(1)
+
+=head1		NAME
+
+rpix_stream -- Convert rpixel coefficient data into an image data stream
+
+=head1		SYNOPSIS
+
+ rpix_stream  [options]
+    --coeff=N,N,N,..  coefficient numbers to image
+    --scale=1.0       scale factor multiply coeff
+    --offset=0.0      offset;   color = (coeff * scale) + offset
+                  sweep reset on scan mark edge
+    --xrise           Xm rising edge
+    --xfall           Xm falling edge (default)
+    --yrise           Ym rising edge
+    --yfall           Ym falling edge (default)
+  options:
+    --debug           show debug output on stderr
+    --help            show command usage and exit
+    --man             show man page and exit
+
+
+=head1		DESCRIPTION
+
+The idea is to process a series of coefficient data points into a stream
+of image pixel data.  
+Intended to operate as a filter between 'rpixel' and 'simage'.
+There are two transformations to manage:
+
+1) Coefficient data transform into RGB pixel value.
+
+2) Scan marks transform into Xloc and Yloc scan reset points.
+
+ Input:  (stdin)
+ index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
+ 0,1,0,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
+ 1,0,1,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
+
+ Output:  (stdout)
+ Ys,Xs,c0,c1,c2
+ 1,0,#0f0000,#000000,#ff0000
+ 0,1,#0f0000,#000000,#ff0000
+
+Input Xm,Ym are the raw scan mark signals from the physical scanning system.
+Options select which edge to use for sweep reset in the image scanning.
+This allows the input pulse to be of any duration, since only the edge is used.
+
+Output Xs,Ys are 1 only on the pixel where the sweep should reset to the
+left edge (Xs) or top edge (Ys) of the image, otherwise 0.
+
+Coefficient values are expected to be signed integers.
+They are transformed into unsigned 8-bit intensity values by the equation
+
+    intensity = (coeff * scale) + offset
+
+where scale and offset are provided by options --scale and --offset.
+Default values --scale=1.0 and --offset=0.0 leave the value unchanged.
+
+The intensity is then clipped - any value above 255 is set to 255, and
+any value below zero is set to 0.  It is then applied to the Red channel
+and output in X11 RGB hexadecimal format.
+
+Both input and output are in CSV (comma seperated value) format.
+The input column "index" is ignored.  The input columns "Ym" and "Xm" are
+the scan mark signals.  The coefficient heading names "c0", etc. are
+transferred to the output, and can be any names since they are selected
+by column position with option --coeff.
+
+It is intended the user customize this program (or a copy) to create the
+desired data visualization as an image (please change this man page
+accordingly).
+
+
+=head1		OPTIONS
+
+=over 8
+
+=item B<--coeff=N,N,N,..>   - Coefficient numbers to image.
+
+Select these coefficient numbers to ouput image data.
+The numbers are coefficient column numbers, not heading names.
+e.g. 0 is "c0" in the above example input.
+
+
+=item B<--scale=1.0>        - Scale factor multiplies coefficient.
+
+=item B<--offset=0.0>       - Offset factor added.
+
+intensity = (coeff * scale) + offset
+
+=item B<--xrise>            - Xm rising edge
+
+=item B<--xfall>            - Xm falling edge (default)
+
+Select which edge of the X input scan mark for output as Xs.
+
+=item B<--yrise>            - Ym rising edge
+
+=item B<--yfall>            - Ym falling edge (default)
+
+Select which edge of the Y input scan mark for output as Ys.
+
+=item B<--help>             - Show command usage and exit.
+
+=item B<--man>              - Show man page and exit.
+
+Prints the manual page and exits.
+
+=back
+
+
+=head1		RETURN VALUE
+
+0= success, otherwise errors
+
+
+=head1		EXAMPLES
+
+ Generate data for coefficients c0, c1, c8, c9.
+ % rpix_stream  --coeff=0,1,8,9  < in.csv
+
+ Reset scan on rising edge for both X and Y scan marks.
+ % rpix_stream  --coeff=3,4  --xrise --yrise  < in.csv
+
+ Compute color value as (coeff * 0.2) + 200
+ % rpix_stream  --scale=0.2 --offset=200  < in.csv
+
+
+=head1		ENVIRONMENT
+
+=over 8
+
+=item B<PAGER>
+
+Value defines an output filter used to display manual pages.
+By default, less(1) is used.  If PAGER='', stdout is written with no paging.
+
+=back
+
+
+=head1		FILES
+
+none
+
+=head1		SEE ALSO
+
+=cut
+
