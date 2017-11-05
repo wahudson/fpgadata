@@ -111,9 +111,13 @@ Configure RPi pin modes:  (after each power-up)
     --      -- --         -   -   .         29  +3.3V    .  red    FPGA
     --      -- --         -   -   .         30  GND      .  white  FPGA
 
+    --      -- --         -   -   .         39  GPIO[34] .  brown  FPGA-in FrameGate
+
     --      -- --         -   -   .         10  GPIO[9]  .  Dead Vol=1.2V
     --      -- --         -   -   .         11  +5V      .  FPGA
 
+
+FrameGate   is the Shutter Enable signal from ScanImage.
 
 ----------------------------------------------------------------------------
 ##(2017-07-30)  Live Update Plots

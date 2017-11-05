@@ -269,20 +269,24 @@ simage -- Stream data into an image display.
 Stream data into an image display.  The data stream is one pixel per line,
 usually from an FPGA to RaspberryPi program.
 
-Output is a PerlTk window with the image displayed.
+Output is a PerlTk window with one or more images displayed.
 Intended to build the image in real time as data comes in.
 
  Input:  (stdin)
  Ys,Xs,c0,c1,c2
  1,0,#0f0000,#000000,#ff0000
  0,1,#0f0000,#000000,#ff0000
+ ...
 
 Input data is in CSV format.
-The image columns (c0,c1,..) are in X11 RGB color format "#rrggbb", and
-one image will be produced for each column.
+Each input line is one pixel containing sync marks (Ys,Xs) and pixel colors
+for multiple image columns (c0,c1,..).
+Pixel colors are in X11 RGB color format "#rrggbb", and one image will be
+produced for each column.
 
 Input Xs,Ys should be 1 only on the pixel where the sweep should reset to
 the left edge (Xs) or top edge (Ys) of the image, otherwise 0.
+Scanning is assumed to be X-direction fastest.
 
 =head1		OPTIONS
 
@@ -309,6 +313,64 @@ Prints the manual page and exits.
 
 
 =head1		EXAMPLES
+
+ Display images for input data.
+ % simage < in.data
+
+ Disable auto wrapping of scan lines, --nx is ignored.
+ % simage --wrap=0
+
+ Show default options.  Is a hidden test option.
+ % simage --TESTOP
+
+ Typical processing pipeline.
+ % rpixel --csv | coeff2stream | simage
+
+
+=head1		TOUBLESHOOTING
+
+=head2			No Ys,Xs sync marks in input stream.
+
+This results in only one scan line at the top of the image.
+Inspect the input stream.  Search for ",1," to find Xs sync marks.
+
+Without scan marks use --wrap=1, and --nx=N to specify the number of pixels
+per line.
+Note --nx must match the actual number of pixels per line, or the image
+will look skewed.
+
+=head2			Xs/Ys switched
+
+Scanning expects the X-direction to sweep faster than the Y-direction.
+When Xs and Ys are reversed, the Y-direction is reset multiple times
+for one X-direction sweep.  This results in all the scan lines being piled
+on top of each other at the top of the image.
+
+=head2			Horizontal lines in the image
+
+This can occur when both --wrap=1 and scan marks Xs,Ys are applied, and the
+scan line is longer than --nx.  For example, when a 257 pixel line is input
+with --nx=256 there is one X-direction reset at pixel 256 (due to --wrap=1),
+followed by 1 pixel on the next line which is then reset by Xs.  This gives
+a background colored line in the image.
+
+If every line is longer than --nx, then the number of scan lines in the
+image is effectively doubled, with every other line having partial data.
+
+With --wrap=0, the extra pixels are discarded beyond the right edge of the
+image.
+
+When the scan line is shorter than --nx, the remaining pixels assume the
+previous color in that location, usually the background color.
+
+
+=head1		BUGS
+
+There is no check for number of pixels in each scan line.
+
+When the Y-direction is reset, the new pixels overwrite the exising pixels
+in the image.  If the new scan line is shorter, then the remaing old pixels
+may be misleading in the image.
 
 
 =head1		ENVIRONMENT
