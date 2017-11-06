@@ -140,7 +140,11 @@ sub print_usage
     my $y_edge = ( $op_yrise ) ? +1 : -1;
 
     unless ( $op_palette ) {
-	$op_palette = "${ToolDir}/palette/cubeYF.rgb";
+	$op_palette = "cubeYF.rgb";
+    }
+
+    if ( $op_palette !~ m:/: ) {
+	$op_palette = "${ToolDir}/palette/" . $op_palette;
     }
 
     last  if ( Error() );
@@ -309,7 +313,7 @@ coeff2stream -- Convert rpixel coefficient data into an image data stream
     --yrise           Ym rising edge
     --yfall           Ym falling edge (default)
   options:
-    --palette=FILE    rgb palette file in #rrggbb format
+    --palette=FILE    rgb palette file in X11 color format
     --debug           show debug output on stderr
     --help            show command usage and exit
     --man             show man page and exit
@@ -395,11 +399,16 @@ Select which edge of the X input scan mark for output as Xs.
 
 Select which edge of the Y input scan mark for output as Ys.
 
-=item B<--palette=FILE>     - RGB palette file in #rrggbb format.
+=item B<--palette=FILE>     - RGB palette file in X11 color format.
 
-One color entry per line.  Ordered in a linear scale 0 to 256.
-Requre 256 entries for 8-bit color.
+A FILE without a path component is found in the installation image/palette/
+directory.  Use ./file to specify the current directory.
+
+The file should have one color entry per line, ordered in a linear
+scale 0 to 255.
 Colors can be any X11 color names - See X(7) COLOR NAMES.
+Typically use "rgb:hh/hh/hh", where 'hh' are hexadecimal digits specifying
+an intensity for red/green/blue color.
 
 =item B<--help>             - Show command usage and exit.
 
@@ -429,6 +438,8 @@ Prints the manual page and exits.
  Specify an alternate color map palette.
  % coeff2stream  --palette=./mymap.rgb  < in.csv
 
+ Show default options.  Is a hidden test option.
+ % coeff2stream --TESTOP
 
 =head1		ENVIRONMENT
 
@@ -445,9 +456,9 @@ By default, less(1) is used.  If PAGER='', stdout is written with no paging.
 =head1		FILES
 
 In the source directory tree:
-
- palette/cubeYF.rgb	Default color palette.  Derived from
-    https://mycarta.wordpress.com/2013/03/06/perceptual-rainbow-palette-the-goodies/
+ image/palette/     Directory of palette files.
+     cubeYF.rgb         Default color palette.  Derived from
+         https://mycarta.wordpress.com/2013/03/06/perceptual-rainbow-palette-the-goodies/
 
 =head1		SEE ALSO
 
