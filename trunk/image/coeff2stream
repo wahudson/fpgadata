@@ -140,7 +140,7 @@ sub print_usage
     my $y_edge = ( $op_yrise ) ? +1 : -1;
 
     unless ( $op_palette ) {
-	$op_palette = "cubeYF.rgb";
+	$op_palette = "cubeYF_clip.rgb";
     }
 
     if ( $op_palette !~ m:/: ) {
@@ -456,9 +456,11 @@ By default, less(1) is used.  If PAGER='', stdout is written with no paging.
 =head1		FILES
 
 In the source directory tree:
+
  image/palette/     Directory of palette files.
-     cubeYF.rgb         Default color palette.  Derived from
+     cubeYF.rgb         Violet to Yellow, derived from
          https://mycarta.wordpress.com/2013/03/06/perceptual-rainbow-palette-the-goodies/
+     cubeYF_clip.rgb    Clip limits index 0 Black, 255 White.  (Default)
 
 =head1		SEE ALSO
 
