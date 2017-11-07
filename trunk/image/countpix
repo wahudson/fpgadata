@@ -1,0 +1,296 @@
+#!/usr/bin/perl -w
+# 2017-11-03  William A. Hudson
+
+# countpix -- Count pixels on each scan line.
+#---------------------------------------------------------------------------
+
+use strict;
+
+use Getopt::Long  ();
+use Pod::Usage    ( 'pod2usage' );
+
+use FindBin qw($RealBin);
+
+our $ToolDir;
+BEGIN
+{
+    $ToolDir = $RealBin;
+}
+
+use lib "$ToolDir";		# Libraries from this tool installation.
+
+
+our $ProgFile = $0;	# this program
+our $ProgName = $0;
+    $ProgName =~ s:^.*/:: ;
+
+#---------------------------------------------------------------------------
+## Main program usage
+#---------------------------------------------------------------------------
+
+# Print program usage.
+#    May show configuration defaults.
+# call:
+#    print_usage()
+# return:
+#    ()  = unused
+#    Does NOT exit, let main program decide that.
+#
+sub print_usage
+{
+    pod2usage( {
+	-message => "Count pixels on each scan line",
+	-exitval => "NOEXIT",
+	-verbose => 0,
+    } );
+
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Main program
+#---------------------------------------------------------------------------
+
+{
+    select( STDOUT );  $| = 1;	# autoflush
+    select( STDERR );  $| = 1;
+    # Leave STDERR selected to protect data stream.
+
+## Option processing.
+
+    my $op_verbose      = 0;
+    my $op_TESTOP       = 0;
+    my $op_not          = 0;
+
+    Getopt::Long::Configure(
+	'posix_default',
+    #	'bundling',		# enable -rN, require --word
+    #	'bundling_override',	# good for -r3, clash --vx -v -x
+	'no_ignore_case',
+    );
+
+    Getopt::Long::GetOptions(
+	"--help"         => sub { print_usage();      exit( 0 ) },
+	"--man"          => sub { do_man();           exit( 0 ) },
+
+	"--not=i"        => \$op_not,
+	"--verbose|v"    => \$op_verbose,
+	"--TESTOP"       => \$op_TESTOP,
+
+#		# experimental:
+#	# 'bundling_override'  long options clash with bundle options -v -x
+#	"vx"             => sub { print( "Test vx =$_[0]:$_[1]=\n" ) },
+#	"--test=s"       => sub { print( "=$_[0]:$_[1]=\n" ); die("!FINISH") },
+#	"--stuf"         => sub { do_stuf();         die("!FINISH") },
+
+    ) || do {	# GetOptions() returns false on errors in option parsing.
+	Error( "Type '$ProgName --help' for usage.\n" );
+	exit( 2 );
+	# Do not show usage longer than 5 lines, let user see argument error.
+    };
+
+#    print( "ProgFile= $ProgFile\n" );
+#    print( "ProgName= $ProgName\n" );
+
+
+    if ( @ARGV ) {
+	Error( "extra arguments:  $ARGV[0]\n" );
+    }
+
+    last  if ( Error() );
+
+    if ( $op_TESTOP ) {
+	print( "--not          = $op_not\n" );
+	last;
+    }
+
+## Read data stream header.
+    my $want   = "Ys,Xs,";
+    my $header = <STDIN>;
+    last  unless( defined( $header ) );
+    chomp( $header );
+
+    unless ( $header =~ m/^$want/ ) {
+	Error( "unexpected header line:\n",
+	    "    have:  $header\n",
+	    "    want:  $want\n"
+	);
+	last;
+    }
+
+    my( $Ys, $Xs, @coeff_name ) = split( ',', $header );
+
+## Read data stream.
+
+    print( STDOUT  "  line  cnt\n" );		# header
+
+    my $lineno  = 0;		# scan line number
+    my $cnt     = 0;		# pixel count per line
+    while ( <> )
+    {
+	chomp( $_ );
+	my( $ys, $xs, @colors ) = split( ',', $_ );
+
+	$cnt++;
+
+	if ( $xs ) {
+	    if ( ($op_not == 0) or ( $op_not != $cnt ) ) {
+		printf( STDOUT  "%6i %4i\n", $lineno, $cnt );
+	    }
+	    $cnt = 0;
+	    $lineno++;
+	}
+    }
+
+}
+
+exit( (Error()) ? 1 : 0 );
+
+
+#---------------------------------------------------------------------------
+## functions
+#---------------------------------------------------------------------------
+
+# Show man page.
+#
+sub do_man
+{
+    my $pager = $ENV{'PAGER'} || "less";
+
+    open( STDOUT, "| $pager" );
+
+    {
+	unless ( -r $ProgFile ) {   # message embedded in output
+	    print( "Error:  file not found:  $ProgFile\n\n" );
+	    last;
+	}
+
+#	system( "pod2text -s < $ProgFile" );
+	system( "pod2man -s 1 -n $ProgName --center='User Contrib' $ProgFile | nroff -man" );
+    }
+
+    close( STDOUT );
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Error Handling
+#---------------------------------------------------------------------------
+
+our $Error_cnt = 0;	# (private)
+
+# Error message reporting.
+# call:
+#    Error( @text )	Print error message, increment error count.
+#    Error()		Get error count.
+# return:
+#    ()  = Error count, false if no errors were recorded.
+#
+sub Error
+{
+    if ( @_ ) {
+	warn( "Error:  ", @_ );
+	$Error_cnt ++;
+    }
+    return( $Error_cnt );
+}
+
+
+__END__
+
+#---------------------------------------------------------------------------
+## Man page
+#---------------------------------------------------------------------------
+# See also:  perlpod(1)  perlpodstyle(1)
+
+=head1		NAME
+
+countpix -- Count pixels on each scan line
+
+=head1		SYNOPSIS
+
+ countpix  [options]
+    --not=N           don't report lines of N pixels
+  options:
+    --help            show command usage and exit
+    --man             show man page and exit
+
+
+=head1		DESCRIPTION
+
+Count the number of pixels in each Xs scan line.
+Used to assess the uniformity of sync marks in the pixel stream.
+(i.e. Sync marks derived from analog comparators on galvo drive signals
+may have noise jitter.)
+
+ Input:  (stdin)
+ Ys,Xs,c0,c1,c2,..
+ 1,0,#0f0000,#000000,#ff0000
+ 0,1,#0f0000,#000000,#ff0000
+ ...
+
+Each input line is one pixel containing sync marks (Ys,Xs) and pixel colors
+for multiple images (c0,c1,..).  The image colors are ignored.
+
+Input Xs,Ys should be 1 only on the pixel where the sweep should reset to
+the left edge (Xs) or top edge (Ys) of the image, otherwise 0.
+
+ Output:  (stdout)
+  line  cnt
+     0   10	# first line may be short, since no Xs has occured
+     1  256
+     2  256
+   ...  ...
+    25  257
+
+
+=head1		OPTIONS
+
+=over 8
+
+=item B<--not=N>            - Don't report lines of N pixels.
+
+Use to ignore lines of a frequently occuring length.
+
+=item B<--help>             - Show command usage and exit.
+
+=item B<--man>              - Show man page and exit.
+
+Prints the manual page and exits.
+
+=back
+
+
+=head1		RETURN VALUE
+
+0= success, otherwise errors
+
+
+=head1		EXAMPLES
+
+ Typical processing pipeline.
+ % rpixel --csv | coeff2stream | countpix --not=256
+
+
+=head1		ENVIRONMENT
+
+=over 8
+
+=item B<PAGER>
+
+Value defines an output filter used to display manual pages.
+By default, less(1) is used.  If PAGER='', stdout is written with no paging.
+
+=back
+
+
+=head1		FILES
+
+none
+
+=head1		SEE ALSO
+
+=cut
+
