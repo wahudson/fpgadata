@@ -141,3 +141,40 @@ Run from wah laptop:
     Display is on laptop, rpixel running on RPi.
     Note ssh does not run user profile.
 
+
+----------------------------------------------------------------------------
+##(2017-11-06)  Live Update Images
+
+ssh:
+    Note ssh does not run users login .profile, and PATH is set to a default
+    determined by ssh.  Thus need to specify path to command.
+
+simage:
+    --npix=N controls how many input pixels are read in a batch before
+    returning control to Tk (the image plotting tool).  If --npix becomes too
+    large, then the image is not drawn until all data has been read, because
+    the repeat timer times out and relaunches another batch read.
+    This happens around --npix=500, and depends on number of images.
+
+    Making --npix small results in simage limiting the pipeline, possibly
+    causing rpixel fifo overflow.  With --npix=10, simage is clearly
+    limiting.
+
+    Note the linux pipe '|' appears to be pretty deep.
+
+
+Pipeline run from laptop, ssh to RPi:
+    Only rpixel runs on the RPi, the rest of pipeline runs on laptop.
+
+    ssh pi@192.168.1.3  \~/fpgadata_bin/rpixel --npix=120000 --stream=10 |
+	coeff2stream --scale=0.01 --offset=0 |
+	simage --npix=200
+
+    Idea is to make rpixel stream out as efficiently as possible on RPi.
+    Hopefully rpixel will not have any long sleeps as it streams stdout
+    over ssh, but of course network latency could result in blocking.
+
+Save large dataset on laptop:
+    ssh pi@192.168.1.3  \~/fpgadata_bin/rpixel --npix=256000 --stream=10 \
+	> y.csv  2> y.err
+
