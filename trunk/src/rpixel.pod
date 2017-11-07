@@ -26,6 +26,7 @@ rpixel -- FPGA data transfer on Raspberry Pi
   options:
     --npix=N            number of pixel to collect
     --repeat=N          repeat data read loop N times
+    --frame=0           align to frame mark, +1= rising, -1=falling
     --help              show this usage
     --man               show manpage and exit
  #  -v, --verbose       verbose output
@@ -70,14 +71,18 @@ See:  src/rpixel.cpp  for GPIO pins used by this program.
 
 =head2			Essential Operation
 
-1)  Flush fifo:  By reading 10000 samples in a tight loop, ignoring the
+1a)  Flush fifo:  By reading 10000 samples in a tight loop, ignoring the
 NoData signal.
 The last sample is checked and a Warning issued if the fifo was not empty
 (NoData=0).
 
-2)  Find first coefficient:  Discard samples until coefficient 0 is found.
+1b)  Find first frame mark:  Only if requested with --frame.
+Discard samples until MarkY makes a rising transition with --frame=+1, or
+falling with --frame=-1.
 
-3)  Collect the dataset in memory:  The number of samples in the dataset is
+1c)  Find first coefficient:  Discard samples until coefficient 0 is found.
+
+2)  Collect the dataset in memory:  The number of samples in the dataset is
 defined as ( --npix pixels * 16 coefficients/pixel * 4 samples/coeff ).
 This inner loop repeatedly reads the GPIO pins, discarding invalid samples
 where NoData=1.  Valid samples are stored in a memory array as raw 12-bit
@@ -87,15 +92,15 @@ on IO.
 This step is timed in nano-seconds (ns) using the Linux CLOCK_MONOTONIC_RAW
 timer (see clock_gettime(3)).
 
-4)  Output statistics on stderr.
+3)  Output statistics on stderr.
 
-5)  Repeat loop:  Steps 1 to 4 are repeated --repeat=M times.  The memory
+4)  Repeat loop:  Steps 1 to 3 are repeated --repeat=M times.  The memory
 array contents are overwritten each time, so only the last repetition is
 available for output.  This is primarily used to let the rpixel process
 settle down (perhaps for more efficient running with shorter process sleeps)
 and to see statistics from each repetition.
 
-6)  Output data on stdout:  The memory data is formatted and output for each
+5)  Output data on stdout:  The memory data is formatted and output for each
 output form option.  The memory is not cleared, so the same data can be
 output in multiple forms.
 
@@ -108,6 +113,11 @@ output in multiple forms.
 
 =item B<--tab>              - Output tabular format.
 
+=item B<--frame=0>          - Align to frame mark, +1= rising, -1=falling.
+
+Primary use is collect pixels in memory starting at begining of a frame.
+Requires the MarkY input signal.
+Default is --frame=0, disabled for when there are no scan mark input signals.
 
 =item B<--help>             - Show command usage and exit.
 
@@ -135,6 +145,9 @@ output in multiple forms.
  Stream pixels to CSV output in chunks of 10 pixels.
  Note number of pixels can be arbitrarily large.
  % rpixel --stream=10  --npix=2000000
+
+ Align data to falling edge of MarkY.
+ % rpixel --frame=-1  --csv
 
  Output raw data with flag field in octal.  Useful for debug.
  % rpixel --flag

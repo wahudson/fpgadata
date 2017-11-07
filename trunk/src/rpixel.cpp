@@ -37,7 +37,7 @@ using namespace std;
 #define COEFF_G		0x00f00000	// Coefficient nibble in data
 #define NODATA_G	0x08000000	// NODATA flag, 1= fifo empty
 #define OVFLOW_G	0x04000000	// OVFLOW flag, 1= fifo write_full
-// #define MARKY_G	0x02000000	// MarkY scan mark
+#define MARKY_G		0x02000000	// MarkY scan mark
 // #define MARKX_G	0x01000000	// MarkX scan mark
 #define READAK_G	0x00000040	// ReadAck fifo read aknowledge
 #define GOPIXEL_G	0x00000020	// GoPixel start one coefficient
@@ -76,7 +76,7 @@ class yOptLong : public yOption {
     const char*		npix;
     const char*		stream;
     const char*		repeat;
-    const char*		prefix;
+    const char*		frame;
     bool		csv;
     bool		tab;
     bool		tab2;
@@ -98,6 +98,7 @@ class yOptLong : public yOption {
     int			npix_n;			// number of pixels
     int			stream_n;		// number of pixels
     int			repeat_n;		// repeat loop
+    int			frame_n;		// MarkY edge
 
   public:
     yOptLong( int argc,  char* argv[] );	// constructor
@@ -122,7 +123,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     npix        = "";
     stream      = "";
     repeat      = "";
-    prefix      = "";
+    frame       = "";
     csv         = 0;
     tab         = 0;
     tab2        = 0;
@@ -142,6 +143,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     npix_n      = 64;
     stream_n    = 0;		// default must be no streaming
     repeat_n    = 1;
+    frame_n     = 0;		// 0= no frame align
 }
 
 
@@ -156,7 +158,7 @@ yOptLong::parse_options()
 	if      ( is( "--npix="      )) { npix       = this->val(); }
 	else if ( is( "--stream="    )) { stream     = this->val(); }
 	else if ( is( "--repeat="    )) { repeat     = this->val(); }
-	else if ( is( "--prefix="    )) { prefix     = this->val(); }
+	else if ( is( "--frame="     )) { frame      = this->val(); }
 	else if ( is( "--csv"        )) { csv        = 1; }
 	else if ( is( "--tab"        )) { tab        = 1; }
 	else if ( is( "--tab2"       )) { tab2       = 1; }
@@ -184,6 +186,7 @@ yOptLong::parse_options()
     string	npix_s    ( npix );
     string	stream_s  ( stream );
     string	repeat_s  ( repeat );
+    string	frame_s   ( frame  );
 
     if ( npix_s.length() ) {
 	npix_n = stoi( npix_s );
@@ -195,6 +198,15 @@ yOptLong::parse_options()
 
     if ( repeat_s.length() ) {
 	repeat_n = stoi( repeat_s );
+    }
+
+    if ( frame_s.length() ) {
+	frame_n = stoi( frame_s );
+	if ( ! ((frame_n ==  0) ||
+		(frame_n == -1) ||
+		(frame_n == +1) ) ) {
+	    Error::err( "--frame must be:  -1, 0, +1" );
+	}
     }
 
     if ( stream_n && ( csv || tab || tab2 ) ) {
@@ -220,7 +232,7 @@ yOptLong::print_option_flags()
     cout << "--npix        = " << npix         << endl;
     cout << "--stream      = " << stream       << endl;
     cout << "--repeat      = " << repeat       << endl;
-    cout << "--prefix      = " << prefix       << endl;
+    cout << "--frame       = " << frame        << endl;
     cout << "--csv         = " << csv          << endl;
     cout << "--tab         = " << tab          << endl;
     cout << "--tab2        = " << tab2         << endl;
@@ -242,6 +254,7 @@ yOptLong::print_option_flags()
     cout << "npix_n        = " << npix_n       << endl;
     cout << "stream_n      = " << stream_n     << endl;
     cout << "repeat_n      = " << repeat_n     << endl;
+    cout << "frame_n       = " << frame_n      << endl;
 }
 
 
@@ -269,6 +282,7 @@ yOptLong::print_usage()
     "  options:\n"
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
+    "    --frame=0           align to frame mark, +1= rising, -1=falling\n"
     "    --help              show this usage\n"
     "    --man               show manpage and exit\n"
     "    -v, --verbose       verbose output\n"
@@ -386,6 +400,35 @@ main( int	argc,
 	    if ( ! (ilevel & NODATA_G) ) {	// fifo not empty
 		cerr << "Warning:  nReset:  fifo not empty (NoData=0)" << endl;
 		// Warning, not fatal.
+	    }
+
+	    // Wait for first frame mark
+	    if ( Opx.frame_n ) {
+		int			y_mark = 0;	// current MarkY
+		int			y_old  = 0;	// old     MarkY
+
+		while ( 1 )
+		{
+		    ilevel = *gpio_read;	// Read GPIO level
+
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+
+		    *gpio_clr = READAK_G;
+
+		    if ( ilevel & NODATA_G ) {
+			continue;
+		    }
+
+		    y_mark = (ilevel & MARKY_G) ? 1 : 0;
+		    if ( (y_mark - y_old) == Opx.frame_n ) {
+			break;
+		    }
+		    y_old = y_mark;
+		}
 	    }
 
 	    // Find first coeff
