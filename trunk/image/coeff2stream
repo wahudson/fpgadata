@@ -75,6 +75,7 @@ sub print_usage
     my $op_yfall        = undef;
 
     my $op_palette      = "";
+    my $op_frame        = 0;
 
     Getopt::Long::Configure(
 	'posix_default',
@@ -97,6 +98,7 @@ sub print_usage
 	"--yfall"        => \$op_yfall,
 
 	"--palette=s"    => \$op_palette,
+	"--frame=i"      => \$op_frame,
 
 	"--verbose|v"    => \$op_verbose,
 	"--debug"        => \$op_debug,
@@ -147,6 +149,10 @@ sub print_usage
 	$op_palette = "${ToolDir}/palette/" . $op_palette;
     }
 
+    if ( $op_frame < 0 ) {
+	Error( "require (N >= 0) in:  --frame=$op_frame\n" );
+    }
+
     last  if ( Error() );
 
     if ( $op_TESTOP ) {
@@ -156,6 +162,7 @@ sub print_usage
 	print( "x_edge         = $x_edge\n"    );
 	print( "y_edge         = $y_edge\n"    );
 	print( "--palette      = $op_palette\n" );
+	print( "--frame        = $op_frame\n"   );
 	last;
     }
 
@@ -186,6 +193,7 @@ sub print_usage
 
     my $xmold = 0;
     my $ymold = 0;
+    my $frame_cnt = 0;
 
     my $header = <STDIN>;
     unless ( $header =~ m/^index,Ym,Xm,/ ) {
@@ -213,6 +221,12 @@ sub print_usage
 
 	$xmold = $xm;
 	$ymold = $ym;
+
+	if ( $op_frame ) {		# whole frames if requested
+	    if ( $ys ) { $frame_cnt++ }
+	    next  if ( $frame_cnt <= 0 );
+	    last  if ( $frame_cnt >  $op_frame );
+	}
 
 	print( STDOUT  "$ys,$xs" );
 
@@ -314,6 +328,7 @@ coeff2stream -- Convert rpixel coefficient data into an image data stream
     --yfall           Ym falling edge (default)
   options:
     --palette=FILE    rgb palette file in X11 color format
+    --frame=N         grab N whole frames
     --debug           show debug output on stderr
     --help            show command usage and exit
     --man             show man page and exit
@@ -410,6 +425,14 @@ Colors can be any X11 color names - See X(7) COLOR NAMES.
 Typically use "rgb:hh/hh/hh", where 'hh' are hexadecimal digits specifying
 an intensity for red/green/blue color.
 
+=item B<--frame=N>          - Grab N whole frames.
+
+With N>0, discard pixels until the first frame mark (Ys==1), then output
+N full frames.  When the last frame is complete, the program terminates
+leaving any unread pixels on stdin.
+With N=0 (default), all input pixels are translated, terminating when stdin
+reaches End-Of-File.
+
 =item B<--help>             - Show command usage and exit.
 
 =item B<--man>              - Show man page and exit.
@@ -434,6 +457,9 @@ Prints the manual page and exits.
 
  Compute color value as (coeff * 0.2) + 200
  % coeff2stream  --scale=0.2 --offset=200  < in.csv
+
+ Process 2 full frames, ignoring pixels until the first Ys==1.
+ % coeff2stream  --frame=2  < in.csv
 
  Specify an alternate color map palette.
  % coeff2stream  --palette=./mymap.rgb  < in.csv
