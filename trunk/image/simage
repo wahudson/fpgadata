@@ -69,7 +69,7 @@ sub print_usage
 
     my $op_verbose      = 0;
     my $op_TESTOP       = 0;
-    my $op_npix         = 10;
+    my $op_npix         = 100;
     my $op_nx           = 256;
     my $op_ny           = 256;
     my $op_magnify      = 1;
@@ -256,7 +256,7 @@ simage -- Stream data into an image display.
  simage  [options]
     --npix=N          number of pixels per read burst
     --nx=N            image N pixels wide
-    --ny=N            image N pixels high
+    --ny=M            image M pixels high
     --magnify=1       magnify pixel size by integer factor
     --wrap=1          wrap scan lines at window size (bool)
   options:
@@ -280,23 +280,51 @@ Intended to build the image in real time as data comes in.
 
 Input data is in CSV format.
 Each input line is one pixel containing sync marks (Ys,Xs) and pixel colors
-for multiple image columns (c0,c1,..).
-Pixel colors are in X11 RGB color format "#rrggbb", and one image will be
-produced for each column.
+for one or more image columns (c0,c1,..).
+
+Pixel colors can be any X11 color names - See X(7) COLOR NAMES.
+Typically use "rgb:hh/hh/hh", where 'hh' are hexadecimal digits specifying
+an intensity for red/green/blue color.
+An older syntax is "#rrggbb", where r,g,b are hexadecimal digits.
 
 Input Xs,Ys should be 1 only on the pixel where the sweep should reset to
 the left edge (Xs) or top edge (Ys) of the image, otherwise 0.
 Scanning is assumed to be X-direction fastest.
 
+
 =head1		OPTIONS
 
 =over 8
 
-=item B<--magnify=N>        - Magnify pixel size by integer factor.
+=item B<--npix=N>           - Number of pixels per read burst.
+
+This is the number of pixels read before returning to the Tk event loop.
+The burst reads are repeated until End-Of-File on stdin.
+This allows the new pixels to be displayed in the image, providing a live
+update mechanism.  It also allows other Tk events to be acted upon so the
+GUI does not become unresponsive.
+Note making N too large will still overload the event loop, and the images
+may not display until all pixels have been read.
+
+=item B<--nx=N>             - Image N pixels wide.
+
+=item B<--ny=M>             - Image M pixels high.
+
+These specify the size of each image panel.  The actual image can be smaller.
+If a scan line is longer, then the extra pixels fall outside the image
+frame and are not displayed.
+
+=item B<--magnify=1>        - Magnify pixel size by integer factor.
 
 Magnification affects only the pixel size, the window size (nx,ny) is not
 scaled.
 Typically is a small integer (1..4).
+
+=item B<--wrap=1>           - Wrap scan lines at window size (bool).
+
+With --wrap=1 scan lines reset at window width --nx, and at window hight --ny,
+in adition to any sync marks in the input stream.
+With --wrap=0 scan lines reset only on the sync marks (Ys,Xs).
 
 =item B<--help>             - Show command usage and exit.
 
@@ -306,6 +334,28 @@ Prints the manual page and exits.
 
 =back
 
+
+=head1		BUTTONS
+
+These buttons exist on the GUI header.
+
+=over 8
+
+=item B<Quit>               - Terminate the program.
+
+It does not save any files.  No confirmation.
+
+=item B<Save>               - Save all image panels to .ppm files.
+
+Each panel is saved to a seperate file incorporating the image column heading
+in the file name, e.g. "xx.c0.ppm".
+All files share a common "xx." file name prefix (future may add an Tk::Entry
+widget).
+For now it may be best to change to a new directory for each invocation of
+simage.
+
+
+=back
 
 =head1		RETURN VALUE
 
@@ -317,14 +367,26 @@ Prints the manual page and exits.
  Display images for input data.
  % simage < in.data
 
+ Specify image frame size.
+ % simage --nx=512 --ny=512
+
+ Magnify image and increase image frame size.
+ % simage --magnify=2  --nx=512 --ny=512
+
  Disable auto wrapping of scan lines, --nx is ignored.
  % simage --wrap=0
+
+ Enable wrapping when there are no input sync marks.
+ % simage --wrap=1
 
  Show default options.  Is a hidden test option.
  % simage --TESTOP
 
  Typical processing pipeline.
  % rpixel --csv | coeff2stream | simage
+
+ Convert saved image file to JPG format using ImageMagick.
+ % convert  xx.c2.ppm  xx.c2.jpg
 
 
 =head1		TOUBLESHOOTING
@@ -362,6 +424,23 @@ image.
 
 When the scan line is shorter than --nx, the remaining pixels assume the
 previous color in that location, usually the background color.
+
+=head2			Multiple frames in the image
+
+If the input stream has multiple frames (i.e. multiple Ys=1 sync marks),
+then the later frames will overwrite the earlier frames in the image.
+If the later frame is short, then the lower part of the earlier frame will
+still show.
+
+If the first frame is short (i.e. missing the upper part of the image),
+it will be drawn at the top of the image panel and the later frame will
+redraw in the correct position.  This makes an odd replacement effect.
+
+Try using a small value for --npix=20, so the image display rate is slow
+and you can see the frame reset as it happens.
+
+In general, arrange to have only one frame with the Ys sync mark at the
+beginning.
 
 
 =head1		BUGS

@@ -206,14 +206,15 @@ sub go_flow
 
     my $mw = MainWindow->new();
 
-    my $lab1 = $mw->Label(
-	-text => "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n",
-    );
-    $lab1->pack();
-
     # Use a Frame to group buttons independent of photos.
     my $bframe = $mw->Frame();
     $bframe->pack();
+
+    my $lab1 = $bframe->Label(
+	-text => "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" .
+		join( ', ', @{$self->{CoeffHeads}} )
+    );
+    $lab1->pack( -side => 'left' );
 
     my $but1 = $bframe->Button(
 	-text    => 'Quit',
@@ -262,9 +263,13 @@ sub go_flow
 
     print( "simage:  Nx= $self->{Nx}, Ny= $self->{Ny}\n" );
 
+    my $lab3 = $bframe->Label(
+	-text => "    ${save_base}.*.ppm",
+    );
+    $lab3->pack( -side => 'left' );
 
     my $but3 = $bframe->Button(
-	-text    => "Save:  ${save_base}.0.ppm",
+	-text    => "Save",
 	-command => sub {
 	    my $ii = 0;
 	    foreach my $im ( @im_list )
@@ -282,9 +287,10 @@ sub go_flow
 
 
     # start streaming data
-    $sx->{AfterID} = $mw->repeat( 10,
+    $sx->{AfterID} = $mw->repeat( 10,	# milliseconds
 	sub{ $sx->stream_pixels() || $sx->{AfterID}->cancel() }
     );
+    # see:  Tk::after(3pm)  has repeat()
 
     MainLoop();
     # Window is not shown until now.
