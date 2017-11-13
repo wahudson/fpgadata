@@ -6,7 +6,7 @@ Build from this directory:
     % make mkdirs
     % make
 
-Files:
+Files:  (2017-11-12)
 ------
 Error.cpp	Error handling class
 Error.h
@@ -18,6 +18,7 @@ nibbler		Read 'fpgadata --flag' output and group into coefficents.
 plotc16		Plot FPGA filter coefficients.
 plotc16loop	Live Plot of FPGA filter coefficients.
 rpixel.cpp	Get FPGA Data v2
+rpixel.pod	rpixel manpage source
 runplots	Run rpixel with live update plots from plotc16loop.
 yBuffStat.cpp	Buffer Statistics base class.
 yBuffStat.h

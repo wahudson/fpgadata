@@ -10,82 +10,56 @@ the RPi GPIO pins.
 Motivation from CSU Jesse Wilson.
 
 
-Files:  (2017-04-22)
+Files:  (2017-11-12)
 ------
 README			this file
 
-? Makefile		top-level build, test, package
-
 doc/		    Documentation
     architecture.text	Architecture description
+    gpio_connect.text	fpgadata  GPIO Connection Wiring
+    hardware.text	Hardware Components used
+    rpixel.text		rpixel  Connection and User Guide
 
 ? man/man1/		Manpage dir tree (unmanaged)
 
-src/		    Source code
+image/		    Image generation scripts
+    palette/	    Color palette files
+	cubeYF.rgb
+	cubeYF_clip.rgb
+		    Main programs
+    coeff2stream	Convert rpixel coefficient data into an image stream.
+    fakedata		Generate fake pixel data.
+    rpix_stream		Convert rpixel coefficient data into an image stream.
+    simage		Stream data into an image display.
+		    Perl modules, mostly used by simage
+    Error_mixi.pm	Error handling mix-in functions.
+    ImStream.pm		Image Stream data.
+    ImTop.pm		Top-level Stream data into an image.
+
+src/		    Source code, mostly C++
+    README
     Makefile		for building the tool
-    Error.cpp		Error handling
-    Error.h
-    yOption.cpp		Option parsing base class
-    yOption.h
+    ...			(see src/README)
 
 bin/		    Commands
     fpgadata		Get FPGA Data.
     rpixel		Get FPGA Data, pixel signals.
-
-  ? linux_rhel40_gcc44x_64/	compiled binary commands
-	opt/
-	dbg/
-	    oacells_exe
+		    Symlinks for other commands
+    coeff2stream	Convert rpixel coefficient data into an image stream.
+    plotc16		Plot FPGA filter coefficients.
+    plotc16loop		Live Plot of FPGA filter coefficients.
+    rpix_stream		(obsolete)
+    rpixel.pod		rpixel manpage (found by being next to rpixel).
+    rpixel_init		Initialize Raspberry Pi gpio for use with rpixel.
+    runplots		Run rpixel with plotc16loop.
+    simage		Stream data into an image display.
 
 obj/		    temporary .o object files
-    linux_rhel40_gcc44x_64/
-	opt/
-	dbg/
-	    *.o
+    *.o
 
 test/		    Testing
     Makefile		Run all tests
     t_*/		Test suites
-
-? extra/	    extra development code
-? unused/	    unused code
-
-build/X.YY/	    versioned build directory (unmanaged)
-
-
-Repository layout:
-------------------
-The subversion repository is structured like this:
-
-    trunk/		Mainline development
-    tags/		Release tags
-	1.11/
-	1.12/
-	1.47/
-        ...
-    branches/		Parallel development branches (unused)
-
-
-Release directory structure:
-----------------------------
-
-
-Version numbers: ??
-----------------
-Version number format is:  X.YY.Z
-    major.minor.patch
-
-    major = major release number
-    minor = minor release number, 2-digit, no leading 0 zeros
-    patch = optional patch number, used when a release tag is patched
-
-Assign new version number by simple incrementing of the appropriate field.
-Do NOT try to make larger increments imply larger change, because it won't.
-
-Release tag name IS the version number.  e.g. tags/1.10
-
-? Version number is derived from the tag name in the URL keyword.
-    see also:  ToolVersion.pm
 
 
 Initial Build process:
@@ -96,8 +70,14 @@ Initial Build process:
     % make mkdirs
     % make compile
 
+The idea is to build/run in the source directory tree, thus avoiding need for
+any package/install process.
 
-Primary developers:  (user ID, Email, Working copy)  (2016-05-02)
+The bin/ dirctory aggregates all commands with symlinks (so it does not
+contain any sources), making it easy to add to $PATH.
+
+
+Primary developers:
 -------------------
-    wah		William.Hudson542@gmail.com
+    William.Hudson542@gmail.com
 
