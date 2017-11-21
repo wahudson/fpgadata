@@ -1,0 +1,50 @@
+2017-11-21
+			Software Components
+			-------------------
+
+These are some infrastructure pieces used in developing/running this
+tool set.  Specific versions are what I was using.  Using the latest
+versions should be fine.
+
+----------------------------------------------------------------------------
+## Linux OS on Raspberry Pi
+----------------------------------------------------------------------------
+    Raspbian OS is a deravitive of Debian.
+
+% uname -a
+Linux raspberrypi 4.1.19-v7+ #858 SMP Tue Mar 15 15:56:00 GMT 2016 armv7l GNU/Linux
+
+
+----------------------------------------------------------------------------
+## Packages installed
+----------------------------------------------------------------------------
+These additional packages are needed to run some of the tools developed here.
+
+Packages:
+    r-base-core (3.1.1-1+deb8u1)	R language
+    perl-tk (1:804.032-3+b1)		PerlTk graphics
+
+
+Helpful commands:
+    Resynchronize the package index files from their sources.
+    % sudo apt-get update
+
+    Inspect package
+    % apt-cache show  <pkg>
+
+    Install the package
+    % sudo apt-get install  <pkg>
+
+----------------------------------------------------------------------------
+## References
+----------------------------------------------------------------------------
+
+Raspberry Pi Foundation
+    https://www.raspberrypi.org/
+
+Raspberry Pi - nice summary
+    https://en.wikipedia.org/wiki/Raspberry_Pi
+
+RPi Hub - a collaborative wiki, not Raspberry Pi Foundation
+    http://elinux.org/RPi_Hub
+
