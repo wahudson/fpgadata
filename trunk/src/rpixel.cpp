@@ -275,7 +275,7 @@ yOptLong::print_usage()
     "    --hex               hex data dump\n"
     "    --raw               raw hex data\n"
     "    --delta             delta data in decimal\n"
-    "    --flag              octal flags with 8-bit data in decimal\n"
+    "    --flag              octal flags with 8-bit data in hex\n"
     "  raw data:  one sample per line, with headline\n"
     "    --load=FILE         load hex words from file\n"
     "    --save=FILE         save hex words to   file\n"
@@ -285,7 +285,7 @@ yOptLong::print_usage()
     "    --frame=0           align to frame mark, +1= rising, -1=falling\n"
     "    --help              show this usage\n"
     "    --man               show manpage and exit\n"
-    "    -v, --verbose       verbose output\n"
+    "  # -v, --verbose       verbose output\n"
     "    --debug             debug output\n"
     "  (options with GNU= only)\n"
     ;

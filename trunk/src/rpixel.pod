@@ -19,7 +19,7 @@ rpixel -- FPGA data transfer on Raspberry Pi
     --hex               hex data dump
     --raw               raw hex data
     --delta             delta data in decimal
-    --flag              octal flags with 8-bit data in decimal
+    --flag              octal flags with 8-bit data in hex
   raw data:  one sample per line, with headline
     --load=FILE         load hex words from file
     --save=FILE         save hex words to   file
@@ -29,8 +29,8 @@ rpixel -- FPGA data transfer on Raspberry Pi
     --frame=0           align to frame mark, +1= rising, -1=falling
     --help              show this usage
     --man               show manpage and exit
- #  -v, --verbose       verbose output
- #  --debug             debug output
+  # -v, --verbose       verbose output
+    --debug             debug output
   (options with GNU= only)
 
 
@@ -71,6 +71,8 @@ See:  src/rpixel.cpp  for GPIO pins used by this program.
 
 =head2			Essential Operation
 
+The following steps comprise the essential operation.
+
 1a)  Flush fifo:  By reading 10000 samples in a tight loop, ignoring the
 NoData signal.
 The last sample is checked and a Warning issued if the fifo was not empty
@@ -104,24 +106,117 @@ and to see statistics from each repetition.
 output form option.  The memory is not cleared, so the same data can be
 output in multiple forms.
 
+Option --stream=N works differently, in that output of N pixels is done
+as part of the inner loop of step (2) instead of the normal output in
+step (5).
+This allows --npix to be arbitrarily large, since only --stream number of
+pixels are stored in memory.
+
 
 =head1		OPTIONS
 
 =over 8
 
+=head2			output forms
+
+These options specify the format of the output data stream on stdout.
+Zero or more may be combined (except --stream).
+With no output option nothing is output on stdout, useful to see only the
+statistics on stderr.
+
+=item B<--stream=N>         - Stream N pixels at a time to CSV output.
+
+As described above.
+Output format is the same as --csv.
+No other output options may be combined with --stream.
+The idea was to stream output while making as little impact on the inner
+loop as possible.
+
 =item B<--csv>              - Output CSV format.
 
 =item B<--tab>              - Output tabular format.
 
+These are the primary output forms.  Columns are:  (left to right)
+Index is a pixel number, counting from zero.
+Ym,Xm are the verticle and horizontal scan mark signals, binary 0/1 values.
+Coefficient columns (named c0, c1, .., c15) are signed 16-bit decimal values.
+
+=item B<--hex>              - Hex data dump.
+
+Output a hex dump table, 16-bit big-endian data values.
+Eight data column follow an address index column on the left.
+There is a two-line heading for the columns.
+
+=item B<--raw>              - Raw hex data.
+
+Output raw data as 16-bit hexadecimal words, with index, one line per word.
+There is a one-line heading for the columns.
+
+=item B<--delta>            - Delta data in decimal.
+
+Output raw data as 16-bit word in unsigned decimal, with an index and delta
+column.  The delta is the difference in value from the previous entry.
+There is a one-line heading for the columns.
+Primarily used for debug in early development.
+
+=item B<--flag>             - Octal flags with 8-bit data in hex.
+
+This is the primary debug output form.
+Output raw data as 8-bit hex words with flag bits, index, and delta.
+Delta is in decimal (current - previous).
+Flags are 4-bits in octal, with leading zero.  Bit position values are:
+    001 MarkX scan mark
+    002 MarkY scan mark
+    004 OverFlow (fifo write_full)
+    010 NoData (fifo empty)
+
+=head2			raw data
+
+=item B<--load=FILE>        - Load hex words from file.
+
+=item B<--save=FILE>        - Save hex words to   file.
+
+These options allow the raw data array to be loaded/saved in text form,
+mostly for debug and testing, but there may be other uses.
+They can be combined with any of the output forms, and are processed in this
+order:  --load, --save, then memory outputs --tab, --csv, etc.
+File format is hexadecimal, one 16-bit value per line.
+First line is a headline, which may be null.
+
+=head2			options
+
+=item B<--npix=N>           - Number of pixel to collect.
+
+This is the total number of pixels to collect in step (2) above.
+The total number of valid transfers will be ( --npix * 16 coeff/pixel *
+4 transfers/coeff ), and may be truncated to the data array size.
+Without --stream, all transfers will be to memory.
+With --stream, only --stream number of pixels need fit in memory.
+
+=item B<--repeat=N>         - Repeat data read loop N times.
+
+This is the number of repetitions of the outer repeat loop of step (4) above.
+
 =item B<--frame=0>          - Align to frame mark, +1= rising, -1=falling.
 
-Primary use is collect pixels in memory starting at begining of a frame.
+Wait until the beginning of a frame, as in step (1b) above, before collecting
+pixels.
+With --frame=0 (default) alignment is disabled (e.g. for when there are no
+scan mark input signals).
 Requires the MarkY input signal.
-Default is --frame=0, disabled for when there are no scan mark input signals.
+This is most useful when collecting a full frame to limited memory.
 
 =item B<--help>             - Show command usage and exit.
 
 =item B<--man>              - Show manpage and exit.
+
+These are the primary documentation.
+
+=item B<-v, --verbose>      - Verbose output.  (Not used)
+
+=item B<--debug>            - Debug output.
+
+Output extra debug info, possibly on stdout.
 
 =back
 
@@ -158,8 +253,68 @@ Default is --frame=0, disabled for when there are no scan mark input signals.
  Save raw data to a file for later loading, and output CSV format.
  % rpixel --save=outfile.raw  --csv
 
- Load raw data and output it as CSV format.
- % rpixel --load=infile.raw  --csv
+ Load raw data and output it in table format.
+ % rpixel --load=infile.raw  --tab
+
+ Show default options.  Is a hidden test option.
+ % rpixel --TESTOP
+
+
+=head1		TOUBLESHOOTING
+
+=head2			GPIO pins not connected
+
+A faulty GPIO pin connection can result in an apparent hang, erratic operation,
+or bad data.  Visually inspect for loose connections.
+
+=head2			ReadAck pin direction is not Output
+
+With no ReadAck signal, the FPGA fifo will not advance to the next output
+entry, and the input data will appear to be constant.  This may result in
+a hang in finding the first coefficient in step (1c) above.
+
+Verify with utility command 'gpio readall'.
+Set correct directions with 'rpixel_init'.
+
+=head2			OverFlow errors
+
+If the FPGA fifo overflows, then no new entries can be inserted in the fifo
+and are lost.  This typically results in "misaligned coeff nibble" errors.
+Overflow is used as a cross check for possible bad data, and is not intended
+to be a recoverable condition.
+
+Inspect stderr for statistics and error messages, e.g.:
+    OverFlow= 4
+    Error:  Fifo overflow count= 4
+
+=head2			/dev/gpiomem access permisions
+
+This device special file is used to access the GPIO interface which appears
+as registers in the ARM processor IO address space.
+This may result in errors like "can't open /dev/gpiomem" and program exit
+with non-zero exit code.
+File permission should be read-write for group 'gpio', and your user ID
+should belong to group 'gpio', e.g inspect:
+
+    % ls -l  /dev/gpiomem
+    crw-rw---- 1 root gpio 243, 0 Nov  7 12:42 /dev/gpiomem
+        ^^            ^^^^
+    % id
+    uid=1000(pi) gid=1000(pi) groups=1000(pi),...,997(gpio),...
+
+=head2			Bad signal level on GPIO pins
+
+This may result in flaky behavior or hang.
+In one case, the NoData signal had a bad low level input voltage of Vil= 1.2 V,
+due to a likely damaged FPGA output pin driver (it should have been well below
+0.4 V).  This was very near the CMOS input low threshold of ~1.1 V
+(typicaly 1/3 * Vcc, at Vcc=3.3 V on the RPi).
+The result was some valid data transfers being interpreted as NoData=1 and
+discarded, causing "misaligned coeff nibble" errors.
+
+Use an oscilloscope and verify good 3.3V CMOS input signal levels, typically
+(0.0V <= Vil <= 0.4V) and (3.1V <= Vih <= 3.3V).
+
 
 =head1		ENVIRONMENT
 
@@ -175,7 +330,7 @@ none
 
 In the source directory tree:
 
- doc/rpixel.text	User Guide.
+ doc/rpixel.text	User Guide.  Pin connections.
  src/rpixel.cpp		Main program, table of GPIO pins used.
  bin/rpixel_init	Initialize Raspberry Pi gpio for use with rpixel.
 
