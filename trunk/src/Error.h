@@ -2,15 +2,21 @@
 #ifndef Error_P
 #define Error_P
 
-
 //--------------------------------------------------------------------------
 // Error class
 //--------------------------------------------------------------------------
 
 class Error {
   private:
-    static int		Error_cnt;
-    int			count;
+    static int			Error_cnt;
+    static std::ostream		*cErr;
+
+  public:	// Class Methods
+    static void			Init_ostream( std::ostream* erx );
+    static int			has_err();
+    static std::ostream&	msg();
+    static std::ostream&	msg( const char* text );
+
   public:
     static int		err();
     static void		err( const char* );
@@ -18,8 +24,8 @@ class Error {
     static void		err( const char*,  const char*,  const char* );
     static void		err( const char*,  const char*,  const char*,  const char* );
 
-    int			msg( char* );
 };
 
 
 #endif
+
