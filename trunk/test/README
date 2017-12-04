@@ -43,6 +43,7 @@ Test suites:  (2017-05-21)
  m      = Module test (perl)     TestLib1.pm
  p      = Program test (command)
 ------  --------------
+ u   s  t_Error/	Error      Error message class.
  u   s  t_yBuffStat/	yBuffStat  Buffer Statistics class.
  u   s  t_yFramDat/	yFramDat   Frame Data class.
 
