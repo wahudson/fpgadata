@@ -103,8 +103,8 @@ yCoeffItr::next_pixel()
 	if ( nib_err ) {		// report only first error
 	    if ( ! PixErr ) {
 		int	ii = DaPtr - Fdata->data_pointer_begin();
-		Error::err( "misaligned coeff nibble at:" );
-		cerr << "    index= " << ii << endl;
+		Error::msg( "misaligned coeff nibble at:\n" )
+		    << "    index= " << ii << endl;
 	    }
 	    PixErr = 1;
 	    PixCoef[jj] = COEFF_ERR;	// flag value
@@ -166,13 +166,17 @@ yCoeffItr::print_coeff_tab()
 
 /*
 * Print coefficients CSV header.
+*    Default output to stdout, override with pass-by-reference for testing.
 * call:
-*    print_coeff_csv_head()
+*    print_coeff_csv_head()		default stdout
+*    print_coeff_csv_head( cout )	override ostream
 */
 void
-yCoeffItr::print_coeff_csv_head()
+yCoeffItr::print_coeff_csv_head(
+    ostream&		sout
+)
 {
-    cout << "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,"
+    sout << "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,"
 	    "c8,c9,c10,c11,c12,c13,c14,c15" << endl;
 }
 
@@ -182,34 +186,36 @@ yCoeffItr::print_coeff_csv_head()
 *    Bad pixel entry marked with '!'.
 *    #!! Perhaps use a seperate column?
 * call:
-*    print_coeff_csv_body()
+*    print_coeff_csv_body()		default stdout
+*    print_coeff_csv_body( cout )	override ostream
 */
 void
-yCoeffItr::print_coeff_csv_body()
+yCoeffItr::print_coeff_csv_body(
+    ostream&		sout
+)
 {
     int			*cp;	// coefficient pointer
 
-    cout <<dec;
-    cout.fill(' ');
+    sout <<dec;
+    sout.fill(' ');
 
     while ( (cp = this->next_pixel()) )
     {
-	cout << PixNum;
+	sout << PixNum;
 	if ( this->has_error() ) {
-	    cout << "!";
+	    sout << "!";
 	}
 
-	cout << "," << PixMarkY;
-	cout << "," << PixMarkX;
+	sout << "," << PixMarkY;
+	sout << "," << PixMarkX;
 
 	for ( int j = 0;  j < 16;  j++ )
 	{
-	    cout << "," << cp[j];
+	    sout << "," << cp[j];
 	}
-	cout << endl;
+	sout << endl;
     }
 }
-
 
 
 /*
@@ -217,34 +223,15 @@ yCoeffItr::print_coeff_csv_body()
 *    Bad pixel entry marked with '!'.
 *    #!! Perhaps use a seperate column?
 * call:
-*    print_coeff_csv()
+*    print_coeff_csv()		default stdout
+*    print_coeff_csv( cout )	override ostream
 */
 void
-yCoeffItr::print_coeff_csv()
+yCoeffItr::print_coeff_csv(
+    ostream&		sout
+)
 {
-    int			*cp;	// coefficient pointer
-
-    cout << "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,"
-	    "c8,c9,c10,c11,c12,c13,c14,c15" << endl;
-
-    cout <<dec;
-    cout.fill(' ');
-
-    while ( (cp = this->next_pixel()) )
-    {
-	cout << PixNum;
-	if ( this->has_error() ) {
-	    cout << "!";
-	}
-
-	cout << "," << PixMarkY;
-	cout << "," << PixMarkX;
-
-	for ( int j = 0;  j < 16;  j++ )
-	{
-	    cout << "," << cp[j];
-	}
-	cout << endl;
-    }
+    print_coeff_csv_head( sout );
+    print_coeff_csv_body( sout );
 }
 

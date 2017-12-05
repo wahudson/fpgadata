@@ -29,9 +29,9 @@ class yCoeffItr {
     virtual int		*next_pixel();
     virtual void	print_coeff_tab();
 
-    virtual void	print_coeff_csv_head();
-    virtual void	print_coeff_csv_body();
-    virtual void	print_coeff_csv();
+    virtual void	print_coeff_csv_head( ostream& sout = cout );
+    virtual void	print_coeff_csv_body( ostream& sout = cout );
+    virtual void	print_coeff_csv(      ostream& sout = cout );
 
     inline bool		has_error()
     {
