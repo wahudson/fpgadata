@@ -181,7 +181,7 @@ int main()
     }
 
 //----------------------------------------
-// restart()  PixNum continues incrementing.
+// restart() Good data, PixNum continues incrementing.
 
   CASE( "30", "restart()" );
     try {
@@ -217,6 +217,7 @@ int main()
 	CHECK( 4096, Cx.PixCoef[15] );
 	CHECK(    0, Cx.PixMarkX );
 	CHECK(    1, Cx.PixMarkY );
+	CHECK( "", Serr.str().c_str() );
     }
     catch (...) {
 	FAIL( "unexpected exception" );
@@ -231,6 +232,7 @@ int main()
 	CHECK( -257, Cx.PixCoef[15] );
 	CHECK(    1, Cx.PixMarkX );
 	CHECK(    0, Cx.PixMarkY );
+	CHECK( "", Serr.str().c_str() );
     }
     catch (...) {
 	FAIL( "unexpected exception" );
@@ -307,6 +309,29 @@ int main()
 	CHECK(  -257, Cx.PixCoef[15] );
 	CHECK(     1, Cx.PixMarkX );
 	CHECK(     0, Cx.PixMarkY );
+	CHECK(
+	    "Error:  misaligned coeff nibble at:\n"
+	    "    index= 72\n",
+	    Serr.str().c_str()
+	);
+	Serr.str( string () );
+    }
+    catch (...) {
+	FAIL( "unexpected exception" );
+    }
+
+  CASE( "45", "show bad nibble" );
+    try {
+	ostringstream		ss;
+	yCoeffItr		cx  ( &Fx );
+	cx.print_coeff_csv( ss );		// walks the whole Fx
+	CHECK( 128, Fx.get_length() );
+	CHECK(
+"index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15\n"
+"0,1,0,14,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,4096\n"
+"1!,0,1,10,-99999,4096,-1,33,291,291,291,291,291,291,291,291,291,291,-257\n",
+	    ss.str().c_str()
+	);
 	CHECK(
 	    "Error:  misaligned coeff nibble at:\n"
 	    "    index= 72\n",
