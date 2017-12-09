@@ -56,10 +56,14 @@ yCoeffItr::restart()
 
 /*
 * Get next pixel set of coefficients from Big-endian 4-bit nibbles.
-*    Big-endian data.
 *    Assume there are no NoData entries.
-*    Return only complete pixel data sets.
-*    Note coeff size to pack as a signed 16-bit value.
+*    Coefficients are signed 16-bit values packed from big-endian nibbles.
+*    Coefficient numbers are checked on each array entry.  If an alignment
+*    error occures, the remaining coefficients are flagged with value -99999,
+*    and array entries are skipped to re-synchronize on the start of the
+*    next pixel.
+*    Each array entry is packed bits:
+*        data[15:0] = (0, OverFlow, Ymark, Xmark, cnum[3:0], nibble[3:0])
 * call:
 *    self.next_pixel()
 * return:
@@ -69,6 +73,7 @@ int*
 yCoeffItr::next_pixel()
 {
     uint16_t		*max_dp;	// DaPtr past end of source array
+    int			nib_err = 0;	// nibble error
 
     const int		COEFF_ERR = -99999;
 
@@ -81,13 +86,13 @@ yCoeffItr::next_pixel()
 
     PixErr = 0;
 
-    for ( int jj = 0;  jj < 16;  jj++ )	// each coefficient
+    int			jj;
+    for ( jj = 0;  jj < 16;  jj++ )	// each coefficient
     {
 	int		cnum;		// coeff number in data array
 	int16_t		cvalue  = 0;	// coeff value
-	int		nib_err = 0;	// nibble error
 
-	if ( DaPtr+4 > max_dp ) {	// at limit
+	if ( DaPtr+3 >= max_dp ) {	// at limit
 	    return  NULL;
 	}
 
@@ -100,17 +105,35 @@ yCoeffItr::next_pixel()
 	    }
 	}
 
-	if ( nib_err ) {		// report only first error
-	    if ( ! PixErr ) {
-		int	ii = DaPtr - Fdata->data_pointer_begin();
-		Error::msg( "misaligned coeff nibble at:\n" )
-		    << "    index= " << ii << endl;
-	    }
-	    PixErr = 1;
+	if ( nib_err ) {
+	    break;
+	}
+	PixCoef[jj] = cvalue;
+    }
+
+    if ( nib_err ) {
+	if ( ! PixErr ) {		// report only first error
+	    int	ii = DaPtr - Fdata->data_pointer_begin();
+	    Error::msg( "misaligned coeff nibble at:\n" )
+		     << "    index= " << ii << endl;
+	}
+	PixErr = 1;
+
+	for ( ;  jj < 16;  jj++ )	// remaining coefficients
+	{
 	    PixCoef[jj] = COEFF_ERR;	// flag value
 	}
-	else {
-	    PixCoef[jj] = cvalue;
+
+	// find start of next pixel to resynchronize
+	for ( ;  (DaPtr+3) < max_dp;  DaPtr++ )
+	{
+	    if ( *(DaPtr  ) & 0xf0 ) {	// non-zero coeff number
+		continue;
+	    }
+	    if ( *(DaPtr+3) & 0xf0 ) {
+		continue;
+	    }
+	    break;	// assume all 4 nibbles have a zero coeff number
 	}
     }
 

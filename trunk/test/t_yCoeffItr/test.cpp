@@ -305,8 +305,8 @@ int main()
 	CHECK(     5, Cx.PixNum );		// continue
 	CHECK(    10, Cx.PixCoef[0] );
 	CHECK(-99999, Cx.PixCoef[1] );		// error from dp[70]
-	CHECK(  4096, Cx.PixCoef[2] );
-	CHECK(  -257, Cx.PixCoef[15] );
+	CHECK(-99999, Cx.PixCoef[2] );		// following coeff are error
+	CHECK(-99999, Cx.PixCoef[15] );
 	CHECK(     1, Cx.PixMarkX );
 	CHECK(     0, Cx.PixMarkY );
 	CHECK(
@@ -329,7 +329,7 @@ int main()
 	CHECK(
 "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15\n"
 "0,1,0,14,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,4096\n"
-"1!,0,1,10,-99999,4096,-1,33,291,291,291,291,291,291,291,291,291,291,-257\n",
+"1!,0,1,10,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999\n",
 	    ss.str().c_str()
 	);
 	CHECK(
@@ -363,7 +363,7 @@ int main()
 	FAIL( "unexpected exception" );
     }
 
-  CASE( "51", "next_pixel()" );
+  CASE( "51", "next_pixel() has missing coeff nibble" );
     try {
 	Cx.next_pixel();
 	CHECK(    1, Cx.has_error() );
@@ -383,21 +383,16 @@ int main()
 	FAIL( "unexpected exception" );
     }
 
-  CASE( "52", "next_pixel()" );
+  CASE( "52", "next_pixel() is resynchronized" );
     try {
 	Cx.next_pixel();
-	CHECK(    1, Cx.has_error() );
+	CHECK(    0, Cx.has_error() );
 	CHECK(    1, Cx.PixNum );
-	CHECK(-99999, Cx.PixCoef[0] );
-	CHECK(-99999, Cx.PixCoef[15] );
-	CHECK(    0, Cx.PixMarkX );
+	CHECK(   10, Cx.PixCoef[0] );
+	CHECK( -257, Cx.PixCoef[15] );
+	CHECK(    1, Cx.PixMarkX );
 	CHECK(    0, Cx.PixMarkY );
-	CHECK(
-	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 68\n",
-	    Serr.str().c_str()
-	);
-	Serr.str( string () );
+	CHECK( "", Serr.str().c_str() );
     }
     catch (...) {
 	FAIL( "unexpected exception" );
@@ -413,14 +408,12 @@ int main()
 	CHECK(
 "index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15\n"
 "0!,1,0,15,-32768,4096,-1,33,291,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999\n"
-"1!,0,0,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999,-99999\n",
+"1,0,1,10,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,-257\n",
 	    ss.str().c_str()
 	);
 	CHECK(
 	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 28\n"
-	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 68\n",
+	    "    index= 28\n",
 	    Serr.str().c_str()
 	);
 	Serr.str( string () );
