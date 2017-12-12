@@ -310,8 +310,7 @@ int main()
 	CHECK(     1, Cx.PixMarkX );
 	CHECK(     0, Cx.PixMarkY );
 	CHECK(
-	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 72\n",
+	    "Error:  misaligned coeff at pixel= 5  coeff= 1\n",
 	    Serr.str().c_str()
 	);
 	Serr.str( string () );
@@ -333,8 +332,7 @@ int main()
 	    ss.str().c_str()
 	);
 	CHECK(
-	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 72\n",
+	    "Error:  misaligned coeff at pixel= 1  coeff= 1\n",
 	    Serr.str().c_str()
 	);
 	Serr.str( string () );
@@ -344,7 +342,7 @@ int main()
     }
 
 //----------------------------------------
-// restart()  with missing coeff nibble.
+// Start over with missing coeff nibble.
 
   CASE( "50", "new object" );
     try {
@@ -373,8 +371,7 @@ int main()
 	CHECK(    0, Cx.PixMarkX );
 	CHECK(    1, Cx.PixMarkY );
 	CHECK(
-	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 28\n",
+	    "Error:  misaligned coeff at pixel= 0  coeff= 6\n",
 	    Serr.str().c_str()
 	);
 	Serr.str( string () );
@@ -412,8 +409,7 @@ int main()
 	    ss.str().c_str()
 	);
 	CHECK(
-	    "Error:  misaligned coeff nibble at:\n"
-	    "    index= 28\n",
+	    "Error:  misaligned coeff at pixel= 0  coeff= 6\n",
 	    Serr.str().c_str()
 	);
 	Serr.str( string () );

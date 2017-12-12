@@ -111,11 +111,12 @@ yCoeffItr::next_pixel()
 	PixCoef[jj] = cvalue;
     }
 
+    PixNum++;
+
     if ( nib_err ) {
 	if ( ! PixErr ) {		// report only first error
-	    int	ii = DaPtr - Fdata->data_pointer_begin();
-	    Error::msg( "misaligned coeff nibble at:\n" )
-		     << "    index= " << ii << endl;
+	    Error::msg( "misaligned coeff at pixel= " )
+		<< PixNum << "  coeff= " << jj <<endl;
 	}
 	PixErr = 1;
 
@@ -137,7 +138,6 @@ yCoeffItr::next_pixel()
 	}
     }
 
-    PixNum++;
     return  PixCoef;	// array
 }
 
