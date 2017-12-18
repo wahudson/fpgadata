@@ -28,6 +28,7 @@ image/		    Image generation scripts
 	cubeYF_clip.rgb
 		    Main programs
     coeff2stream	Convert rpixel coefficient data into an image stream.
+    countpix		Count pixels on each scan line.
     fakedata		Generate fake pixel data.
     rpix_stream		Convert rpixel coefficient data into an image stream.
     simage		Stream data into an image display.
