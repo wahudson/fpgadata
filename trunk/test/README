@@ -10,12 +10,14 @@ Files:  (2017-05-21)
 Makefile	run all test suites
 README		this file
 
+.gitignore	Git ignore transient files
+
 bin/		commands for Test
 
 lib/		Test library
-    TestLib1.pm		Library for testing programs.
+??  TestLib1.pm		Library for testing programs.
 
-opt/		External command installations
+opt/		External command installations (none)
 
 obj/		compiled .o from src/
 src/		test library source code
@@ -49,17 +51,32 @@ Test suites:  (2017-05-21)
  u   s  t_yFramDat/	yFramDat   Frame Data class.
 
 
-Test Setup: ??
+Test Setup:
 -----------
-The local working copy opt/ directory must be set up before some tests
-can be run.  (see  opt/README)
+    The individual test  t_*/Makefile  has dependency on the test framework,
+    but will not rebuild the test framework.
+
+    Build the test framework in src/ (only needed when it changes):
+    % cd  src/
+    % make
 
 
-Subversion: ??
------------
-Ignore temporary directories:
-    % svn proplist  -v -R  t_*
-    % svn propset  svn:ignore 'tmp'  t_*
+Run Tests:
+----------
+    # Run all tests from this directory
+    % make test
+
+    # Run a specific test
+    % cd t_<dir>/
+    % make test
+
+
+Git:
+----
+    The .gitignore file has entries to ignore the transient files in each
+    test directory:
+    t_*/test.exe
+    t_*/tmp
 
 
 Issues:

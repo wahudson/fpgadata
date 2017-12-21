@@ -20,16 +20,20 @@ OBJS       = \
 CXXFLAGS   = -Wall  -std=c++11
 
 
-compile	: $(OBJS)
+compile:  $(OJ)  $(OBJS)
 
-mkdirs	:
-	mkdir -p $(OJ)
+
+mkdirs:   $(OJ)
+
 
 clean: 
 	rm -f  $(OJ)/*
 
 clobber:
 	rm -f  $(OJ)/*
+
+$(OJ):
+	mkdir -p  $(OJ)
 
 
 $(OJ)/utLib1.o:	utLib1.cpp  utLib1.h
