@@ -323,8 +323,9 @@ Typically is a small integer (1..4).
 =item B<--wrap=1>           - Wrap scan lines at window size (bool).
 
 With --wrap=1 scan lines reset at window width --nx, and at window hight --ny,
-in adition to any sync marks in the input stream.
-With --wrap=0 scan lines reset only on the sync marks (Ys,Xs).
+ignoring any sync marks in the input stream.
+With --wrap=0 scan lines reset only on the sync marks (Ys,Xs) and any pixels
+beyond the edges of the image are not displayed.
 
 =item B<--help>             - Show command usage and exit.
 
@@ -373,7 +374,7 @@ simage.
  Magnify image and increase image frame size.
  % simage --magnify=2  --nx=512 --ny=512
 
- Disable auto wrapping of scan lines, --nx is ignored.
+ Disable auto wrapping of scan lines and use input sync marks.
  % simage --wrap=0
 
  Enable wrapping when there are no input sync marks.
@@ -408,22 +409,48 @@ When Xs and Ys are reversed, the Y-direction is reset multiple times
 for one X-direction sweep.  This results in all the scan lines being piled
 on top of each other at the top of the image.
 
-=head2			Horizontal lines in the image
+=head2			Scan lines shorter than window width, --wrap=0
 
-This can occur when both --wrap=1 and scan marks Xs,Ys are applied, and the
-scan line is longer than --nx.  For example, when a 257 pixel line is input
-with --nx=256 there is one X-direction reset at pixel 256 (due to --wrap=1),
-followed by 1 pixel on the next line which is then reset by Xs.  This gives
-a background colored line in the image.
-
-If every line is longer than --nx, then the number of scan lines in the
-image is effectively doubled, with every other line having partial data.
-
-With --wrap=0, the extra pixels are discarded beyond the right edge of the
-image.
+With --wrap=0, the scan line length is determined by the Xs sync mark.
+Any extra pixels are discarded beyond the right edge of the image.
 
 When the scan line is shorter than --nx, the remaining pixels assume the
 previous color in that location, usually the background color.
+This may give a white line at the end of some, or all, scan lines.
+
+Possibly adjust --nx to trim the right edge as necessary.
+
+=head2			Pixel rate asynchronous to Scan rate
+
+If the pixel rate and scan rate are not synchronized, there will be an
+error of less than 1 pixel per scan line.  The scan marks are quantized to
+the following pixel, so this error will accumulate and appear to be off by
+1 pixel in N scan lines.  This results in an intrinsic skew in the image.
+
+If you count pixels per line defined by the scan marks, the image will have
+(N-1) lines of the same length, and every N-th line will have one missing or
+one extra pixel.
+
+If N is large, like 50 in a 256x256 pixel image, then every 50-th line may
+appear shifted by 1 pixel, producing an artifact in 5 places (with --wrap=0).
+In this case it may be better to eliminate the artifacts by using --wrap=1 to
+ignore the sync marks and accept the accumulated skew of 5 pixels accross the
+whole image.
+
+If N is small, like 3, then every third line will be offset by 1 pixel
+(with --wrap=0).  There will be more offset artifacts, but at least the
+the image will not be skewed by one third.
+
+=head2			Image skew, no sync marks, --wrap=1
+
+When --wrap=1, the scan line is reset at the the window width --nx.  If --nx
+does not match the actual number of pixels on a scan line, then the following
+line will be offset by the extra/missing pixels.  This causes the image to
+look skewed.
+
+If the offset is 1 pixel per line, the image will be skewed at 45 degrees.
+If it is off multiple pixels per line, then the image is skewed more, and
+may look scrambled.  Try adjusting --nx.
 
 =head2			Multiple frames in the image
 

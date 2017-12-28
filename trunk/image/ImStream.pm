@@ -239,6 +239,11 @@ sub stream_pixels
 	chomp( $line );
 	my( $ys, $xs, @colors ) = split( ',', $line );
 
+	if ( $self->{AutoWrap} ) {	# override scan marks
+	    $xs = ( $self->{Xloc} >= $self->{Nx} );
+	    $ys = ( $self->{Yloc} >= $self->{Ny} );
+	}
+
 	if ( $xs ) {
 	    $self->{Xloc} = 0;
 	    $self->{Yloc}++;
@@ -246,17 +251,6 @@ sub stream_pixels
 
 	if ( $ys ) {
 	    $self->{Yloc} = 0;
-	}
-
-	#!! Should we wrap if no marks?
-	if ( $self->{AutoWrap} ) {
-	    if ( $self->{Xloc} >= $self->{Nx} ) {
-		$self->{Xloc} = 0;
-		$self->{Yloc}++;
-		if ( $self->{Yloc} >= $self->{Ny} ) {
-		    $self->{Yloc} = 0;
-		}
-	    }
 	}
 
 	my $Ax = $self->{Xloc} * $mag;
