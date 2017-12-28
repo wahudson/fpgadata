@@ -14,6 +14,8 @@ Files:  (2017-11-12)
 ------
 README			this file
 
+.gitignore		Git ignore transient files
+
 doc/		    Documentation
     architecture.text	Architecture description
     gpio_connect.text	fpgadata  GPIO Connection Wiring
@@ -27,6 +29,7 @@ image/		    Image generation scripts
 	cubeYF.rgb
 	cubeYF_clip.rgb
 		    Main programs
+    coeff2polar		Multi-lockin coefficient to magnitude and phase.
     coeff2stream	Convert rpixel coefficient data into an image stream.
     countpix		Count pixels on each scan line.
     fakedata		Generate fake pixel data.
@@ -46,7 +49,9 @@ bin/		    Commands
     fpgadata		Get FPGA Data.
     rpixel		Get FPGA Data, pixel signals.
 		    Symlinks for other commands
+    coeff2polar		Multi-lockin coefficient to magnitude and phase.
     coeff2stream	Convert rpixel coefficient data into an image stream.
+    countpix		Count pixels on each scan line.
     plotc16		Plot FPGA filter coefficients.
     plotc16loop		Live Plot of FPGA filter coefficients.
     rpix_stream		(obsolete)

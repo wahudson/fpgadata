@@ -1,0 +1,309 @@
+#!/usr/bin/perl -w
+# 2017-09-03  William A. Hudson
+
+# coeff2polar -- Multi-lockin coefficient to magnitude and phase.
+#
+# Maintenance comments:  #!!
+#---------------------------------------------------------------------------
+
+use strict;
+
+use Getopt::Long  ();
+use Pod::Usage    ( 'pod2usage' );
+
+use FindBin qw($RealBin);
+
+our $ToolDir;
+BEGIN
+{
+    $ToolDir = $RealBin;
+}
+
+use lib "$ToolDir";		# Libraries from this tool installation.
+
+our $ProgFile = $0;	# this program
+our $ProgName = $0;
+    $ProgName =~ s:^.*/:: ;
+
+#---------------------------------------------------------------------------
+## Main program usage
+#---------------------------------------------------------------------------
+
+# Print program usage.
+#    May show configuration defaults.
+# call:
+#    print_usage()
+# return:
+#    ()  = unused
+#    Does NOT exit, let main program decide that.
+#
+sub print_usage
+{
+    pod2usage( {
+	-message => "Multi-lockin coefficient to magnitude and phase",
+	-exitval => "NOEXIT",
+	-verbose => 0,
+    } );
+
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Main program
+#---------------------------------------------------------------------------
+
+{
+    select( STDOUT );  $| = 1;	# autoflush
+    select( STDERR );  $| = 1;
+    # Leave STDERR selected to protect data stream.
+
+## Option processing.
+
+    my $op_verbose      = 0;
+    my $op_debug        = 0;
+    my $op_TESTOP       = 0;
+
+    my $op_deg          = 0;
+
+    Getopt::Long::Configure(
+	'posix_default',
+    #	'bundling',		# enable -rN, require --word
+    #	'bundling_override',	# good for -r3, clash --vx -v -x
+	'no_ignore_case',
+    );
+
+    Getopt::Long::GetOptions(
+	"--help"         => sub { print_usage();      exit( 0 ) },
+	"--man"          => sub { do_man();           exit( 0 ) },
+
+#	"--deg"          => \$op_deg,
+
+	"--verbose|v"    => \$op_verbose,
+	"--debug"        => \$op_debug,
+	"--TESTOP"       => \$op_TESTOP,
+
+    ) || do {	# GetOptions() returns false on errors in option parsing.
+	Error( "Type '$ProgName --help' for usage.\n" );
+	exit( 2 );
+	# Do not show usage longer than 5 lines, let user see argument error.
+    };
+
+#    print( "ToolDir= $ToolDir\n" );
+#    print( "ProgFile= $ProgFile\n" );
+#    print( "ProgName= $ProgName\n" );
+
+
+    if ( @ARGV ) {
+	Error( "extra arguments:  $ARGV[0]\n" );
+    }
+
+    last  if ( Error() );
+
+    if ( $op_TESTOP ) {
+	print( "--deg          = $op_deg\n"   );
+	last;
+    }
+
+## Main Loop
+
+    my $header = <STDIN>;
+    unless ( $header =~ m/^index,Ym,Xm,c0,c1/ ) {
+	Error( "unexpected header line:\n",
+	    "    have:  $header",
+	    "    want:  index,Ym,Xm,c0,c1,...\n"
+	);
+	last;
+    }
+
+    print( STDOUT  "index,Ym,Xm" );		# Header
+    for ( my $k=0;  $k<=7;  $k++ )
+    {
+	printf( STDOUT  ",r${k},p${k}" );
+    }
+    print( STDOUT  "\n" );
+
+    while ( <STDIN> )
+    {
+	chomp();
+	next  if ( m/^\s*$/ );
+	my( $index, $ym, $xm, @coeff ) = split( ',', $_ );
+
+	if ( $op_debug ) {
+	    print( STDOUT  join( ",", "#$index", $ym, $xm, @coeff ), "\n" );
+	}
+
+	print( STDOUT  "$index,$ym,$xm" );
+
+	my @v;
+	for ( my $k=0;  $k<=15;  $k+=2 )
+	{
+	    my $x = $coeff[$k];
+	    my $y = $coeff[$k+1];
+	    my $r = sqrt( ($x * $x) + ($y * $y) );	# magnitude
+	    my $p = atan2( $y, $x );			# phase
+	    printf( STDOUT  ",%1.1f,%1.3f", $r, $p );
+	    # Precision choosen for 16-bit signed integer input.
+	}
+	print( STDOUT  "\n" );
+    }
+
+}
+
+exit( (Error()) ? 1 : 0 );
+
+
+#---------------------------------------------------------------------------
+## functions
+#---------------------------------------------------------------------------
+
+# Show man page.
+#
+sub do_man
+{
+    my $pager = $ENV{'PAGER'} || "less";
+
+    open( STDOUT, "| $pager" );
+
+    {
+	unless ( -r $ProgFile ) {   # message embedded in output
+	    print( "Error:  file not found:  $ProgFile\n\n" );
+	    last;
+	}
+
+#	system( "pod2text -s < $ProgFile" );
+	system( "pod2man -s 1 -n $ProgName --center='User Contrib' $ProgFile | nroff -man" );
+    }
+
+    close( STDOUT );
+    1;
+}
+
+
+#---------------------------------------------------------------------------
+## Error Handling
+#---------------------------------------------------------------------------
+
+our $Error_cnt = 0;	# (private)
+
+# Error message reporting.
+# call:
+#    Error( @text )	Print error message, increment error count.
+#    Error()		Get error count.
+# return:
+#    ()  = Error count, false if no errors were recorded.
+#
+sub Error
+{
+    if ( @_ ) {
+	warn( "Error:  ", @_ );
+	$Error_cnt ++;
+    }
+    return( $Error_cnt );
+}
+
+
+__END__
+
+#---------------------------------------------------------------------------
+## Man page
+#---------------------------------------------------------------------------
+# See also:  perlpod(1)  perlpodstyle(1)
+
+=head1		NAME
+
+coeff2polar -- Multi-lockin coefficient to magnitude and phase
+
+=head1		SYNOPSIS
+
+ coeff2polar  [options] < in.csv > out.csv
+ #  --deg             output phase in degrees, default radians
+    --debug           show debug output on stdout
+    --help            show command usage and exit
+    --man             show man page and exit
+
+
+=head1		DESCRIPTION
+
+Convert multi-channel lockin quadrature values into magnitude and phase.
+
+The input csv is expected to be in rpixel format.  The coefficient values
+are pairs of (x,y) lockin quadrature values, e.g. (c0,c1), (c2,c3), .. etc.
+
+ Input:  (stdin)
+ index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
+ 17,0,0,100,0,0,100,-100,0,0,-100,0,0,0,0,0,0,0,0
+ 18,0,0,100,100,-100,100,-100,-100,100,-100,0,0,0,0,0,0,0,0
+
+ Output:  (stdout)
+ index,Ym,Xm,r0,p0,r1,p1,r2,p2,r3,p3,r4,p4,r5,p5,r6,p6,r7,p7
+ 17,0,0,100.0,0.000,100.0,1.571,100.0,3.142,100.0,-1.571,0.0,0.000,..
+ 18,0,0,141.4,0.785,141.4,2.356,141.4,-2.356,141.4,-0.785,0.0,0.000,..
+
+ where headings are:
+    index            arbitrary sample number - passed thru
+    Ym,Xm            scan mark signals       - passed thru
+    c0,c2,c4,..,c14  even is lockin X value
+    c1,c3,c5,..,c15  odd  is lockin Y value
+    r0,r1,r2,..,r7   magnitude
+    p0,p1,p2,..,p7   phase
+
+Coefficient values are expected to be signed integers.
+They are transformed to magnitude and phase by:
+
+    r0 = sqrt( (c0*c0) + (c1*c1) )	# magnitude
+    p0 = atan2( c1, c0 )		# phase  atan( c1/c0 )  radians
+
+
+=head1		OPTIONS
+
+=over 8
+
+=item B<--deg>              - Output phase in degrees, default radians.
+
+=item B<--debug>            - Show debug output on stdout.
+
+Output the original csv line with a leading '#' for comparison.
+
+=item B<--help>             - Show command usage and exit.
+
+=item B<--man>              - Show man page and exit.
+
+Prints the manual page and exits.
+
+=back
+
+
+=head1		RETURN VALUE
+
+0= success, otherwise errors
+
+
+=head1		EXAMPLES
+
+ Simple transformation
+ % coeff2polar  < xx.csv  > xx.polar.csv
+
+ Show default options.  Is a hidden test option.
+ % coeff2polar --TESTOP
+
+=head1		ENVIRONMENT
+
+=over 8
+
+=item B<PAGER>
+
+Value defines an output filter used to display manual pages.
+By default, less(1) is used.  If PAGER='', stdout is written with no paging.
+
+=back
+
+
+=head1		FILES
+
+=head1		SEE ALSO
+
+B<rpixel>(1)  FPGA data transfer on Raspberry Pi
+
+=cut
+
