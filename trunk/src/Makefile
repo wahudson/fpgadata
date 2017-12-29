@@ -37,17 +37,22 @@ run	: compile
 ##	$(BINDIR)/fpgadata --csv --TESTOP
 	$(BINDIR)/rpixel --csv --TESTOP
 
-mkdirs	:
-	mkdir -p $(BINDIR)
-	mkdir -p $(OJ)
+mkdirs	: $(OJ)  $(BINDIR)
 
-compile	: $(BINDIR)/fpgadata  $(BINDIR)/rpixel  $(OBJS)
+compile	: $(OJ)  $(BINDIR)  $(BINDIR)/fpgadata  $(BINDIR)/rpixel
 
 clean: 
 	rm -f  $(OJ)/*
 
 clobber:
 	rm -f  $(BINDIR)/fpgadata  $(BINDIR)/rpixel  $(OJ)/*
+
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
+$(OJ):
+	mkdir -p $(OJ)
+
 
 $(BINDIR)/fpgadata:	$(OJ)/fpgadata.o  $(OBJS)
 	g++ -o $@       $(OJ)/fpgadata.o  $(OBJS)

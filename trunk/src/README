@@ -3,7 +3,6 @@
 		------------
 
 Build from this directory:
-    % make mkdirs
     % make
 
 Files:  (2017-11-12)
