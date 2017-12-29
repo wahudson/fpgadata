@@ -351,6 +351,7 @@ main( int	argc,
 	volatile unsigned	*gpio_clr  = Gpx.get_clr_addr();
 
 	if ( Opx.debug ) {
+	    cout << "    GpioBase=  " << (unsigned *)Gpx.get_GpioBase() << endl;
 	    cout << "    gpio_read= " << (unsigned *)gpio_read << endl;
 	    cout << "    gpio_set=  " << (unsigned *)gpio_set  << endl;
 	    cout << "    gpio_clr=  " << (unsigned *)gpio_clr  << endl;

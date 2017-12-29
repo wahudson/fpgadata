@@ -2,6 +2,7 @@
 
 // Raspberry Pi GPIO base class.
 //
+// See also:  http://elinux.org/RPi_GPIO_Code_Samples#Direct_register_access
 //--------------------------------------------------------------------------
 
 #include <iostream>
@@ -11,6 +12,7 @@
 #include <fcntl.h>	// open()
 #include <sys/mman.h>	// mmap()
 #include <sys/stat.h>	// stat()
+#include <string.h>	// strerror()
 
 using namespace std;
 
@@ -26,7 +28,7 @@ using namespace std;
 #define GP_SET0		(0x001c / 4)
 #define GP_CLR0		(0x0028 / 4)
 #define GP_LEV0		(0x0034 / 4)
- 
+
 
 /*
 * Constructor.
@@ -39,18 +41,19 @@ yRpiGpio::yRpiGpio()
     int				mem_fd;
     void			*gpio_map;
     static volatile unsigned	fake_block[ BLOCK_SIZE ];
-    char			devfile[] = "/dev/gpiomem";
+    const char			devfile[] = "/dev/gpiomem";
     struct stat			statbuf;
 
   if ( stat( devfile, &statbuf ) == 0 ) {	// exists
     cerr << "Real GPIO" << endl;
 
     // open /dev/gpiomem
-    if (( mem_fd = open( devfile, O_RDWR|O_SYNC ) ) < 0) {
-	cerr << "can't open " << devfile << endl;
+    mem_fd = open( devfile, O_RDWR|O_SYNC );
+    if ( mem_fd < 0 ) {
+	cerr << "Error:  can't open " << devfile << endl;
 	exit( -1 );
     }
- 
+
     // map GPIO into our memory
     gpio_map = mmap(
 	NULL,			// Any adddress in our space will do
@@ -60,18 +63,14 @@ yRpiGpio::yRpiGpio()
 	mem_fd,			// File to map
 	GPIO_BASE		// Offset to GPIO peripheral
     );
- 
+
     close( mem_fd );	// No need to keep mem_fd open after mmap
- 
+
     if ( gpio_map == MAP_FAILED ) {
-	//#!! fix mixed io
-	printf( "mmap error %p:  %m\n", gpio_map );	//errno also set!
+	cerr << "Error:  mmap() failed:  " << strerror( errno ) << endl;
 	exit(-1);
     }
-    else {
-	cerr << "gpio_map= " << gpio_map << endl;
-    }
- 
+
     // Always use volatile pointer!
     GpioBase = (volatile unsigned *)gpio_map;
   }
@@ -80,7 +79,6 @@ yRpiGpio::yRpiGpio()
     GpioBase = fake_block;
   }
 
-    cerr << "    GpioBase= " << (unsigned *)GpioBase << endl;
 }
 
 
