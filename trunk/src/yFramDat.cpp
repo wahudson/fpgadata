@@ -48,7 +48,7 @@ yFramDat::yFramDat( size_t nsize )
     data = new( uint16_t [sz+1] );
 
     if ( nsize > sz ) {
-	Error::err( "yFramDat() nsize too large\n" );
+	Error::msg( "yFramDat() nsize too large\n" );
     }
 
     if ( data ) {

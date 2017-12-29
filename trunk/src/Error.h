@@ -17,13 +17,6 @@ class Error {
     static std::ostream&	msg();
     static std::ostream&	msg( const char* text );
 
-  public:
-    static int		err();
-    static void		err( const char* );
-    static void		err( const char*,  const char* );
-    static void		err( const char*,  const char*,  const char* );
-    static void		err( const char*,  const char*,  const char*,  const char* );
-
 };
 
 

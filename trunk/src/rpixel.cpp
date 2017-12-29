@@ -179,7 +179,7 @@ yOptLong::parse_options()
 	else if ( is( "-"            )) {                break; }
 	else if ( is( "--"           )) { this->next();  break; }
 	else {
-	    Error::err( "unknown option:  ", this->current_option() );
+	    Error::msg( "unknown option:  " ) << this->current_option() <<endl;
 	}
     }
 
@@ -205,17 +205,17 @@ yOptLong::parse_options()
 	if ( ! ((frame_n ==  0) ||
 		(frame_n == -1) ||
 		(frame_n == +1) ) ) {
-	    Error::err( "--frame must be:  -1, 0, +1" );
+	    Error::msg( "--frame must be:  -1, 0, +1\n" );
 	}
     }
 
     if ( stream_n && ( csv || tab || tab2 ) ) {
-	Error::err( "--stream only outputs CSV format" );
+	Error::msg( "--stream only outputs CSV format\n" );
     }
     // --stream not intended with other outputs, but allow for debug.
 
     if ( get_argc() > 0 ) {
-	Error::err( "extra arguments:  ", next_arg() );
+	Error::msg( "extra arguments:  " ) << next_arg() <<endl;
     }
 }
 
@@ -315,7 +315,7 @@ main( int	argc,
 
 	if ( Opx.TESTOP ) {
 	    Opx.print_option_flags();
-	    return ( Error::err() ? 1 : 0 );
+	    return ( Error::has_err() ? 1 : 0 );
 	}
 
 	if ( Opx.man ) {
@@ -338,7 +338,7 @@ main( int	argc,
 	int			stream_ii;	// stream burst pixel count
 	yCoeffItr		stream_itr  ( &Fdx );
 
-	if ( Error::err() )  return 1;
+	if ( Error::has_err() )  return 1;
 
 	if ( Opx.stream_n ) {
 	    stream_itr.print_coeff_csv_head();
@@ -618,17 +618,16 @@ main( int	argc,
 	}
 
 	if ( overflow ) {
-//#!!	    Error::err( "Fifo overflow count= ", overflow );
-	    cerr << "Error:  Fifo overflow count= " << overflow << endl;
+	    Error::msg( "Fifo overflow count= " ) << overflow <<endl;
 	}
     }
     catch ( std::exception& e ) {
-	Error::err( e.what() );
+	Error::msg() << e.what() <<endl;
     }
     catch (...) {
-        Error::err( "unexpected exception" );
+        Error::msg( "unexpected exception\n" );
     }
 
-    return ( Error::err() ? 1 : 0 );
+    return ( Error::has_err() ? 1 : 0 );
 }
 

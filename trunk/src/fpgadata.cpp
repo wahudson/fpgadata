@@ -137,7 +137,7 @@ yOptLong::parse_options()
 	else if ( is( "-"            )) {                break; }
 	else if ( is( "--"           )) { this->next();  break; }
 	else {
-	    Error::err( "unknown option:  ", this->current_option() );
+	    Error::msg( "unknown option:  " ) << this->current_option() <<endl;
 	}
     }
 
@@ -153,7 +153,7 @@ yOptLong::parse_options()
     }
 
     if ( get_argc() > 0 ) {
-	Error::err( "extra arguments:  ", next_arg() );
+	Error::msg( "extra arguments:  " ) << next_arg() <<endl;
     }
 }
 
@@ -278,7 +278,7 @@ main( int	argc,
 
 	if ( Opx.TESTOP ) {
 	    Opx.print_option_flags();
-	    return ( Error::err() ? 1 : 0 );
+	    return ( Error::has_err() ? 1 : 0 );
 	}
 
 	yFramDat		Fdx  ( 10 );	// constructor
@@ -286,7 +286,7 @@ main( int	argc,
 
 	int			overflow;	// OVFLOW_G
 
-	if ( Error::err() )  return 1;
+	if ( Error::has_err() )  return 1;
 
 	yRpiGpio		Gpx;		// constructor
 
@@ -407,6 +407,6 @@ main( int	argc,
 	cerr << "caught something" << endl;
     }
 
-    return ( Error::err() ? 1 : 0 );
+    return ( Error::has_err() ? 1 : 0 );
 }
 
