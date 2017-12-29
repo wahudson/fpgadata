@@ -167,7 +167,7 @@ Data Flow of Scan Marks:
 
 Command pipeline:
 
-    FPGA -> rpixel | rpix_stream | simage
+    FPGA -> rpixel | coeff2stream | simage
 
 
 simage:  Command to generat the image display.

@@ -33,7 +33,6 @@ image/		    Image generation scripts
     coeff2stream	Convert rpixel coefficient data into an image stream.
     countpix		Count pixels on each scan line.
     fakedata		Generate fake pixel data.
-    rpix_stream		Convert rpixel coefficient data into an image stream.
     simage		Stream data into an image display.
 		    Perl modules, mostly used by simage
     Error_mixi.pm	Error handling mix-in functions.
@@ -54,7 +53,6 @@ bin/		    Commands
     countpix		Count pixels on each scan line.
     plotc16		Plot FPGA filter coefficients.
     plotc16loop		Live Plot of FPGA filter coefficients.
-    rpix_stream		(obsolete)
     rpixel.pod		rpixel manpage (found by being next to rpixel).
     rpixel_init		Initialize Raspberry Pi gpio for use with rpixel.
     runplots		Run rpixel with plotc16loop.
