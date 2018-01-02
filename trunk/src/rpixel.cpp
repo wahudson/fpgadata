@@ -363,7 +363,8 @@ main( int	argc,
 	if ( ! Opx.stream_n ) {
 	    n_trans = Fdx.nlimit( n_trans );	// limit to array size
 	}
-	cerr << "    n_trans= " << n_trans << endl;
+	cerr << "num pixels=     " << Opx.npix_n << endl;
+	cerr << "num samples=    " << n_trans    << endl;
 	// Count valid transfers so pixel identification is not required.
 
 	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )	// time repeats
@@ -545,23 +546,25 @@ main( int	argc,
 		ns_sample    =         ( delta_ns / sample_cnt );
 	    }
 
-	    cerr << "  FlushFifo_cy= " << flush_cnt <<endl;
+	    cerr << "Rep[" << jj << "]" <<endl;
 //	    cerr << "  NoData " << Bsx.text_stats_by_call();
 	    cerr << "    OverFlow=   " << overflow   <<endl;
-	    cerr << "    sample_cnt= " << sample_cnt <<endl;
 	    cerr << "    NoData_cnt= " << NoData_cnt <<endl;
+	    cerr << "    sample_cnt= " << sample_cnt <<endl;
 	    cerr << "    coeff_cnt=  " << coeff_cnt  <<endl;
+	    cerr << "    delta_ns=   " << delta_ns   << " ns" <<endl;
 
 	    cerr << "    NoData per Coeff = "
 		 <<setw(8) <<fixed <<setprecision(2) << NoData_coeff <<endl;
 
-	    cerr << "    Coeff Rate       = "
-		 <<setw(5) << ns_coeff << " ns/coeff" <<endl;
+	    cerr << "    Pixel Rate       = "
+		 <<setw(8) << ns_coeff * 16 << " ns/pixel"  <<endl;
 
-	    cerr << "    delta_ns[" <<setw(2) << jj << "]= "
-		 <<setw(10) << delta_ns  << " ns,  "
-		 <<setw(4)  << ns_sample << " ns/sample"
-		 <<endl;
+	    cerr << "    Coeff Rate       = "
+		 <<setw(8) << ns_coeff      << " ns/coeff"  <<endl;
+
+	    cerr << "    Sample Rate      = "
+		 <<setw(8) << ns_sample     << " ns/sample" <<endl;
 
 //	    cout << "    A.tv_sec  = " << tpA.tv_sec  << endl;
 //	    cout << "    A.tv_nsec = " << tpA.tv_nsec << endl;
