@@ -2,13 +2,13 @@
 		fpgadata -- FPGA to Raspberry Pi Data Transfer
 		----------------------------------------------
 
+A tool set to:
+    Transfer data from an FPGA to Raspberry Pi (RPi) via GPIO pins.
+    Generate dotplots from csv file data.
+    Format and display images from from csv file data.
+    Original motivation from CSU Jesse Wilson.
+
 Revision control:  git
-
-This is the "fpgadata" tool.
-Runs on Raspberry Pi (RPi) to transfer data from an FPGA connected to
-the RPi GPIO pins.
-Motivation from CSU Jesse Wilson.
-
 
 Files:  (2017-11-12)
 ------
@@ -74,11 +74,15 @@ Initial Build process:
     % make mkdirs
     % make compile
 
-The idea is to build/run in the source directory tree, thus avoiding need for
-any package/install process.
+    The idea is to build/run in the source directory tree, thus avoiding
+    need for any package/install process.
 
-The bin/ dirctory aggregates all commands with symlinks (so it does not
-contain any sources), making it easy to add to $PATH.
+    The bin/ dirctory aggregates all commands with symlinks (so it does not
+    contain any sources), making it easy to add to $PATH.
+
+    Most tools have an embedded man page, e.g. 'rpixel --man'.
+
+    See also:  doc/rpixel.text
 
 
 Primary developers:

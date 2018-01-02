@@ -9,9 +9,11 @@ Try to keep it current and focused on as-implemented function.
 Altera DE2-115 User Manual
     /home/var/ref/DE2_115_User_manual_2013.pdf
     http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=165&No=502&PartNo=4
+    p. 46  Using the Expansion Header
 
 ----------------------------------------------------------------------------
 ##(2017-07-30)  RPi Signals
+----------------------------------------------------------------------------
 
    RPi
    Dir  Signal      Description
@@ -53,6 +55,7 @@ whenever fifo 'rdempty' (NoData) is low.  When high, the data is ignored.
 
 ----------------------------------------------------------------------------
 ##(2017-07-05)  FPGA Connections
+----------------------------------------------------------------------------
 
 Configure RPi pin modes:  (after each power-up)
     % gpio readall
@@ -120,7 +123,100 @@ Configure RPi pin modes:  (after each power-up)
 FrameGate   is the Shutter Enable signal from ScanImage.
 
 ----------------------------------------------------------------------------
+## FIFO Interface
+----------------------------------------------------------------------------
+
+Situation
+
+    We have an adaptive filter in the FPGA running at a fixed frequency.
+    The RPi process is asynchronous, and may experience process sleeps.
+    How to transfer data from the FPGA to RPi without loosing any samples?
+
+    A FIFO (First-In First-Out) buffer is used to buffer data between
+    asynchronous processes.
+    The Adaptive Filter puts data in the fifo at fixed frequency.
+    The RPi takes data out (reads) of the fifo at a faster average rate.
+    Thus the fifo should normally run nearly empty, and begin to fill only
+    during RPi process sleeps.
+
+
+----------------------------------------------------------------------------
+##(2017-11-27)  rpixel Reading Data from FPGA
+----------------------------------------------------------------------------
+
+General comments:
+    This is a custom tool set, not a polished application.
+    A tool set is created as a set of individual components that can be used
+    in various combinations to meet changing needs.  Each tool is focused
+    on a particular task, and does not try to do everything.
+    It is intended that each tool be simple enough that even a novice
+    programmer could make changes to parameters or modify the algorithm to
+    meet special needs.  So make changes -- you always have the original as
+    a working reference.  Possibly put your changes on a git branch.
+
+    Here I will try to describe how I have used these tools (programs).
+    Intended as an example of what we actually did, with notes on possible
+    alternatives.  Use it as a guide, and branch out as needed.
+
+    Note that man pages and documentation may seem like polish, but the
+    important thing is to explain concepts, context, needs, and intended
+    behaviour.  This helps a lot when looking at a piece of code and
+    wondering why it is the way it is.  Keep in mind the code may be
+    incomplete or have mistakes with respect to the indended function.
+
+
+See also:  rpixel --man
+
+    The man page has detailed information about setup and the essential
+    operation of rpixel.
+
+Setup:
+    Connect the RPi pins to the FPGA header pins.  Typically done while
+    both are powered down to avoid accidents.
+    We made a custom cable (6 inches long) with 40-pin female headers, which
+    makes it much quicker to get all connections correct.
+
+    Power up the RPi and FPGA board.  Order does not matter.
+
+Install and compile:
+
+RPi access to commands:
+
+Initialize the RPi pin directions:
+    This only needs to be done once after power up.
+    % rpixel_init
+
+Collecting data in memory:
+
+    rpixel --npix=66000  --csv > x1.csv 2>x1.err
+
+    rpixel --npix=66000  --stream=10 --frame=-1 > x4.csv 2> x4.err
+
+
+Note memory usage:
+    # Idle system, rpixel not running
+    % free
+		 total       used       free     shared    buffers     cached
+    Mem:        945512     255096     690416       6644      22272     142384
+    -/+ buffers/cache:      90440     855072
+    Swap:       102396          0     102396
+
+    # Use (--npix * 64 entry/pixel * 2 byte/entry) 256 Mbyte
+    # Units displayed in 'free' are Kbytes.  Mem used went up ~256 Mbyte.
+    % rpixel --npix=2048000 --repeat=2
+    % free
+		 total       used       free     shared    buffers     cached
+    Mem:        945512     512204     433308       6676      22288     142420
+    -/+ buffers/cache:     347496     598016
+    Swap:       102396          0     102396
+
+    Long as plenty of free memory remains, all is OK.  (433 Mbyte in this case)
+    If swap (to the SD card) occures, not so good, may wear out the card.
+
+
+----------------------------------------------------------------------------
 ##(2017-07-30)  Live Update Plots
+----------------------------------------------------------------------------
 
 Put symlinks in bin/ directories for the commands.  e.g.
 
@@ -144,6 +240,7 @@ Run from wah laptop:
 
 ----------------------------------------------------------------------------
 ##(2017-11-06)  Live Update Images
+----------------------------------------------------------------------------
 
 ssh:
     Note ssh does not run users login .profile, and PATH is set to a default

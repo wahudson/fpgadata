@@ -2,18 +2,103 @@
 		fpgadata -- FPGA to Raspberry Pi Data Transfer
 		----------------------------------------------
 
-This is the "fpgadata" tool.
-Transfer data from an FPGA to Raspberry Pi (RPi) via GPIO pins.
-
-Content Experts:
-    William Hudson  William.Hudson542@gmail.com
-
+A tool set to:
+    Transfer data from an FPGA to Raspberry Pi (RPi) via GPIO pins.
+    Generate dotplots from csv file data.
+    Format and display images from from csv file data.
 
 Files:
 ------
 README		this file
-
+LICENSE		MIT Open Source License
 trunk/		mainline development
+
+
+Purpose of this project:
+------------------------
+    These tools were developed for use on a graduate student project at
+    Colorado State University.
+    The original problem was to get data out of an adaptive filter running
+    on an FPGA (Field Programmable Gate Array).
+    Later applied to an 8-channel Digital Lockin amplifier on an FPGA.
+
+    The tools meet these needs in a reasonably general way, and could
+    find application in other situations.
+    Intended to be modified to suit specific needs.
+
+    It is a command line tool set, not a GUI application.
+    Intended to run on Linux.
+
+
+Catalog of Tools:
+-----------------
+Data transfer:
+
+    rpixel		FPGA data transfer to Raspberry Pi.
+	It transfers data, over 8 GPIO pins, from a fifo on the FPGA to the
+	Raspberry Pi.  Output is a csv file, where each line is a data set
+	of 16 signed integer coefficients along with scan sync marks for
+	later interpretation as an image.
+	It is a C++ program using /dev/gpiomem memory mapped IO.
+
+    rpixel_init		Initialize Raspberry Pi gpio for use with rpixel.
+
+Dot plots:
+
+    plotc16		Plot FPGA filter coefficients.
+	Essentially a generic program to produce a dotplot of csv file data.
+	Written in R-script.
+
+    plotc16loop		Live Plot of FPGA filter coefficients.
+	Similar, but uses a repeat loop to read data from a named pipe.
+	Written in R-script.
+
+    runplots		Run rpixel with plotc16loop.
+	A simple wraper script.
+
+Image display:
+
+    simage		Stream data into an image display.
+	Displays one image for each column of pixel color values in the input
+	csv data stream.  Is a fairly generic program relying on external
+	formatting of data.  It is capable of live image update from a slow
+	scanning image.
+	Written in Perl, using PerlTk to do the imaging.
+
+    coeff2stream	Convert rpixel coefficient data into an image stream.
+	This is the transformation from rpixel output to simage input.
+	Coefficient data is transformed into RGB pixel value using a palette
+	file lookup.
+	Rising/falling scan mark edges are detected and turned into single
+	pixel scan reset points.
+	Written in Perl.
+
+Utility:
+
+    coeff2polar		Multi-lockin coefficient to magnitude and phase.
+	Interpret rpixel coefficient values as pairs of lockin quadrature
+	values and convert into magnitude and phase.
+	An example of data manipulation before feeding to dot plot and
+	image tools.
+	Written in Perl.
+
+    countpix		Count pixels on each scan line.
+	Used to assess the uniformity of sync marks in the pixel stream.
+	Written in Perl.
+
+
+Contributing:
+-------------
+    I am NOT accepting pull requests at this time.
+
+    This is a single-person project of tools I am actively using.
+    It is intended that you should fork or copy parts that are useful to
+    you and modify to suit your needs.  I am happy you found something
+    useful!
+
+Original Author:
+----------------
+    William Hudson  William.Hudson542@gmail.com
 
 
 Repository History:  (newest first)
