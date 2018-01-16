@@ -1,0 +1,116 @@
+2018-01-15  William A. Hudson
+
+		Plotting with R - Getting Started
+		---------------------------------
+
+See also:
+    https://cran.r-project.org/doc/manuals/r-release/R-intro.html
+    ftp://cran.r-project.org/pub/R/doc/contrib/Short-refcard.pdf
+    https://www.r-project.org/
+    % man R		# the R manpage
+    doc/software.text	# this installation
+
+    R commands are shown here without any prompt character, making it easier
+    to cut-and-paste a group of commands.
+
+----------------------------------------------------------------------------
+## Simple Plotting
+----------------------------------------------------------------------------
+    # Start R on the command line, type 'R'
+    % R
+
+    # Read dataset from csv file, assign it to a Data Frame named 'df'.
+	df <- read.csv( "x1.csv", header=TRUE )
+
+    # Time Series Plot coefficient c0
+	plot( df$c0, pch='.' )
+
+    # XY Plot of coefficient c0 vs c1
+	plot( df$c0, df$c1, pch='.' )
+
+    # Save the plot
+	dev.copy2pdf( file="x1.myplot.pdf" )
+
+    # Quit R
+	quit()
+
+----------------------------------------------------------------------------
+## LockIn analysis with time-series plot:
+----------------------------------------------------------------------------
+    Convert rpixel csv output to polar:
+    % coeff2polar < x2.csv  > x2.polar.csv
+
+    Start R
+    % R
+
+    Read files into two data frames.
+	df <- read.csv( "x2.csv", header=TRUE )
+	dg <- read.csv( "x2.polar.csv", header=TRUE )
+
+    Set the plot axis range.  The vector names are the axis names.
+	Index  <- c(     0, 50000 )
+	Output <- c( -5000, 10000 )
+	plot( Index, Output, type="n" )
+	
+    Add points to existing plot.
+	points( df$c0, pch='.' )
+	points( df$c1, pch='.', col="blue" )
+	points( dg$r0, pch='.', col="red" )
+	points( (dg$p0 * 1000), pch='.', col="green" )
+
+    Horizonal line at output=0
+	abline( h=0 )
+
+    Add a legend
+      legend( 36000,10000,
+	title="Time Series",
+	c( "c0 Xout", "c1 Yout", "r0 Magnitude", "p0*1000 Phase" ),
+	pch=c(20,20,20,20),
+	col=c("black", "blue", "red", "green") )
+
+    title( "Frequency Sweep, AFM_sim 1034.3 KHz, x2.csv 2018-01-09" )
+
+    Copy to a pdf file
+	dev.copy2pdf( file="x2.freq_sweep.pdf" )
+
+    Note pdf output looses some resolution compared to X11cairo display.
+
+
+----------------------------------------------------------------------------
+## Help and Useful Tips
+----------------------------------------------------------------------------
+
+Read the R-intro!  It really helps.
+    https://cran.r-project.org/doc/manuals/r-release/R-intro.html
+
+Here follows a very few useful tips.  The intent is to show function
+examples, which typically have many more possible arguments.
+
+R is intended to be used on the interactive command line.  The commands
+can then be written down and turned into a program.
+
+Getting Help:
+    help()
+	# The function to get help
+
+    ?help
+    ?read.csv
+    ?plot
+	# Shortcut for help('plot')
+
+    help( '<-' )
+	# Assignment operators.
+
+Data Frames:
+    ?data.frame
+	# Data Frame creation function, and some info.
+
+    ?'[.data.frame'
+	# Extract or Replace Parts of a Data Frame
+
+    names( df )         # column names
+    row.names( df )     # row names
+
+    df$name
+	# extract one column, named 'name'
+

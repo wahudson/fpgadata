@@ -20,6 +20,7 @@ doc/		    Documentation
     architecture.text	Architecture description
     gpio_connect.text	fpgadata  GPIO Connection Wiring
     hardware.text	Hardware Components used
+    plot_guide.text	Plotting with R - Getting Started
     rpixel.text		rpixel  Connection and User Guide
 
 ? man/man1/		Manpage dir tree (unmanaged)
