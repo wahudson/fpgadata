@@ -40,6 +40,10 @@ image/		    Image generation scripts
     ImStream.pm		Image Stream data.
     ImTop.pm		Top-level Stream data into an image.
 
+lockin/		    Multi-channel Lockin support
+    mlifreq		Multi-LockIn Frequency computation.
+    sdmean		Compute Mean and Standard Deveiation of csv input file.
+
 src/		    Source code, mostly C++
     README
     Makefile		for building the tool
@@ -52,11 +56,13 @@ bin/		    Commands
     coeff2polar		Multi-lockin coefficient to magnitude and phase.
     coeff2stream	Convert rpixel coefficient data into an image stream.
     countpix		Count pixels on each scan line.
+    mlifreq		Multi-LockIn Frequency computation.
     plotc16		Plot FPGA filter coefficients.
     plotc16loop		Live Plot of FPGA filter coefficients.
     rpixel.pod		rpixel manpage (found by being next to rpixel).
     rpixel_init		Initialize Raspberry Pi gpio for use with rpixel.
     runplots		Run rpixel with plotc16loop.
+    sdmean		Compute Mean and Standard Deveiation of csv input file.
     simage		Stream data into an image display.
 
 obj/		    temporary .o object files

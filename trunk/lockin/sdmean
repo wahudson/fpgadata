@@ -1,0 +1,42 @@
+#!/usr/bin/Rscript --vanilla
+# 2018-02-09  William A. Hudson
+
+# Compute Mean and Standard Deveiation of a csv input file.
+#
+# usage:  sdmean  inFile.csv
+#     inFile = input csv file, or literal 'stdin'
+#
+#----------------------------------------------------------------------------
+
+# Check arguments.
+    arg = commandArgs( trailingOnly=TRUE )
+
+    inFile  <- arg[1]
+
+    if ( is.na( inFile ) ) {
+        stop( "usage:  sdmean  inFile.csv|stdin" )
+    }
+
+# Read in csv data table.
+    df <- read.csv( inFile, header=TRUE )
+
+# Headings
+    head <- names( df )
+
+# Mean
+    Mean <- sapply( df, mean )
+
+# Standard Deviation
+    SDev <- sapply( df, sd )
+
+# New dataframe
+    data.frame( Mean, SDev, row.names=head )
+
+
+
+#    sapply( df, mean )
+#    cat( "\n" );
+#    sapply( df, sd )
+# Output of sapply() is printed as a folded table with headings.
+# Format could be improved.
+
