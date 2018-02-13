@@ -1,0 +1,58 @@
+#! /usr/bin/perl -w
+# 2018-02-13  William A. Hudson
+
+# Socket experiment.
+# Example from:  perlipc(1)
+#---------------------------------------------------------------------------
+
+use IO::Socket;
+
+$remote = IO::Socket::INET->new(
+    Proto    => "tcp",
+    PeerAddr => "localhost",
+    PeerPort => 9900,
+);
+
+unless ( $remote ) {
+    die( "cannot open socket\n" );
+}
+
+select( $remote );  $| = 1;  # autoflush
+select( STDOUT  );  $| = 1;
+
+for ( my $i=0;  $i < 5;  $i++ ) {
+
+    print( "send\n" );
+    print( $remote  "mw $i 83\n" );
+
+#    sleep( 1 );
+    print( "rec\n" );
+    while (<$remote>) { print }
+#    print( <$remote> );
+}
+
+close( $remote ) || do {
+    print( STDERR  "Error:  closing socket\n" );
+};
+
+exit( 0 );
+
+
+#---------------------------------------------------------------------------
+# Subroutines
+#---------------------------------------------------------------------------
+
+# Run system() command with trace output.
+# call:
+#    do_system( $cmd )
+# return:
+#    ()  : TRUE= success, else fail
+#
+sub do_system
+{
+    my( $cmd ) = @_;
+    warn( "+ $cmd\n" );
+    my $rc = system( $cmd );
+    return( ! $rc );
+}
+
