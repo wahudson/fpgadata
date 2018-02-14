@@ -20,13 +20,26 @@ proc m_write { addr value } {
 
 proc m_freq { addr phinc } {
     upvar master mr
-    set F0  50000000
-    set Len [ expr {1024 * 1024} ]
 
-    set freq [expr { ( $F0 / $Len ) * $phinc } ]
+    set freq [ freq_phi  $phinc ]
 
     puts "+ master_write_32 MR $addr $phinc;  f_Hz= $freq"
 #    master_write_32 $mr $addr $phinc
+}
+
+
+proc freq_phi { phi } {
+    set F0  50000000.0
+    set Len [ expr {1024.0 * 1024.0} ]
+    set freq [ expr { int( ( $F0 / $Len ) * $phi ) } ]
+    return  $freq
+}
+
+proc phinc_Hz { fHz } {
+    set F0  50000000.0
+    set Len [ expr {1024.0 * 1024.0} ]
+    set phi [ expr { int( ( $Len * $fHz / $F0 ) + 0.5 } ) ]
+    return  $phi
 }
 
 
