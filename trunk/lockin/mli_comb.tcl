@@ -20,28 +20,47 @@ proc m_write { addr value } {
 
 proc m_freq { addr phinc } {
     upvar master mr
-    set F0  50000000
-    set Len [ expr {1024 * 1024} ]
 
-    set freq [expr { ( $F0 / $Len ) * $phinc } ]
+    set freq [ freq_phi  $phinc ]
 
     puts "+ master_write_32 MR $addr $phinc;  f_Hz= $freq"
 #    master_write_32 $mr $addr $phinc
 }
 
 
-puts "Custom Frequencies"
+proc freq_phi { phi } {
+    set F0  50000000.0
+    set Len [ expr {1024.0 * 1024.0} ]
+    set freq [ expr { int( ( $F0 / $Len ) * $phi ) } ]
+    return  $freq
+}
+
+proc phinc_Hz { fHz } {
+    set F0  50000000.0
+    set Len [ expr {1024.0 * 1024.0} ]
+    set phi [ expr { int( ( $Len * $fHz / $F0 ) + 0.5 } ) ]
+    return  $phi
+}
+
+
+set Ibase   [ phinc_Hz 250000 ]
+set Idelta  [ phinc_Hz   1000 ]
+
+set fbase   [ freq_phi $Ibase  ]
+set fdelta  [ freq_phi $Idelta ]
+
+puts "Comb:  Ibase= $Ibase ($fbase Hz)  Idelta= $Idelta ($fdelta Hz)"
 
 ## frequencies of the 8 lockins (20-bit phinc)
 
-m_freq 0x00000000 21691
-m_freq 0x00000010 21953
-m_freq 0x00000020 22215
-m_freq 0x00000030 22477
-m_freq 0x00000040 21429
-m_freq 0x00000050 21167
-m_freq 0x00000060 20905
-m_freq 0x00000070 20643
+m_freq 0x00000000 [ expr { $Ibase - (3 * $Idelta) } ]
+m_freq 0x00000010 [ expr { $Ibase - (2 * $Idelta) } ]
+m_freq 0x00000020 [ expr { $Ibase - (1 * $Idelta) } ]
+m_freq 0x00000030 [ expr { $Ibase + (0 * $Idelta) } ]
+m_freq 0x00000040 [ expr { $Ibase + (1 * $Idelta) } ]
+m_freq 0x00000050 [ expr { $Ibase + (2 * $Idelta) } ]
+m_freq 0x00000060 [ expr { $Ibase + (3 * $Idelta) } ]
+m_freq 0x00000070 [ expr { $Ibase + (4 * $Idelta) } ]
 
 ## phase offsets of the 8 lockins (20-bit phinc)
 
