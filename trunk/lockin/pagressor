@@ -1,0 +1,100 @@
+#! /usr/bin/perl -w
+# 2018-02-13  William A. Hudson
+
+# Agressor frequency sweep.
+# Multi-Lockin socket control.
+#---------------------------------------------------------------------------
+
+use IO::Socket;
+use strict;
+
+my $LiaSock = IO::Socket::INET->new(
+    Proto    => "tcp",
+    PeerAddr => "localhost",
+    PeerPort => 9900,
+);
+
+unless ( $LiaSock ) {
+    die( "cannot open socket\n" );
+}
+
+select( $LiaSock );  $| = 1;  # autoflush
+select( STDOUT   );  $| = 1;
+
+liacmd( "mw 0 83" );
+liacmd( "echo hello world" );
+liacmd( "m_enable 0xff" );
+liacmd( "m_ch_freqi 1 ", phinc_fHz( 250000 ) );		# victem
+
+## frequency sweep
+my $idelta = 1;
+for ( my $i=0;  $i < 5;  $i+= $idelta ) {
+
+    liacmd( "m_ch_freqi 0 ", $i );	# aggressor
+
+}
+
+close( $LiaSock ) || do {
+    print( STDERR  "Error:  closing socket\n" );
+};
+
+exit( 0 );
+
+
+#---------------------------------------------------------------------------
+# Subroutines
+#---------------------------------------------------------------------------
+
+sub phinc_fHz
+{
+    my $F0   = 50.0e6;
+    my $Len  = 1024 * 1024;
+
+    my( $freq ) = @_;
+    my $phinc = int( (($Len / $F0) * $freq) + 0.5 );
+    return( $phinc );
+}
+
+sub freq_phi
+{
+    my $F0   = 50.0e6;
+    my $Len  = 1024 * 1024;
+
+    my( $phinc ) = @_;
+    my $freq = ($F0 / $Len) * $phinc;
+    return( $freq );
+}
+
+
+# Send command to Lockin system via socket.
+# call:
+#    liacmd( @cmd )
+# return:
+#    ()  = unused
+#
+sub liacmd
+{
+    warn( "+ @_\n" );
+    print( $LiaSock  @_, "\n" );
+    #!! Remember new-line in socket text!
+
+    print( "get reply\n" );
+    my $reply = <$LiaSock>;
+    print( $reply );
+}
+
+
+# Run system() command with trace output.
+# call:
+#    do_system( $cmd )
+# return:
+#    ()  : TRUE= success, else fail
+#
+sub do_system
+{
+    my( $cmd ) = @_;
+    warn( "+ $cmd\n" );
+    my $rc = system( $cmd );
+    return( ! $rc );
+}
+
