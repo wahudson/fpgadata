@@ -25,9 +25,11 @@ for ( my $i=0;  $i < 5;  $i++ ) {
     print( "send\n" );
     print( $remote  "mw $i 83\n" );
 
-#    sleep( 1 );
     print( "rec\n" );
-    while (<$remote>) { print }
+    my $reply = <$remote>;
+    print( $reply );
+
+#    while (<$remote>) { print }
 #    print( <$remote> );
 }
 
