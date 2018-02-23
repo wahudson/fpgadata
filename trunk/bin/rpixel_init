@@ -5,6 +5,9 @@
 
     set -x
 
+    gpio -g mode  5 out		# GoPixel
     gpio -g mode  6 out		# ReadAck       required
+    gpio -g mode  7 out		# nReset
+    gpio -g mode  8 out		# TrigOut
     gpio readall
 

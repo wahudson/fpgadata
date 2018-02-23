@@ -75,7 +75,7 @@ Configure RPi pin modes:  (after each power-up)
     Gpio4   07 GPCLK0     Hi  i   .         .   .        .
     Gpio5   29 GPCLK1     Hi   o  GoPixel   .   .        white short
     Gpio6   31 GPCLK2     Hi   o  ReadAck   09  GPIO[8]  gray
-    Gpio7   26 spi0_CE1_N Hi   o  nReset    .   .        .
+    Gpio7   26 spi0_CE1_N Hi   o  nReset    20  GPIO[17] gray
     Gpio8   24 spi0_CE0_N Hi   o  TrigOut   .   .        brown short
     Gpio9   21 spi0_MISO  Lo  i   .         .   .        .
     Gpio10  19 spi0_MOSI  Lo  i   .         .   .        .
