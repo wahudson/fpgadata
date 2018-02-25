@@ -32,6 +32,7 @@ yFramDat::yFramDat()
 * call:
 *    yFramDat	fdat  ( size );
 *    yFramDat	fdat = yFramDat::yFramDat( size );
+*    size  = number of memory elements, #!! not used
 */
 yFramDat::yFramDat( size_t nsize )
 {
@@ -39,7 +40,12 @@ yFramDat::yFramDat( size_t nsize )
 // warning: ISO C++ does not support variable-length array types [-Wvla]
 //    data = new( unsigned char [nsize] );
 
-    const int	sz = 4 * 1024 * 1024;
+    // Set memory array number of entries:  2 bytes/entry, 64 entries/pixel
+    //     sz=  4 M entries,   8 Mbyte,  256x256  pixels
+    //     sz= 16 M entries,  32 Mbyte,  512x512  pixels
+    //     sz= 64 M entries, 128 Mbyte, 1024x1024 pixels
+    //
+    const int	sz = 64 * 1024 * 1024;
 
     std::string		HeadLine  ( "#yFrameDat" );
 

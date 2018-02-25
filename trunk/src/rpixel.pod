@@ -113,6 +113,31 @@ This allows --npix to be arbitrarily large, since only --stream number of
 pixels are stored in memory.
 
 
+=head2			Data Array Size
+
+The in-memory data array size is hardcoded in the 'yFramDat' class constructor
+(see file src/yFramDat.cpp).  The constant 'sz' (const int sz) is the maximum
+number of entries in the data array.  Change the value and re-compile.
+
+The array is type (unit16_t) and consumes 2 bytes/entry.  One pixel requires
+64 entries in the array (16 coeff/pixel * 4 nibble/coeff * 1 entry/nibble).
+Thus typical image sizes require:
+
+     256x256   --npix=65536    sz=  4 M entries,   8 Mbyte
+     512x512   --npix=262144   sz= 16 M entries,  32 Mbyte
+    1024x1024  --npix=1048576  sz= 64 M entries, 128 Mbyte
+
+Size limitation is the amount of free RAM on the RPi that can be used without
+swapping to disk (the SD card).  Swapping may incur process sleeps, possibly
+resulting in fifo OverFlow and lost data.  Excessive swapping may wear out
+the SD card.  Use the free(1) command to display the amount of free and used
+memory in the system.
+
+The Raspberry Pi-3 has 1 Gbyte of RAM.  Data array size of 256 Mbyte
+(128 M entries) was tested and seems to work fine.  No testing to find failure
+limit has been done (as of 2018-02-25).
+
+
 =head1		OPTIONS
 
 =over 8
@@ -259,6 +284,10 @@ Output extra debug info, possibly on stdout.
  Show default options.  Is a hidden test option.
  % rpixel --TESTOP
 
+ Check free memory while rpixel is running.
+ % rpixel --npix=2000000 --repeat=4 &
+ % free
+
 
 =head1		TOUBLESHOOTING
 
@@ -335,6 +364,7 @@ In the source directory tree:
  bin/rpixel_init	Initialize Raspberry Pi gpio for use with rpixel.
 
 B<clock_gettime>(3)
+B<free>(1)
 
 =cut
 
