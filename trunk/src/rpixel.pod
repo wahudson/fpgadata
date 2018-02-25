@@ -140,14 +140,14 @@ limit has been done (as of 2018-02-25).
 
 =head1		OPTIONS
 
-=over 8
-
 =head2			output forms
 
 These options specify the format of the output data stream on stdout.
 Zero or more may be combined (except --stream).
 With no output option nothing is output on stdout, useful to see only the
 statistics on stderr.
+
+=over
 
 =item B<--stream=N>         - Stream N pixels at a time to CSV output.
 
@@ -195,7 +195,11 @@ Flags are 4-bits in octal, with leading zero.  Bit position values are:
     004 OverFlow (fifo write_full)
     010 NoData (fifo empty)
 
+=back
+
 =head2			raw data
+
+=over
 
 =item B<--load=FILE>        - Load hex words from file.
 
@@ -208,7 +212,11 @@ order:  --load, --save, then memory outputs --tab, --csv, etc.
 File format is hexadecimal, one 16-bit value per line.
 First line is a headline, which may be null.
 
+=back
+
 =head2			options
+
+=over
 
 =item B<--npix=N>           - Number of pixel to collect.
 

@@ -47,6 +47,10 @@ clean:
 clobber:
 	rm -f  $(BINDIR)/fpgadata  $(BINDIR)/rpixel  $(OJ)/*
 
+man:
+	podchecker rpixel.pod
+
+
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
