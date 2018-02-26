@@ -4,11 +4,13 @@
 //--------------------------------------------------------------------------
 
 #include <iostream>	// std::cerr
+#include <sstream>	// std::ostringstream
 #include <iomanip>
 #include <stdexcept>	// std::stdexcept
 
 #include "utLib1.h"	// unit test library
 
+#include "Error.h"
 #include "yFramDat.h"
 
 using namespace std;
@@ -16,6 +18,12 @@ using namespace std;
 
 int main()
 {
+    // Capture error messages.
+    //     Note if Serr is not checked and cleared on each case, then an
+    //     unexpected error message may get attributed to the next case.
+    //     Possibly make it part of eash CASE().
+    ostringstream       Serr;
+    Error::Init_ostream( &Serr );
 
   CASE( "10", "constructor" );
     try {
@@ -26,7 +34,44 @@ int main()
 	FAIL( "unexpected exception" );
     }
 
-  CASE( "12", "push_dat" );
+  CASE( "11", "get_maxlen() array size" );
+    try {
+	yFramDat		fx  (10);
+	CHECK( 64*1024*1024, fx.get_maxlen() );
+    }
+    catch (...) {
+	FAIL( "unexpected exception" );
+    }
+
+//--------------------------------------
+  CASE( "12a", "nlimit() ok" );
+    try {
+	yFramDat		fx  (10);
+	int			ns;
+	ns = fx.nlimit( 64*1024*1024 );
+	CHECK( 64*1024*1024, ns );
+    }
+    catch (...) {
+	FAIL( "unexpected exception" );
+    }
+
+  CASE( "12b", "nlimit() exceeded" );
+    try {
+	yFramDat		fx  (10);
+	int			ns;
+	ns = fx.nlimit( 64*1024*1024 + 1 );
+	CHECK( 64*1024*1024, ns );
+	CHECK(
+	    "Error:  yFramDat::nlimit() exceeded:  67108864\n",
+	    Serr.str().c_str()
+	);
+	Serr.str( string () );
+    }
+    catch (...) {
+	FAIL( "unexpected exception" );
+    }
+
+  CASE( "15", "push_dat" );
     try {
 	yFramDat		fx  (10);
 	fx.push_dat( 0x0000 );
