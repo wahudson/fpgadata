@@ -58,7 +58,6 @@ yFramDat::yFramDat( size_t nsize )
     }
 
     if ( data ) {
-	data[sz+1] = '\0';
 	size = sz;
     }
 }
