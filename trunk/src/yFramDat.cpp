@@ -101,13 +101,11 @@ yFramDat::nlimit(
     unsigned int	ntran
 )
 {
-    if ( ntran <= size ) {
-	return( ntran );
+    if ( ntran > size ) {
+	Error::msg( "yFramDat::nlimit() exceeded:  " ) << size <<endl;
+	ntran = size;
     }
-    else {
-	return( size );
-	cerr << "Error:  yFramDat::nlimit() size exceeded" << endl;
-    }
+    return( ntran );
 }
 
 

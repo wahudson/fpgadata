@@ -21,6 +21,11 @@ class yFramDat {
     yFramDat( size_t nsize );
    ~yFramDat();
 
+    inline int		get_maxlen()	// Get max length of data array.
+    {
+	return size;
+    }
+
     inline int		get_length()	// Get length of data array.
     {
 	return len;

@@ -189,7 +189,11 @@ yOptLong::parse_options()
     string	frame_s   ( frame  );
 
     if ( npix_s.length() ) {
+	const int		npix_max = (32*1024*1024);
 	npix_n = stoi( npix_s );
+	if ( npix_n > npix_max ) {
+	    Error::msg( "--npix limit:  " ) << npix_max <<endl;
+	}
     }
 
     if ( stream_s.length() ) {
@@ -357,16 +361,25 @@ main( int	argc,
 	    cout << "    gpio_clr=  " << (unsigned *)gpio_clr  << endl;
 	}
 
+	int			n_npix = Opx.npix_n;	// effective num
 
-    // Main Loop
-	n_trans = Opx.npix_n * 16 * 4;		// 16 coeff x 4 nibbles
-	if ( ! Opx.stream_n ) {
-	    n_trans = Fdx.nlimit( n_trans );	// limit to array size
+	if ( n_npix < 0 ) {
+	    n_npix = Fdx.get_maxlen() / (16 * 4);
 	}
-	cerr << "num pixels=     " << Opx.npix_n << endl;
-	cerr << "num samples=    " << n_trans    << endl;
+
+	n_trans = n_npix * (16 * 4);		// 16 coeff x 4 nibbles
+
+	if ( (n_trans > Fdx.get_maxlen()) && ! Opx.stream_n ) {
+	    Error::msg( "maximum:  --npix=" ) << (Fdx.get_maxlen() / (16 * 4))
+		<<endl;
+	    return 1;
+	}
+
+	cerr << "num pixels=     " << n_npix  << endl;
+	cerr << "num samples=    " << n_trans << endl;
 	// Count valid transfers so pixel identification is not required.
 
+    // Main Loop
 	for ( int jj=1;  jj<=Opx.repeat_n;  jj++ )	// time repeats
 	{
 	    Fdx.clear();
