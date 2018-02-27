@@ -4,20 +4,8 @@
 # Tcl socket server.
 # Example from:  http://tmml.sourceforge.net/doc/tcl/socket.html
 
-
-set master "xx"
-
-proc m_write { addr value } {
-    upvar master mr
-
-    # master_write_32 $mr $addr $value
-    puts "+ master_write_32 MR $addr $value"
-}
-
-
 proc ServProc {channel clientaddr clientport} {
     puts "Connection from:  $clientaddr"
-#    puts "Connection:  $clientaddr registered"
 
     while { 1 } {
 	if { 0 } {
@@ -25,6 +13,7 @@ proc ServProc {channel clientaddr clientport} {
 	    flush $channel
 	}
 
+	puts "receive line"
 	gets  $channel  line
 
 	if { [eof $channel] } {
@@ -35,28 +24,19 @@ proc ServProc {channel clientaddr clientport} {
 	set value ""
 
 #	puts  "line= $line"
-	scan $line "%s %s %d"  cmd addr value
+	scan $line "%s %s %s"  cmd addr value
 
-	if {       [string equal $cmd "mw"   ] } {
-	    if { [string length $value] == 0 } {
-		puts "Error:  missing value:  $line"
-		continue
-	    }
-#	    puts  "do:  $cmd"
-	    m_write "$addr" "$value"
-
-	} elseif { [string equal $cmd "exit" ] } {
+	if {       [string equal $cmd "exit" ] } {
 	    puts "+ exit"
 	    exit
 
 	} else {
-	    puts "Error:  unknown command:  $line"
-	    continue
+	    puts "+ $line"
 	}
 
 	if { 1 } {
-	    puts "+ send ok"
-	    puts  $channel "ok"
+	    puts "send ok"
+	    puts  $channel "ok >"
 	    flush $channel
 	}
 

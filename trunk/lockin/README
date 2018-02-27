@@ -1,0 +1,62 @@
+2018-02-27
+		Multi Lockin Amplifier Programs
+		-------------------------------
+
+Tcl code to run on the Altera System Console, use for changing registers on
+the FPGA via Qsys.
+
+Socket programs to connect RPi with Altera System Console on the PC.
+
+Files:
+------
+README		this file
+
+	Tcl scripts for Altera System Console
+mli_comb.tcl		Set comb frequencies
+mli_config.tcl		Config single frequencies on each channel
+mli_config_orig.tcl	Original version
+
+	Utility programs
+mlifreq		Multi-LockIn Frequency computation.
+sdmean		Compute Mean and Standard Deveiation of a csv input file.
+
+	Socket exploration
+psock		Explore Tcl socket on RPi
+sock.tcl	Explore Tcl socket on Altera System Console
+pagressor	Connect to mli_socket.tcl (prototype)
+mli_socket.tcl	Socket server (prototype)
+
+
+----------------------------------------------------------------------------
+## Socket Connection Exploring
+----------------------------------------------------------------------------
+
+% hostname -I
+
+Netcat
+    Listen on port 9900 of this host
+    % nc -l 9900
+
+    Connect to another host on port 9900
+    % nc  localhost  9900
+    % nc  192.168.1.14  9900
+
+Socket info
+    Display all TCP sockets.
+    % ss -t -a
+
+ARP ping
+    % arping -I eth0   192.168.1.14
+    % arping -I wlan0  192.168.1.14
+
+ARP scan
+    % sudo arp-scan --interface=eth0  192.168.1.0/24
+
+Netstat
+    % netstat --route
+    % netstat --interfaces
+    % netstat --statistics
+
+    Active Internet connections (w/o servers)
+    % netstat --tcp
+

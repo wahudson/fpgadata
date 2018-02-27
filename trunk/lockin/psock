@@ -7,6 +7,7 @@
 
 use IO::Socket;
 
+print( "new socket\n" );
 $remote = IO::Socket::INET->new(
     Proto    => "tcp",
     PeerAddr => "localhost",
@@ -16,6 +17,9 @@ $remote = IO::Socket::INET->new(
 unless ( $remote ) {
     die( "cannot open socket\n" );
 }
+
+print( "socket open\n" );
+#sleep( 2 );
 
 select( $remote );  $| = 1;  # autoflush
 select( STDOUT  );  $| = 1;
@@ -29,8 +33,6 @@ for ( my $i=0;  $i < 5;  $i++ ) {
     my $reply = <$remote>;
     print( $reply );
 
-#    while (<$remote>) { print }
-#    print( <$remote> );
 }
 
 close( $remote ) || do {
