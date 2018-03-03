@@ -234,6 +234,7 @@ sub go_flow
 	$self->Error( "internal:  go_flow() no CoeffHeads\n" )
     }
 
+    my @im_labs = ();
     my @im_list = ();
     foreach my $head ( @{$self->{CoeffHeads}} )
     {
@@ -255,6 +256,7 @@ sub go_flow
 	$im2->put( "#cf00ff", -to =>     0,$ny-4,   4,$ny );
 	$im2->put( "#cf00ff", -to => $nx-4,$ny-4, $nx,$ny );
 
+	push( @im_labs, $lab2 );
 	push( @im_list, $im2 );
 	print( "simage:  im_name= $im_name\n" );
     }
@@ -284,6 +286,48 @@ sub go_flow
 	},
     );
     $but3->pack( -side => 'left' );
+
+
+    my $but4a = $bframe->Button(
+	-text    => "A",
+	-command => sub {
+	    $mw->configure( '-cursor' => "arrow" );
+	},
+    );
+    $but4a->pack( -side => 'left' );
+
+    my $but4b = $bframe->Button(
+	-text    => "X",
+	-command => sub {
+	    $mw->configure( '-cursor' => "crosshair" );
+	},
+    );
+    $but4b->pack( -side => 'left' );
+
+
+    # pixel coordinates for button press on photo
+    {
+	my $ii = 0;
+	foreach my $ib ( @im_labs )	# each lable holding a photo
+	{
+#	    print( "bind $ii\n" );
+	    my $ix = $ii;		# copy for sub closure
+	    $ii++;
+	    $mw->bind( $ib, '<ButtonPress-1>',
+		sub{
+#		    print( "Photo $ix:  Button1\n" );
+		    my( $x, $y ) = $mw->pointerxy();
+		    my $wx = $ib->rootx();
+		    my $wy = $ib->rooty();
+		    my $dx = $x - $wx - 2;
+		    my $dy = $y - $wy - 2;
+		    my $np = ($dy * $self->{Nx}) + $dx;
+		    print( "  x= $dx, y= $dy, np= $np\n" );
+		}
+		# Photo boarder width is 2 pixels.
+	    );
+	}
+    }
 
 
     # start streaming data
