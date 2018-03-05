@@ -50,11 +50,12 @@
 
 # Open plot device, make it the default.
     if ( is.na( outFile ) ) {
-	cat( "    plot_output= X11\n" )
+#	cat( "    plot_output= X11\n" )
 	X11()
     } else {
-	cat( "    plot_output= ", outFile, "\n" )
-	pdf( outFile )
+#	cat( "    plot_output= ", outFile, "\n" )
+	pdf( outFile, 5, 5 )
+	# pdf( file, width, height, .. )  in inches
     }
     # dev.list()
 
