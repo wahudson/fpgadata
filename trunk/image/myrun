@@ -21,6 +21,8 @@ fi
 
     rpixel --frame=+1 --npix=65536 --csv > ${RAW_CSV}  2> ${base}.err
 
-    coeff2stream --scale=0.02 --offset=100 --coeff=0,2 < ${RAW_CSV} | simage &
+    coeff2polar < ${RAW_CSV} |
+	coeff2stream --scale=0.05 --offset=20 --coeff=0,2,4,6,8,10,12,14 |
+	simage &
 }
 
