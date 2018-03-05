@@ -10,7 +10,7 @@ A tool set to:
 
 Revision control:  git
 
-Files:  (2017-11-12)
+Files:  (2018-03-04)
 ------
 README			this file
 
@@ -22,6 +22,7 @@ doc/		    Documentation
     hardware.text	Hardware Components used
     plot_guide.text	Plotting with R - Getting Started
     rpixel.text		rpixel  Connection and User Guide
+    software.text	Software Components used
 
 ? man/man1/		Manpage dir tree (unmanaged)
 
@@ -33,16 +34,22 @@ image/		    Image generation scripts
     coeff2polar		Multi-lockin coefficient to magnitude and phase.
     coeff2stream	Convert rpixel coefficient data into an image stream.
     countpix		Count pixels on each scan line.
+    csvrow		Extract rows from a csv file.
+    dotplot_polar	Plot Polar Multi-channel Lockin coefficients.
     fakedata		Generate fake pixel data.
+    myrun		Template script to run rpixel/simage system.
     simage		Stream data into an image display.
+    simage_dotplot	Helper dotplot command run by simage.
 		    Perl modules, mostly used by simage
     Error_mixi.pm	Error handling mix-in functions.
     ImStream.pm		Image Stream data.
     ImTop.pm		Top-level Stream data into an image.
 
 lockin/		    Multi-channel Lockin support
+    README
     mlifreq		Multi-LockIn Frequency computation.
     sdmean		Compute Mean and Standard Deveiation of csv input file.
+    ...			(see lockin/README)
 
 src/		    Source code, mostly C++
     README
@@ -56,6 +63,8 @@ bin/		    Commands
     coeff2polar		Multi-lockin coefficient to magnitude and phase.
     coeff2stream	Convert rpixel coefficient data into an image stream.
     countpix		Count pixels on each scan line.
+    csvrow		Extract rows from a csv file.
+    dotplot_polar	Plot Polar Multi-channel Lockin coefficients.
     mlifreq		Multi-LockIn Frequency computation.
     plotc16		Plot FPGA filter coefficients.
     plotc16loop		Live Plot of FPGA filter coefficients.
@@ -64,11 +73,13 @@ bin/		    Commands
     runplots		Run rpixel with plotc16loop.
     sdmean		Compute Mean and Standard Deveiation of csv input file.
     simage		Stream data into an image display.
+    simage_dotplot	Helper dotplot command run by simage.
 
 obj/		    temporary .o object files
     *.o
 
 test/		    Testing
+    README
     Makefile		Run all tests
     t_*/		Test suites
 

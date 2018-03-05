@@ -253,13 +253,14 @@ simage -- Stream data into an image display.
 
 =head1		SYNOPSIS
 
- simage  [options]
+ simage  [options] < stdin
+    stdin             stream csv sync marks and pixel colors
+  options:
     --npix=N          number of pixels per read burst
     --nx=N            image N pixels wide
     --ny=M            image M pixels high
     --magnify=1       magnify pixel size by integer factor
     --wrap=1          wrap scan lines at window size (bool)
-  options:
     --help            show command usage and exit
     --man             show man page and exit
 
@@ -336,6 +337,38 @@ Prints the manual page and exits.
 =back
 
 
+=head1		INTERACTIVE FEATURES
+
+Pixel selection is provide by the following button bingings.
+These features are likely to evolve.  See "sub go_flow" in file "ImTop.pm".
+
+=head2			Button Bindings
+
+=over 8
+
+=item B<Button1>             - Identify pixel coordinates.
+
+The pixel coordinates are printed on stdout when <Button1> is pressed in
+any of the displayed images.  The value "np" is the sequential pixel number
+counting from 1 in the upper left corner, calculated assuming --wrap=0 and
+--magnify=1.  e.g.
+
+  x= 125, y= 5, np= 1405
+
+=item B<Shift-Button1>       - Run 'simage_dotplot' with selected coordinates.
+
+The pixel coordinates are printed on stdout as above.  The helper script
+is executed with the pixel number as the first argument.
+
+The intent is to extract the pixel coefficients from the source file and
+perform further analysis.
+
+Currently 'simage_dotplot' produces a dotplot of the 8-channel lockin amplifier
+output showing amplitude and phase for each channel.
+
+=back
+
+
 =head1		BUTTONS
 
 These buttons exist on the GUI header.
@@ -355,8 +388,12 @@ widget).
 For now it may be best to change to a new directory for each invocation of
 simage.
 
+=item B<A>                  - Change cursor to "arrow".
+
+=item B<X>                  - Change cursor to "crosshair".
 
 =back
+
 
 =head1		RETURN VALUE
 
