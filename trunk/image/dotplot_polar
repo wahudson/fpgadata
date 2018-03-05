@@ -1,0 +1,79 @@
+#!/usr/bin/Rscript --vanilla
+# 2018-03-02  William A. Hudson
+
+# Plot Polar Multi-channel Lockin coefficients.
+#
+# usage:  dotplot_polar  inFile.csv
+#     inFile = input csv file, or literal 'stdin'
+#
+# inFile:
+# index,Ym,Xm,r0,p0,r1,p1,r2,p2,r3,p3,r4,p4,r5,p5,r6,p6,r7,p7
+# 0,1,1,...
+#
+#    rN = amplitude
+#    pN = phase (radians)
+#
+#----------------------------------------------------------------------------
+
+    library( lattice )
+
+# Check arguments.
+    arg = commandArgs( trailingOnly=TRUE )
+
+    inFile  <- arg[1]
+    outFile <- arg[2]
+
+    if ( is.na( inFile ) ) {
+	stop( "usage:  dotplot_polar  inFile.csv|stdin  [outFile.pdf]" )
+    }
+
+#    if ( is.na( outFile ) ) {
+#        outFile <- "out.pdf"
+#    }
+
+# Read in csv data table.
+    df <- read.csv( inFile, header=TRUE )
+
+# Stack columns of dataframe.
+
+    sr <- stack( df, c("r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7") )
+    sp <- stack( df, c("p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7") )
+
+    sp$values = sp$values * 360 / 3.14159	# radians to degrees
+
+    # names(sr)
+
+    sr.f <- factor( sr$ind )
+    sp.f <- factor( sp$ind )
+
+    # levels( sr.f )
+
+# Open plot device, make it the default.
+    if ( is.na( outFile ) ) {
+	cat( "    plot_output= X11\n" )
+	X11()
+    } else {
+	cat( "    plot_output= ", outFile, "\n" )
+	pdf( outFile )
+    }
+    # dev.list()
+
+# Generate and output two plots on one page
+    xr <- dotplot( sr$values ~ sr.f,
+	ylab="amplitude", jitter.x=TRUE )
+    xp <- dotplot( sp$values ~ sp.f,
+	ylab="phase (deg)", xlab="channel", jitter.x=TRUE )
+
+    print( xr, split=c(1,1, 1,2), more=TRUE  )
+    print( xp, split=c(1,2, 1,2), more=FALSE )
+
+# Show the plot
+    if ( is.na( outFile ) ) {
+	cat( "+ sleep( 20 )\n" )
+	Sys.sleep( 20 )
+    } else {
+	cmd <- paste( "xpdf ", outFile, "&" )
+	cat( "+", cmd, "\n" )
+	system( cmd )
+    }
+
