@@ -1,0 +1,26 @@
+#! /bin/bash
+
+# Template script to run rpixel/simage system.
+# Copy, edit and run to meet your needs.
+
+# usage:  ./myrun  file_base
+#    file_base  = output file base name, e.g. "x2".
+
+base=${1:?}
+
+export RAW_CSV=${base}.csv	# for simage_dotplot
+
+if [ -e ${RAW_CSV} ]
+then
+    echo "Error:  file exists:  ${RAW_CSV}"  >&2
+    exit 1
+fi
+
+{
+    set -x
+
+    rpixel --frame=+1 --npix=65536 --csv > ${RAW_CSV}  2> ${base}.err
+
+    coeff2stream --scale=0.02 --offset=100 --coeff=0,2 < ${RAW_CSV} | simage &
+}
+
