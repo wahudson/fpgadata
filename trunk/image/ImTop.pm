@@ -326,6 +326,21 @@ sub go_flow
 		}
 		# Photo boarder width is 2 pixels.
 	    );
+
+	    $mw->bind( $ib, '<Shift-ButtonPress-1>',
+		sub{
+		    my( $x, $y ) = $mw->pointerxy();
+		    my $wx = $ib->rootx();
+		    my $wy = $ib->rooty();
+		    my $dx = $x - $wx - 2;
+		    my $dy = $y - $wy - 2;
+		    my $np = ($dy * $self->{Nx}) + $dx;
+		    print( "  x= $dx, y= $dy, np= $np\n" );
+		    my $cmd = "simage_dotplot $np";
+		    print( "+ $cmd\n" );
+		    system( $cmd );
+		}
+	    );
 	}
     }
 

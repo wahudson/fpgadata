@@ -1,0 +1,30 @@
+#!/usr/bin/perl -w
+# 2018-03-03  William A. Hudson
+
+# Helper dotplot command run by simage.
+
+# usage:  simage_dotplot  pixnum
+#    pixnum = pixel number to extract from file $RAW_CSV.
+
+
+# Run simage like this:
+#   export RAW_CSV=x2.csv;
+#   coeff2stream --scale=0.02 --offset=100 --coeff=0,2 < $RAW_CSV | simage &
+
+{
+    my $pixnum = $ARGV[0];
+    unless ( $pixnum ) {
+	die( "Error:  simage_dotplot:  missing arg1 pixel number\n" );
+    }
+
+    unless ( $ENV{RAW_CSV} ) {
+	die( "Error:  simage_dotplot:  RAW_CSV env not set\n" );
+    }
+
+    my $cmd = "csvrow --center=5  $pixnum < $ENV{RAW_CSV} | coeff2polar |
+	dotplot_polar stdin /tmp/out.pdf";
+
+    print ( "+ $cmd\n" );
+    system( $cmd );
+}
+
