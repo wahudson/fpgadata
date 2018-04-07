@@ -1,0 +1,61 @@
+2018-03-28  William A. Hudson
+
+		LFSR Notes and Experiments
+		--------------------------
+
+../bin/lfsr --num=66000 --poly=0x6000 --obit=16  | less
+
+n     Taps		Poly	Binary
+
+15    15,14		0x6000  0110,0000,0000,0000
+15    15,14,13,11	0x7400  0111,0100,0000,0000
+
+16    16,14,13,11	0xb400	1011,0100,0000,0000
+16    16,15,13,4	0xd008	1101,0000,0000,1000
+
+16    16,15,4		0xc008	1100,0000,0000,1000	# NOT maximal!
+	My mistake
+
+lfsr --num=33000 --poly=0x6000 --obit=16  | less
+
+lfsr --num=33000 --poly=0x6000 --obit=1  > p15a.csv
+
+lfsr --num=66000 --poly=0xb400 --obit=1  > p16b.csv
+
+
+    ?acf
+
+    df <- read.csv( "p15a.csv", header=TRUE )
+
+    pacf( df$Y )
+
+    acf( df$Y, lag.max=33000 )
+
+Note, pacf() is best done on smaller data set.
+
+
+Moving average filter:
+
+    filter(x, rep(1, 3), sides=1 )
+
+    n <- 50
+    filter(x, rep(1/n, n), sides=1 )
+
+    gives pretty good average
+    n <- 6400
+
+# 3-sets of 64K
+lfsr --num=196609 --poly=0xb400 --obit=1 > q16_0xb400_3.csv
+	sma(6400) gives 0.485 to 0.508, big spike
+
+lfsr --num=196609 --poly=0xd008 --obit=1 > q16_0xd005_3.csv
+	sma(6400) gives 0.485 to 0.510, more tapered
+
+Add csv heading "Y" before reading in R.
+
+These two poly give different character in the moving average.
+The pacf() is also more skewed in the 0xb400 data set, but well within
+the +-0.0045 range.
+
+Thus it seems LFSR is doing pretty good.
+

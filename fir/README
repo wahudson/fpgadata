@@ -1,0 +1,42 @@
+2018-03-24
+		FIR Filter Experiments
+		----------------------
+
+Initially only made a Galois LFSR (Linear Feedback Shift Register).
+
+Files:  (2018-03-24)
+------
+README			this file
+
+.gitignore		Git ignore transient files
+
+doc/		    Documentation
+    notes.text		Notes on LFSR experiments
+
+src/		    Source code, mostly C++
+    Error.cpp		Error handling class
+    Error.h
+    Makefile		Compile and run the main program
+ ?  fir1.cpp
+ ?  fir1.h
+    gLfsr.cpp		Galois LFSR (Linear Feedback Shift Register) class
+    gLfsr.h
+    lfsr.cpp		LFSR (Linear Feedback Shift Register) exercise program.
+    yOption.cpp		Option parsing base class.
+    yOption.h
+
+bin/		    Commands
+    lfsr		LFSR (Linear Feedback Shift Register) stream
+
+obj/		    temporary .o object files
+    *.o
+
+
+Initial Build process:
+----------------------
+
+0)  Set up build directories (only in a new working copy).
+    % cd src
+    % make mkdirs
+    % make compile
+
