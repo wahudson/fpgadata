@@ -1,0 +1,284 @@
+2018-08-03
+			New User Setup
+			--------------
+
+Some notes to help the new user get a reasonable environment set up for
+running the fpgadata commands.
+
+Contents:
+    ## Command PATH
+    ## Linux notes
+
+----------------------------------------------------------------------------
+## Command PATH
+----------------------------------------------------------------------------
+
+I recommend setting up the code directory and command PATH as follows.
+
+The idea is to put the "fpgadata/trunk/bin" directory on your command PATH
+as a simple way to provide access to the set of commands.
+I suggest putting it last on PATH so it does not override system commands.
+
+The intermediate symbolic link "~/fpgadata_bin" allows changing to alternate
+versions of fpgadata without having to reset your PATH environment variable
+by simply re-creating the symlink to the new version.
+
+Assume you are logged-in as user 'pi' and the HOME directory is '/home/pi/'.
+
+Make your home directory like this:
+
+/home/pi/
+    bin/		a place for your local commands
+    work/		a place for compiled tools
+	fpgadata/
+	    ...
+	    trunk/
+		bin/
+		...
+    fpgadata_bin -> work/fpgadata/trunk/bin
+			a symlink into the fpgadata tool set installation
+    .profile		login script that sets up your environment
+
+
+File:  /home/pi/.profile	# your login setup script
+    ...
+
+    # set PATH so it includes user's private bin if it exists
+    if [ -d "$HOME/bin" ] ; then
+        PATH="$HOME/bin:$PATH"
+    fi
+
+    # fpgadata project
+    if [ -d "$HOME/fpgadata_bin" ] ; then
+        PATH="$PATH:$HOME/fpgadata_bin"
+    fi
+
+
+Steps:
+------
+    #  = comment explaination
+    %  = the command text to run
+
+a)  Install the 'fpgadata' fileset from git:
+
+    https://github.com/wahudson/fpgadata.git
+
+    % cd ~/work
+    % git clone  https://github.com/wahudson/fpgadata.git
+
+    This creates the directory ~/work/fpgadata/ with all the files from git.
+
+
+b) Create fpgadata_bin symlink:
+
+    # change directory to the home directory
+    % cd
+
+    # create a relative symbolic link
+    % ln -s  work/fpgadata/trunk/bin  fpgadata_bin
+
+    # inspect results:
+    % pwd
+    /home/pi
+
+    # see the symlink itself
+    % ls -l fpgadata_bin
+    lrwxrwxrwx 1 pi pi 23 Aug  3 13:35 fpgadata_bin -> work/fpgadata/trunk/bin
+
+    # see the directory content the symlink points to (note trailing slash)
+    % ls -l fpgadata_bin/
+    total 4
+    lrwxrwxrwx 1 pi pi  20 Aug  3 13:26 coeff2polar -> ../image/coeff2polar
+    lrwxrwxrwx 1 pi pi  21 Aug  3 13:26 coeff2stream -> ../image/coeff2stream
+    lrwxrwxrwx 1 pi pi  17 Aug  3 13:26 countpix -> ../image/countpix
+    lrwxrwxrwx 1 pi pi  15 Aug  3 13:26 csvrow -> ../image/csvrow
+    lrwxrwxrwx 1 pi pi  22 Aug  3 13:26 dotplot_polar -> ../image/dotplot_polar
+    lrwxrwxrwx 1 pi pi  17 Aug  3 13:26 mlifreq -> ../lockin/mlifreq
+    lrwxrwxrwx 1 pi pi  14 Aug  3 13:26 plotc16 -> ../src/plotc16
+    lrwxrwxrwx 1 pi pi  18 Aug  3 13:26 plotc16loop -> ../src/plotc16loop
+    -rwxr-xr-x 1 pi pi 324 Aug  3 13:26 rpixel_init
+    lrwxrwxrwx 1 pi pi  17 Aug  3 13:26 rpixel.pod -> ../src/rpixel.pod
+    lrwxrwxrwx 1 pi pi  15 Aug  3 13:26 runplots -> ../src/runplots
+    lrwxrwxrwx 1 pi pi  16 Aug  3 13:26 sdmean -> ../lockin/sdmean
+    lrwxrwxrwx 1 pi pi  15 Aug  3 13:26 simage -> ../image/simage
+    lrwxrwxrwx 1 pi pi  23 Aug  3 13:26 simage_dotplot -> ../image/simage_dotplot
+
+
+c) Edit file  ~/.profile  as above.
+
+    Test your new .profile without logging out (in case of fatal mistakes):
+    # Create a new login shell.
+    % bash -l
+
+    # See the processess associated with your terminal.
+    %  ps -f
+    UID        PID  PPID  C STIME TTY          TIME CMD
+    pi        1051  1049  0 12:13 pts/0    00:00:01 -bash	# original
+    pi        1369  1051  7 13:55 pts/0    00:00:00 bash -l	# new shell
+    pi        1398  1369  0 13:55 pts/0    00:00:00 ps -f
+
+    If no errors, and all worked well, then safe to logout and login again.
+
+    # Check the new PATH
+    % echo $PATH
+    /home/pi/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games:/home/pi/fpgadata_bin
+
+    The ':' character seperates directories in the command PATH.
+
+    # Alternatively translate colons into <new-line> for easier reading
+    % echo $PATH | tr ':'  '\n'
+    /home/pi/bin
+    /usr/local/sbin
+    /usr/local/bin
+    /usr/sbin
+    /usr/bin
+    /sbin
+    /bin
+    /usr/local/games
+    /usr/games
+    /home/pi/fpgadata_bin
+
+    # See if the fpgadata commands are found
+    % type rpixel_init
+    rpixel_init is /home/pi/fpgadata_bin/rpixel_init
+
+    # Alternative
+    % which rpixel_init
+    /home/pi/fpgadata_bin/rpixel_init
+
+    Note:  The new command directory is NOT added to any existing shell
+    windows, or the window manager process.
+    It is best to fully logout and login again to set the new PATH in
+    the window manager and hence any new terminals it may launch.
+
+    However, it is possible to re-run the .profile in existing
+    shell windows as done above.
+
+
+----------------------------------------------------------------------------
+## Compiling rpixel
+----------------------------------------------------------------------------
+
+Initial compile of the fpgadata commands.
+-----------------------------------------
+    # Compiling is done from the source directory, which contains the Makefile.
+    % cd ~/work/fpgadata/trunk/src
+
+    # The default 'make' target does it all
+    #    Make sub-directories as needed.
+    #    Compile the .o files.
+    #    Link the .o into binary executables.
+    #    Run 'rpixel' to see that it at least executes (no core dump).
+    % make
+    mkdir -p ../obj
+    g++ -Wall  -std=c++11 -o ../obj/fpgadata.o  -c fpgadata.cpp
+    g++ -Wall  -std=c++11 -o ../obj/Error.o  -c Error.cpp
+    g++ -Wall  -std=c++11 -o ../obj/yOption.o  -c yOption.cpp
+    g++ -Wall  -std=c++11 -o ../obj/yMan.o  -c yMan.cpp
+    g++ -Wall  -std=c++11 -o ../obj/yRpiGpio.o  -c yRpiGpio.cpp
+    g++ -Wall  -std=c++11 -o ../obj/yBuffStat.o  -c yBuffStat.cpp
+    g++ -Wall  -std=c++11 -o ../obj/yFramDat.o  -c yFramDat.cpp
+    g++ -Wall  -std=c++11 -o ../obj/yCoeffItr.o  -c yCoeffItr.cpp
+    g++ -o ../bin/fpgadata       ../obj/fpgadata.o  ../obj/Error.o ../obj/yOption.o ../obj/yMan.o ../obj/yRpiGpio.o ../obj/yBuffStat.o ../obj/yFramDat.o ../obj/yCoeffItr.o
+    g++ -Wall  -std=c++11 -o ../obj/rpixel.o  -c rpixel.cpp
+    g++ -o ../bin/rpixel       ../obj/rpixel.o  ../obj/Error.o ../obj/yOption.o ../obj/yMan.o ../obj/yRpiGpio.o ../obj/yBuffStat.o ../obj/yFramDat.o ../obj/yCoeffItr.o
+    ../bin/rpixel --csv --TESTOP
+    --npix        =
+    --stream      =
+    --repeat      =
+    --frame       =
+    --csv         = 1
+    --tab         = 0
+    --tab2        = 0
+    --hex         = 0
+    --raw         = 0
+    --delta       = 0
+    --flag        = 0
+    --load        = -
+    --save        = -
+    --verbose     = 0
+    --debug       = 0
+    npix_n        = 64
+    stream_n      = 0
+    repeat_n      = 1
+    frame_n       = 0
+
+
+    # See the compiled rpixel
+    % ls -l ../bin/rpixel
+    rwxr-xr-x 1 pi pi 54592 Aug  3 14:27 ../bin/rpixel
+
+    # Verify the correct rpixel is found on PATH
+    % type rpixel
+    rpixel is hashed (/home/pi/fpgadata_bin/rpixel)
+	# but fpgadata_bin is a symlink, so ..
+
+    # Expand all symlinks in the file path.  This should match this directory.
+    % readlink -f /home/pi/fpgadata_bin/rpixel
+    /home/pi/work/fpgadata/trunk/bin/rpixel
+
+    # Alternate to combine above using $() command expansion:
+    % readlink -f $( which rpixel )
+    /home/pi/work/fpgadata/trunk/bin/rpixel
+
+    # Try help.  This should produce output.
+    % rpixel --help
+
+    # Try manpage.  This depends on perl installation, which should be there.
+    % rpixel --man
+
+
+Force re-compile.
+-----------------
+    Useful when you copied or moved files around and the date-stamp mechanism
+    of 'make' may be confused.
+
+    % cd ~/work/fpgadata/trunk/src
+
+    # Remove all compile output.
+    % make clobber
+    rm -f  ../bin/fpgadata  ../bin/rpixel  ../obj/*
+
+    # Compile default target again.
+    % make
+
+
+----------------------------------------------------------------------------
+## Linux notes
+----------------------------------------------------------------------------
+
+You have changed the 'pi' login password, haven't you?
+    The default password is widely known, and is a big security risk when
+    you put your RPi on the network.
+
+
+'~'  Character:
+    The '~' character as a leading directory component is an alias for your
+    home directory identified by the 'HOME' enviroment variable.
+    Thus these three are all the same file path:
+	/home/pi/work
+	~/work
+	$HOME/work
+
+
+'ll' command:
+    The command 'ls -l' to make long listing of a directory is very common.
+    The command 'll', for "long listing" it the widely accepted alias, and
+    is quick to type.
+
+    You can create an alias in your shell environment using the 'alias'
+    command in your .profile.
+
+    Or you can create a user command in your home bin/ directory:
+    File:  ~/bin/ll
+	#! /bin/bash
+	ls -l "${@}"
+
+    # make it executable
+    % chmod 755  ~/bin/ll
+
+    Now
+	% ll file
+    is the same as
+	% ls -l file
+
