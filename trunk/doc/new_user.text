@@ -103,8 +103,17 @@ b) Create fpgadata_bin symlink:
     lrwxrwxrwx 1 pi pi  15 Aug  3 13:26 simage -> ../image/simage
     lrwxrwxrwx 1 pi pi  23 Aug  3 13:26 simage_dotplot -> ../image/simage_dotplot
 
+    # If you need to change the symlink, remove it first, otherwise the ln
+    #     command will put the new symlink in the old directory.  This is
+    #     the standard behavior for many commands when the destination
+    #     is a directory that exists.
+    % rm fpgadata_bin
+    % ln -s  work/fpgadata2/trunk/bin  fpgadata_bin
+
 
 c) Edit file  ~/.profile  as above.
+    Note the code for applying "$HOME/bin" typically already exists.  Just
+    add the new code after it.
 
     Test your new .profile without logging out (in case of fatal mistakes):
     # Create a new login shell.
@@ -164,7 +173,7 @@ Initial compile of the fpgadata commands.
     # Compiling is done from the source directory, which contains the Makefile.
     % cd ~/work/fpgadata/trunk/src
 
-    # The default 'make' target does it all
+    # The default 'make' target called 'run' does it all:
     #    Make sub-directories as needed.
     #    Compile the .o files.
     #    Link the .o into binary executables.
@@ -263,13 +272,15 @@ You have changed the 'pi' login password, haven't you?
 
 'll' command:
     The command 'ls -l' to make long listing of a directory is very common.
-    The command 'll', for "long listing" it the widely accepted alias, and
+    The command 'll', for "long listing" is the widely accepted alias, and
     is quick to type.
 
     You can create an alias in your shell environment using the 'alias'
     command in your .profile.
 
     Or you can create a user command in your home bin/ directory:
+	This is an example of a simple shell script.
+	Note the '#!' must be the first two characters in the file.
     File:  ~/bin/ll
 	#! /bin/bash
 	ls -l "${@}"
