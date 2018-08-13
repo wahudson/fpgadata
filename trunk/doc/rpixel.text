@@ -6,6 +6,10 @@ Document application and use of 'rpixel' program on RPi (Raspberry Pi)
 with Altera DE2-115 FPGA Development board.
 Try to keep it current and focused on as-implemented function.
 
+----------------------------------------------------------------------------
+##(2017-05-27)  References
+----------------------------------------------------------------------------
+
 Altera DE2-115 User Manual
     /home/var/ref/DE2_115_User_manual_2013.pdf
     http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=165&No=502&PartNo=4
@@ -58,6 +62,8 @@ whenever fifo 'rdempty' (NoData) is low.  When high, the data is ignored.
 ----------------------------------------------------------------------------
 
 Configure RPi pin modes:  (after each power-up)
+    % rpixel_init
+  OR
     % gpio readall
     % gpio -g mode  5 out	# GoPixel
     % gpio -g mode  6 out	# ReadAck	required
@@ -123,7 +129,55 @@ Configure RPi pin modes:  (after each power-up)
 FrameGate   is the Shutter Enable signal from ScanImage.
 
 ----------------------------------------------------------------------------
-## FIFO Interface
+##(2018-08-12)  Documentation
+----------------------------------------------------------------------------
+
+    Each documentation file tries to have a specific focus, and generally
+    intended as a reference.  I recommend skimming them all to get a sense of
+    what each covers, then read in detail those that touch your current need.
+
+    Here is a recommended order of reading to get started running the tools.
+    Files are in the source directory tree.
+
+Overview:
+    README			top level, has catalog of tools
+    trunk/README		general index of files
+
+Building the system:
+    trunk/doc/hardware.text
+    trunk/doc/software.text
+
+Running tools:
+    trunk/doc/new_user.text	download, compile, setup for access to commands
+    trunk/doc/rpixel.text	this user guide
+
+    Some commands have built-in man pages:
+    % rpixel --man
+    % coeff2polar --man
+    % coeff2stream --man
+    % countpix --man
+    % csvrow --man
+    % simage --man
+
+    R-scripts do not have --help, run with no arguments instead:
+    % dotplot_polar
+    % plotc16
+    % plotc16loop
+    % sdmean
+
+    Some commands have no --help.  Read the script instead.
+
+Inside the tools:
+    trunk/src/README		catalog source files
+    trunk/test/README		testing, top level
+    trunk/doc/architecture.text	design concepts
+    trunk/doc/plot_guide.text	Plotting with R - Getting Started
+    trunk/src/*			rpixel source code, some utilities
+    trunk/image/*		data processing and image generation scripts
+
+
+----------------------------------------------------------------------------
+##(2017-11-27)  FIFO Interface
 ----------------------------------------------------------------------------
 
 Situation
