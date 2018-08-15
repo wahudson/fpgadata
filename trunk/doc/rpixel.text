@@ -166,6 +166,9 @@ Running tools:
     % sdmean
 
     Some commands have no --help.  Read the script instead.
+    % runplots --help
+    % less bin/rpixel_init
+    % less image/simage_dotplot
 
 Inside the tools:
     trunk/src/README		catalog source files
@@ -266,6 +269,152 @@ Note memory usage:
 
     Long as plenty of free memory remains, all is OK.  (433 Mbyte in this case)
     If swap (to the SD card) occures, not so good, may wear out the card.
+
+
+----------------------------------------------------------------------------
+##(2018-08-14)  Data Visualization
+----------------------------------------------------------------------------
+
+    Since the data is collected on the RPi, it would be good to get a
+    quick visualization of it right there.  The idea is to aid the
+    configuration and operation of your experiment.
+
+Dot Plots:
+----------
+    We use R to generate dot plots from the csv data.
+    https://www.r-project.org/
+
+    See also:  doc/plot_guide.text
+
+runplots:
+---------
+    This is a command to repeatedly run rpixel and make a dotplot of the
+    csv output.  It updates once every second or so.  The idea is to see
+    live updates of the coefficient data while you adjust your experiment.
+
+    It plots coefficient values on the X-axis versus coefficient (csv column)
+    names on the Y-axis.  The number of dots is the number of lines in the
+    csv file.
+
+    usage:  runplots  rpixel [options] --csv
+
+    % runplots  rpixel --npix=20 --csv
+
+    Terminate execution with <control-C>.  This might leave a hanging process,
+    so check with the command "ps -f" to list processes associated with your
+    terminal.
+
+    Actually, any CSV data can be plotted in this way.
+    usage:  runplots  'csv_command...'
+    For example, convert rpixel output into magnitude and phase:
+
+    % runplots  'rpixel --npix=20 --csv | coeff2polar'
+
+    Currently there is no fancy scaling options, so the phase in radians
+    is around 3, while the magnitude may be much larger.
+    The idea here is showing concepts, and a little more simple programming
+    can get what you want.
+
+    See the scripts for detail usage:
+	% less src/runplots
+	% less src/plotc16loop
+
+    How it works:
+    The R-script 'plotc16loop' does the actual plotting, reading csv data
+    from a named pipe.  The perl script 'runplots' is a top level wrapper
+    that sets up the named pipe with plotc16loop reading from it, then
+    repeatedly runs the given command with output redirected into the
+    named pipe.
+
+
+Image Generation:
+-----------------
+
+    Each row of coefficients in the csv file represents data for one pixel.
+    The idea is to generate seperate images for each coefficient.
+
+    In transforming the raw csv data into an image, many parameters typically
+    need to be applied.  Thus it is most convinient to use a top level
+    wrapper script to run the image command pipeline.  The script records
+    your configuration, and makes it easy to rerun.
+
+    Such a script is in "trunk/image/myrun".  Copy it and edit to suit.
+    Execute it by typing the file name with a directory component, e.g.
+	% ./myrun
+
+    The template 'myrun' script runs 'rpixel' each time.  This is good for
+    data collection, but probably comment it out in order to rerun just
+    the 'simage' commands.
+
+    The 'coeff2polar' converts csv coefficient pairs to magnitude and phase,
+    as would be appropriate for an 8-channel lock-in amplifier.
+
+    The 'coeff2stream' command does the real work of scaling coefficient
+    values and mapping them into RGB colors.  It selects which coefficients
+    to generate images for.  It has --scale and --offset options to map
+    coeff values into the range {0 .. 255}, which then indexes into a color
+    palette file.  Usually it takes some experimenting to find the best
+    scale and offset for your data.  It also has options to select which
+    edges of the scan marks to use as the beginning of a line (Xm) and
+    beginning of a frame (Ym).
+
+    The 'simage' command takes in the color stream and renders the pixels
+    on the screen.  It has options --nx, --ny to set the image size in
+    pixels.  It has option --wrap to select line wraping at the edges of the
+    image window, or to wrap on the scan marks put in the image stream by
+    'coeff2stream'.  The result is a set of image panels displayed in a
+    single window.
+
+    There are a couple of nice interactive features in 'simage':
+
+    Button1:  Clicking the left mouse button on a pixel will report the
+	x,y pixel coordenents and line number in the csv file.  This output
+	is on stdout, and appears in the terminal window from which simage
+	was run.
+
+    Shift-Button1:  Hold the <shift> key and click the left mouse button
+	on a pixel.  This generates a dotplot of 5 pixels on the same line
+	as the selected pixel.  It assumes the coefficients are multi-channel
+	lock-in pairs, converts them to magnitude and phase for display.
+	The dot plot shows amplitude and phase for each coefficint pair.
+	It pops up in a seperate window.
+
+	This is very useful on the AFM (Atomic Force Microscope) to see
+	a resonance peak, where each channel (coeff pair) represents a
+	different frequency (ordered with higher channels at higher frequency).
+	[I thought this was a pretty darn cool way to get an early look at
+	AFM data!  All on a home brew system.]
+
+	How it works:
+	The R-script 'dotplot_polar' does the actual plotting of csv data into
+	a pdf file, which is then displayed by the standard 'xpdf' command.
+	Clicking on a pixel launches helper script 'simage_dotplot' with
+	the selected pixel number.  It runs 'csvrow' to extract the selected
+	5-pixels from the original csv file, converts to amplitude and phase
+	with 'coeff2polar', and sends it into 'dotplot_polar'.
+	The actual commands being run are shown in the terminal output of
+	'simage'.
+
+    See:
+	% rpixel --man
+	% coeff2polar --man
+	% coeff2stream --man
+	% simage --man
+
+	% less image/dotplot_polar
+	% less image/simage_dotplot
+	% csvrow --man
+
+
+Linux Platforms:
+----------------
+    All the custom commands can be run on RPi, or on a generic Linux
+    workstation.
+
+    Even rpixel can be compiled on another Linux platform and run, but it
+    won't have access to the gpio pins, so will show errors on output.
+
+    See:  doc/software.text  for the Perl-tk and R  packages needed.
 
 
 ----------------------------------------------------------------------------
