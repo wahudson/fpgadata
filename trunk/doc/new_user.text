@@ -7,7 +7,12 @@ running the fpgadata commands.
 
 Contents:
     ## Command PATH
+    ## Compiling rpixel
+    ## Example Commands
     ## Linux notes
+
+See also:
+    doc/rpixel.text
 
 ----------------------------------------------------------------------------
 ## Command PATH
@@ -220,7 +225,7 @@ Initial compile of the fpgadata commands.
     # Verify the correct rpixel is found on PATH
     % type rpixel
     rpixel is hashed (/home/pi/fpgadata_bin/rpixel)
-	# but fpgadata_bin is a symlink, so ..
+	# but fpgadata_bin is a symlink, so expand it (below)
 
     # Expand all symlinks in the file path.  This should match this directory.
     % readlink -f /home/pi/fpgadata_bin/rpixel
@@ -250,6 +255,158 @@ Force re-compile.
 
     # Compile default target again.
     % make
+
+
+----------------------------------------------------------------------------
+## Example Commands
+----------------------------------------------------------------------------
+
+    This is how I typically run the commands.
+    Starting simple, then add complexity to show useful features.
+
+Gather data with rpixel:
+------------------------
+
+    # Initialize the RPi gpio pin directions.
+    # This only needs to be done once after power up.
+    % rpixel_init
+
+    # Review the man page.
+    % rpixel --man
+
+    # Run with no options, just looking to see if things are alive.
+    #   The warning indicates the FIFO was not empty after 10000 reads,
+    #   which is OK, as long as the FIFO does not overflow.
+    % rpixel
+    Real GPIO
+    num pixels=     64
+    num samples=    4096
+ >  Warning:  nReset:  fifo not empty (NoData=0)
+    Rep[1]
+	OverFlow=   0
+	NoData_cnt= 4095
+	sample_cnt= 8191
+	coeff_cnt=  2048
+	delta_ns=   2918385 ns
+	NoData per Coeff =     2.00
+	Pixel Rate       =    22784 ns/pixel
+	Coeff Rate       =     1424 ns/coeff
+	Sample Rate      =      356 ns/sample
+
+    # Run repeated sets to see statistics settle down.
+    #   A larger --npix will settle even faster.  Try it with your intended
+    #   number of pixels.
+    % rpixel --npix=2000 --repeat=3
+    Real GPIO
+    num pixels=     2000
+    num samples=    128000
+    Rep[1]
+	OverFlow=   0
+	NoData_cnt= 127968
+	sample_cnt= 255968
+	coeff_cnt=  32000
+	delta_ns=   84861875 ns
+	NoData per Coeff =     4.00
+	Pixel Rate       =    42416 ns/pixel
+	Coeff Rate       =     2651 ns/coeff
+ >	Sample Rate      =      331 ns/sample
+    Rep[2]
+	OverFlow=   0
+	NoData_cnt= 127968
+	sample_cnt= 255968
+	coeff_cnt=  32000
+	delta_ns=   43829479 ns
+	NoData per Coeff =     4.00
+	Pixel Rate       =    21904 ns/pixel
+	Coeff Rate       =     1369 ns/coeff
+ >	Sample Rate      =      171 ns/sample
+    Rep[3]
+	OverFlow=   0
+	NoData_cnt= 127968
+	sample_cnt= 255968
+	coeff_cnt=  32000
+	delta_ns=   43714636 ns
+	NoData per Coeff =     4.00
+	Pixel Rate       =    21856 ns/pixel
+	Coeff Rate       =     1366 ns/coeff
+ >	Sample Rate      =      170 ns/sample
+
+    # View 10 pixels, do numbers look ok?
+    % rpixel --npix=10 --tab
+
+    # Save csv data to a file.  It is useful to capture the run statistics
+    #     and errors (on stderr) with with each data file.
+    % rpixel --npix=130000 --csv > x1.csv  2> x1.err
+    % cat x1.err
+    Real GPIO
+    num pixels=     130000
+    num samples=    8320000
+    Rep[1]
+	OverFlow=   0
+	NoData_cnt= 796354124
+	sample_cnt= 804674124
+	coeff_cnt=  2080000
+	delta_ns=   130000959794 ns
+	NoData per Coeff =   382.86
+	Pixel Rate       =  1000000 ns/pixel
+	Coeff Rate       =    62500 ns/coeff
+	Sample Rate      =      161 ns/sample
+
+    # Have rpixel wait until the frame mark signal MarkY rises, then collect
+    # the dataset.  Usually make --npix larger than the scan frame dimensions
+    # (Nx * Ny) to help ensure a complete frame.
+    % rpixel --frame=+1 --npix=65536 --csv  > x2.csv  2> x2.err
+
+    # Extract a set of rows from the csv file at pixel 542
+    % csvrow --center=5  542 < x1.csv > x1.p542.csv
+
+    # Dotplot the coeff, sleep for 20 seconds, <ctrl-C> to terminate early.
+    % plotc16  x1.p542.csv
+
+    # Live plotting loop:  Repeatedly run rpixel and update a dotplot of the
+    #     coefficient results on each loop.  <ctrl-C> to terminate.
+    #     Best to plot only 10 or 20 pixels.
+    #     Useful to see live results from the FPGA.
+    % runplots rpixel --npix=20 --csv
+
+
+    # Convert Multi-channel lockin coefficients to magnitude and phase.
+    % coeff2polar < x1.csv > x1.polar.csv
+
+    # Convert coefficients into an image stream for display by 'simage'
+    % coeff2stream --scale=0.20 --offset=20 --coeff=0,4,8,12 < x1.csv > x1.im
+
+    # Render the image stream on the screen.  Use scan marks with no wrapping.
+    % simage --wrap=0 --nx=512  < x1.im &
+
+    # Pipeline the whole image display process.
+    % export  RAW_CSV=x1.csv
+    % coeff2polar < $RAW_CSV |
+	coeff2stream --scale=0.20 --offset=20 --coeff=0,4,8,12 |
+	simage --wrap=0 --nx=512 &
+
+	# Now can use <Shift><Button1> on the mouse to select a pixel in the
+	# 'simage' window, which will then call 'simage_dotplot', which uses
+	# the exported variable RAW_CSV, to generate an amplitude and phase
+	# dotplot of 5 adjacent pixels. e.g. output:
+	  x= 259, y= 79, np= 40707	# selected pixel coordinates
+	+ simage_dotplot 40707
+	+ csvrow --center=5  40707 < x1.csv | coeff2polar |
+		dotplot_polar stdin /tmp/out.pdf
+	+ xpdf  /tmp/out.pdf &
+
+    # Copy "image/myrun" script and edit as a convinient way to automate
+    # the collection/viewing of a dataset.
+    % ./myrun
+
+    # Count pixels in each scan line.  Use to inspect regularity of the
+    # scan marks.
+    % coeff2stream < x1.csv | countpix | less
+
+
+    In general, when rpixel is collecting a large dataset, it is best to
+    not hit the RPi with unnecessary compute load, lest the rpixel process
+    be interrupted long enough for the FIFO on the FPGA to overflow.
 
 
 ----------------------------------------------------------------------------
