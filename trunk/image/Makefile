@@ -7,7 +7,8 @@
 SHELL      = /bin/sh
 MAN        = ../man
 
-man:	$(MAN)/man1 \
+		# manpage output files
+MANS       = \
 	$(MAN)/man1/coeff2polar.1 \
 	$(MAN)/man1/coeff2polar.txt \
 	$(MAN)/man1/coeff2stream.1 \
@@ -19,11 +20,15 @@ man:	$(MAN)/man1 \
 	$(MAN)/man1/simage.1 \
 	$(MAN)/man1/simage.txt
 
+
+man:	$(MAN)/man1  $(MANS)
+
+
 clean:
 
 
 clobber:
-	rm -f  $(MAN)/man1/*
+	rm -f  $(MANS)
 
 $(MAN)/man1:
 	mkdir -p  $(MAN)/man1

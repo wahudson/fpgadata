@@ -7,6 +7,7 @@
 SHELL      = /bin/sh
 BINDIR     = ../bin
 OJ         = ../obj
+MAN        = ../man
 
 		# all include files for main program dependency
 INCS       = \
@@ -28,6 +29,11 @@ OBJS       = \
 	$(OJ)/yFramDat.o \
 	$(OJ)/yCoeffItr.o
 
+		# manpage output files
+MANS       = \
+	$(MAN)/man1/rpixel.1 \
+	$(MAN)/man1/rpixel.txt
+
 		# compiler flags
 	# -std=c++11  needed for std::stoi
 CXXFLAGS   = -Wall  -std=c++11
@@ -46,9 +52,12 @@ clean:
 
 clobber:
 	rm -f  $(BINDIR)/fpgadata  $(BINDIR)/rpixel  $(OJ)/*
+	rm -f  $(MANS)
 
-man:
+pod:
 	podchecker rpixel.pod
+
+man:	$(MAN)/man1  $(MANS)
 
 
 $(BINDIR):
@@ -56,6 +65,9 @@ $(BINDIR):
 
 $(OJ):
 	mkdir -p $(OJ)
+
+$(MAN)/man1:
+	mkdir -p  $(MAN)/man1
 
 
 $(BINDIR)/fpgadata:	$(OJ)/fpgadata.o  $(OBJS)
@@ -94,4 +106,11 @@ $(OJ)/yOption.o:	yOption.cpp  yOption.h  Error.h
 
 $(OJ)/yMan.o:		yMan.cpp  yMan.h
 	g++ $(CXXFLAGS) -o $@  -c yMan.cpp
+
+
+$(MAN)/man1/%.1:	%.pod
+	pod2man -s 1 --center='fpgadata'  -n $<  $<  $@
+
+$(MAN)/man1/%.txt:	%.pod
+	pod2text -i7 -s  $<  $@
 
