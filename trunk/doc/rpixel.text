@@ -151,7 +151,7 @@ Running tools:
     trunk/doc/new_user.text	download, compile, setup for access to commands
     trunk/doc/rpixel.text	this user guide
 
-    Some commands have built-in man pages:
+    Some commands have built-in man pages:  (also in man/man1/)
     % rpixel --man
     % coeff2polar --man
     % coeff2stream --man

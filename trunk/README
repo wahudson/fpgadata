@@ -25,7 +25,9 @@ doc/		    Documentation
     rpixel.text		rpixel  Connection and User Guide
     software.text	Software Components used
 
-? man/man1/		Manpage dir tree (unmanaged)
+man/man1/	    Manual pages, generated from source files
+    *.1			manpage format (unmanaged)
+    *.txt		text format (committed in repository)
 
 image/		    Image generation scripts
     palette/	    Color palette files
@@ -83,6 +85,16 @@ test/		    Testing
     README
     Makefile		Run all tests
     t_*/		Test suites
+
+
+Notes:
+------
+
+Man pages:  Are generated from Perl POD source in command scripts (the same
+    as shown by --man option).  The manpage format (*.1), and the text
+    format (*.txt), have the same content.  The text files are committed
+    in the repository so they can be easily viewed without having to compile
+    or run code.
 
 
 Initial Build process:

@@ -12,6 +12,14 @@ Files:
 README		this file
 LICENSE		MIT Open Source License
 trunk/		mainline development
+    README
+    ...
+    doc/	    documentation (start here)
+	rpixel.text	see "Documentation" section
+	...
+    man/man1/
+	*.txt		text format man pages
+	...
 
 
 Purpose of this project:

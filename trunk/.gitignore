@@ -1,3 +1,4 @@
 bin/fpgadata
 bin/rpixel
 obj/
+man/man1/*.1
