@@ -1,0 +1,71 @@
+NAME
+       coeff2polar -- Multi-lockin coefficient to magnitude and phase
+
+SYNOPSIS
+        coeff2polar  [options] < in.csv > out.csv
+        #  --deg             output phase in degrees, default radians
+           --debug           show debug output on stdout
+           --help            show command usage and exit
+           --man             show man page and exit
+
+DESCRIPTION
+       Convert multi-channel lockin quadrature values into magnitude and
+       phase.
+
+       The input csv is expected to be in rpixel format.  The coefficient
+       values are pairs of (x,y) lockin quadrature values, e.g. (c0,c1),
+       (c2,c3), .. etc.
+
+        Input:  (stdin)
+        index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
+        17,0,0,100,0,0,100,-100,0,0,-100,0,0,0,0,0,0,0,0
+        18,0,0,100,100,-100,100,-100,-100,100,-100,0,0,0,0,0,0,0,0
+
+        Output:  (stdout)
+        index,Ym,Xm,r0,p0,r1,p1,r2,p2,r3,p3,r4,p4,r5,p5,r6,p6,r7,p7
+        17,0,0,100.0,0.000,100.0,1.571,100.0,3.142,100.0,-1.571,0.0,0.000,..
+        18,0,0,141.4,0.785,141.4,2.356,141.4,-2.356,141.4,-0.785,0.0,0.000,..
+
+        where headings are:
+           index            arbitrary sample number - passed thru
+           Ym,Xm            scan mark signals       - passed thru
+           c0,c2,c4,..,c14  even is lockin X value
+           c1,c3,c5,..,c15  odd  is lockin Y value
+           r0,r1,r2,..,r7   magnitude
+           p0,p1,p2,..,p7   phase
+
+       Coefficient values are expected to be signed integers.  They are
+       transformed to magnitude and phase by:
+
+           r0 = sqrt( (c0*c0) + (c1*c1) )      # magnitude
+           p0 = atan2( c1, c0 )                # phase  atan( c1/c0 )  radians
+
+OPTIONS
+       --deg  - Output phase in degrees, default radians.
+       --debug  - Show debug output on stdout.
+               Output the original csv line with a leading '#' for
+               comparison.
+
+       --help  - Show command usage and exit.
+       --man  - Show man page and exit.
+               Prints the manual page and exits.
+
+RETURN VALUE
+       0= success, otherwise errors
+
+EXAMPLES
+        Simple transformation
+        % coeff2polar  < xx.csv  > xx.polar.csv
+
+        Show default options.  Is a hidden test option.
+        % coeff2polar --TESTOP
+
+ENVIRONMENT
+       PAGER   Value defines an output filter used to display manual pages. 
+               By default, less(1) is used.  If PAGER='', stdout is written
+               with no paging.
+
+FILES
+SEE ALSO
+       rpixel(1)  FPGA data transfer on Raspberry Pi
+

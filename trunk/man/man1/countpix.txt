@@ -1,0 +1,61 @@
+NAME
+       countpix -- Count pixels on each scan line
+
+SYNOPSIS
+        countpix  [options]
+           --not=N           don't report lines of N pixels
+         options:
+           --help            show command usage and exit
+           --man             show man page and exit
+
+DESCRIPTION
+       Count the number of pixels in each Xs scan line.  Used to assess the
+       uniformity of sync marks in the pixel stream.  (i.e. Sync marks
+       derived from analog comparators on galvo drive signals may have noise
+       jitter.)
+
+        Input:  (stdin)
+        Ys,Xs,c0,c1,c2,..
+        1,0,#0f0000,#000000,#ff0000
+        0,1,#0f0000,#000000,#ff0000
+        ...
+
+       Each input line is one pixel containing sync marks (Ys,Xs) and pixel
+       colors for multiple images (c0,c1,..).  The image colors are ignored.
+
+       Input Xs,Ys should be 1 only on the pixel where the sweep should
+       reset to the left edge (Xs) or top edge (Ys) of the image, otherwise
+       0.
+
+        Output:  (stdout)
+         line  cnt
+            0   10     # first line may be short, since no Xs has occured
+            1  256
+            2  256
+          ...  ...
+           25  257
+
+OPTIONS
+       --not=N  - Don't report lines of N pixels.
+               Use to ignore lines of a frequently occuring length.
+
+       --help  - Show command usage and exit.
+       --man  - Show man page and exit.
+               Prints the manual page and exits.
+
+RETURN VALUE
+       0= success, otherwise errors
+
+EXAMPLES
+        Typical processing pipeline.
+        % rpixel --csv | coeff2stream | countpix --not=256
+
+ENVIRONMENT
+       PAGER   Value defines an output filter used to display manual pages. 
+               By default, less(1) is used.  If PAGER='', stdout is written
+               with no paging.
+
+FILES
+       none
+
+SEE ALSO

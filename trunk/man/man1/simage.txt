@@ -1,0 +1,232 @@
+NAME
+       simage -- Stream data into an image display.
+
+SYNOPSIS
+        simage  [options] < stdin
+           stdin             stream csv sync marks and pixel colors
+         options:
+           --npix=N          number of pixels per read burst
+           --nx=N            image N pixels wide
+           --ny=M            image M pixels high
+           --magnify=1       magnify pixel size by integer factor
+           --wrap=1          wrap scan lines at window size (bool)
+           --help            show command usage and exit
+           --man             show man page and exit
+
+DESCRIPTION
+       Stream data into an image display.  The data stream is one pixel per
+       line, usually from an FPGA to RaspberryPi program.
+
+       Output is a PerlTk window with one or more images displayed. 
+       Intended to build the image in real time as data comes in.
+
+        Input:  (stdin)
+        Ys,Xs,c0,c1,c2
+        1,0,#0f0000,#000000,#ff0000
+        0,1,#0f0000,#000000,#ff0000
+        ...
+
+       Input data is in CSV format.  Each input line is one pixel containing
+       sync marks (Ys,Xs) and pixel colors for one or more image columns
+       (c0,c1,..).
+
+       Pixel colors can be any X11 color names - See X(7) COLOR NAMES. 
+       Typically use "rgb:hh/hh/hh", where 'hh' are hexadecimal digits
+       specifying an intensity for red/green/blue color.  An older syntax is
+       "#rrggbb", where r,g,b are hexadecimal digits.
+
+       Input Xs,Ys should be 1 only on the pixel where the sweep should
+       reset to the left edge (Xs) or top edge (Ys) of the image, otherwise
+       0.  Scanning is assumed to be X-direction fastest.
+
+OPTIONS
+       --npix=N  - Number of pixels per read burst.
+               This is the number of pixels read before returning to the Tk
+               event loop.  The burst reads are repeated until End-Of-File
+               on stdin.  This allows the new pixels to be displayed in the
+               image, providing a live update mechanism.  It also allows
+               other Tk events to be acted upon so the GUI does not become
+               unresponsive.  Note making N too large will still overload
+               the event loop, and the images may not display until all
+               pixels have been read.
+
+       --nx=N  - Image N pixels wide.
+       --ny=M  - Image M pixels high.
+               These specify the size of each image panel.  The actual image
+               can be smaller.  If a scan line is longer, then the extra
+               pixels fall outside the image frame and are not displayed.
+
+       --magnify=1  - Magnify pixel size by integer factor.
+               Magnification affects only the pixel size, the window size
+               (nx,ny) is not scaled.  Typically is a small integer (1..4).
+
+       --wrap=1  - Wrap scan lines at window size (bool).
+               With --wrap=1 scan lines reset at window width --nx, and at
+               window hight --ny, ignoring any sync marks in the input
+               stream.  With --wrap=0 scan lines reset only on the sync
+               marks (Ys,Xs) and any pixels beyond the edges of the image
+               are not displayed.
+
+       --help  - Show command usage and exit.
+       --man  - Show man page and exit.
+               Prints the manual page and exits.
+
+INTERACTIVE FEATURES
+       Pixel selection is provide by the following button bingings.  These
+       features are likely to evolve.  See "sub go_flow" in file "ImTop.pm".
+
+   Button Bindings
+       Button1  - Identify pixel coordinates.
+               The pixel coordinates are printed on stdout when <Button1> is
+               pressed in any of the displayed images.  The value "np" is
+               the sequential pixel number counting from 1 in the upper left
+               corner, calculated assuming --wrap=0 and --magnify=1.  e.g.
+
+                 x= 125, y= 5, np= 1405
+
+       Shift-Button1  - Run 'simage_dotplot' with selected coordinates.
+               The pixel coordinates are printed on stdout as above.  The
+               helper script is executed with the pixel number as the first
+               argument.
+
+               The intent is to extract the pixel coefficients from the
+               source file and perform further analysis.
+
+               Currently 'simage_dotplot' produces a dotplot of the
+               8-channel lockin amplifier output showing amplitude and phase
+               for each channel.
+
+BUTTONS
+       These buttons exist on the GUI header.
+
+       Quit  - Terminate the program.
+               It does not save any files.  No confirmation.
+
+       Save  - Save all image panels to .ppm files.
+               Each panel is saved to a seperate file incorporating the
+               image column heading in the file name, e.g. "xx.c0.ppm".  All
+               files share a common "xx." file name prefix (future may add
+               an Tk::Entry widget).  For now it may be best to change to a
+               new directory for each invocation of simage.
+
+       A  - Change cursor to "arrow".
+       X  - Change cursor to "crosshair".
+
+RETURN VALUE
+       0= success, otherwise errors
+
+EXAMPLES
+        Display images for input data.
+        % simage < in.data
+
+        Specify image frame size.
+        % simage --nx=512 --ny=512
+
+        Magnify image and increase image frame size.
+        % simage --magnify=2  --nx=512 --ny=512
+
+        Disable auto wrapping of scan lines and use input sync marks.
+        % simage --wrap=0
+
+        Enable wrapping when there are no input sync marks.
+        % simage --wrap=1
+
+        Show default options.  Is a hidden test option.
+        % simage --TESTOP
+
+        Typical processing pipeline.
+        % rpixel --csv | coeff2stream | simage
+
+        Convert saved image file to JPG format using ImageMagick.
+        % convert  xx.c2.ppm  xx.c2.jpg
+
+TOUBLESHOOTING
+   No Ys,Xs sync marks in input stream.
+       This results in only one scan line at the top of the image.  Inspect
+       the input stream.  Search for ",1," to find Xs sync marks.
+
+       Without scan marks use --wrap=1, and --nx=N to specify the number of
+       pixels per line.  Note --nx must match the actual number of pixels
+       per line, or the image will look skewed.
+
+   Xs/Ys switched
+       Scanning expects the X-direction to sweep faster than the
+       Y-direction.  When Xs and Ys are reversed, the Y-direction is reset
+       multiple times for one X-direction sweep.  This results in all the
+       scan lines being piled on top of each other at the top of the image.
+
+   Scan lines shorter than window width, --wrap=0
+       With --wrap=0, the scan line length is determined by the Xs sync
+       mark.  Any extra pixels are discarded beyond the right edge of the
+       image.
+
+       When the scan line is shorter than --nx, the remaining pixels assume
+       the previous color in that location, usually the background color. 
+       This may give a white line at the end of some, or all, scan lines.
+
+       Possibly adjust --nx to trim the right edge as necessary.
+
+   Pixel rate asynchronous to Scan rate
+       If the pixel rate and scan rate are not synchronized, there will be
+       an error of less than 1 pixel per scan line.  The scan marks are
+       quantized to the following pixel, so this error will accumulate and
+       appear to be off by 1 pixel in N scan lines.  This results in an
+       intrinsic skew in the image.
+
+       If you count pixels per line defined by the scan marks, the image
+       will have (N-1) lines of the same length, and every N-th line will
+       have one missing or one extra pixel.
+
+       If N is large, like 50 in a 256x256 pixel image, then every 50-th
+       line may appear shifted by 1 pixel, producing an artifact in 5 places
+       (with --wrap=0).  In this case it may be better to eliminate the
+       artifacts by using --wrap=1 to ignore the sync marks and accept the
+       accumulated skew of 5 pixels accross the whole image.
+
+       If N is small, like 3, then every third line will be offset by 1
+       pixel (with --wrap=0).  There will be more offset artifacts, but at
+       least the the image will not be skewed by one third.
+
+   Image skew, no sync marks, --wrap=1
+       When --wrap=1, the scan line is reset at the the window width --nx. 
+       If --nx does not match the actual number of pixels on a scan line,
+       then the following line will be offset by the extra/missing pixels. 
+       This causes the image to look skewed.
+
+       If the offset is 1 pixel per line, the image will be skewed at 45
+       degrees.  If it is off multiple pixels per line, then the image is
+       skewed more, and may look scrambled.  Try adjusting --nx.
+
+   Multiple frames in the image
+       If the input stream has multiple frames (i.e. multiple Ys=1 sync
+       marks), then the later frames will overwrite the earlier frames in
+       the image.  If the later frame is short, then the lower part of the
+       earlier frame will still show.
+
+       If the first frame is short (i.e. missing the upper part of the
+       image), it will be drawn at the top of the image panel and the later
+       frame will redraw in the correct position.  This makes an odd
+       replacement effect.
+
+       Try using a small value for --npix=20, so the image display rate is
+       slow and you can see the frame reset as it happens.
+
+       In general, arrange to have only one frame with the Ys sync mark at
+       the beginning.
+
+BUGS
+       There is no check for number of pixels in each scan line.
+
+       When the Y-direction is reset, the new pixels overwrite the exising
+       pixels in the image.  If the new scan line is shorter, then the
+       remaing old pixels may be misleading in the image.
+
+ENVIRONMENT
+       PAGER   Value defines an output filter used to display manual pages. 
+               By default, less(1) is used.  If PAGER='', stdout is written
+               with no paging.
+
+FILES
+       none
+
+SEE ALSO

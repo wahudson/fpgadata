@@ -1,0 +1,149 @@
+NAME
+       coeff2stream -- Convert rpixel coefficient data into an image data
+       stream
+
+SYNOPSIS
+        coeff2stream  [options]
+           --coeff=N,N,N,..  coefficient numbers to image
+           --scale=1.0       scale factor multiply coeff
+           --offset=0.0      offset;   color = (coeff * scale) + offset
+                         sweep reset on scan mark edge
+           --xrise           Xm rising edge
+           --xfall           Xm falling edge (default)
+           --yrise           Ym rising edge
+           --yfall           Ym falling edge (default)
+         options:
+           --palette=FILE    rgb palette file in X11 color format
+           --frame=N         grab N whole frames
+           --debug           show debug output on stderr
+           --help            show command usage and exit
+           --man             show man page and exit
+
+DESCRIPTION
+       The idea is to process a series of coefficient data points into a
+       stream of image pixel data.  Intended to operate as a filter between
+       'rpixel' and 'simage'.  There are two transformations to manage:
+
+       1) Coefficient data transform into RGB pixel value.
+
+       2) Scan marks transform into Xloc and Yloc scan reset points.
+
+        Input:  (stdin)
+        index,Ym,Xm,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15
+        0,1,0,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
+        1,0,1,15,-32768,4096,-1,33,291,291,291,291,291,291,291,291,291,291,291
+
+        Output:  (stdout)
+        Ys,Xs,c0,c1,c2
+        1,0,#0f0000,#000000,#ff0000
+        0,1,#0f0000,#000000,#ff0000
+
+       Input Xm,Ym are the raw scan mark signals from the physical scanning
+       system.  Options select which edge to use for sweep reset in the
+       image scanning.  This allows the input pulse to be of any duration,
+       since only the edge is used.
+
+       Output Xs,Ys are 1 only on the pixel where the sweep should reset to
+       the left edge (Xs) or top edge (Ys) of the image, otherwise 0.
+
+       Coefficient values are expected to be signed integers.  They are
+       transformed into unsigned 8-bit intensity values by the equation
+
+           intensity = (coeff * scale) + offset
+
+       where scale and offset are provided by options --scale and --offset. 
+       Default values --scale=1.0 and --offset=0.0 leave the value
+       unchanged.
+
+       The intensity is then clipped - any value above 255 is set to 255,
+       and any value below zero is set to 0.  It is then mapped into an rgb
+       color using the palette file.
+
+       Both input and output are in CSV (comma seperated value) format.  The
+       input column "index" is ignored.  The input columns "Ym" and "Xm" are
+       the scan mark signals.  The coefficient heading names "c0", etc. are
+       transferred to the output, and can be any names since they are
+       selected by column position with option --coeff.
+
+       It is intended the user customize this program (or a copy) to create
+       the desired data visualization as an image (please change this man
+       page accordingly).
+
+OPTIONS
+       --coeff=N,N,N,..  - Coefficient numbers to image.
+               Select these coefficient numbers to ouput image data.  The
+               numbers are coefficient column numbers, not heading names. 
+               e.g. 0 is "c0" in the above example input.
+
+       --scale=1.0  - Scale factor multiplies coefficient.
+       --offset=0.0  - Offset factor added.
+               intensity = (coeff * scale) + offset
+
+       --xrise  - Xm rising edge
+       --xfall  - Xm falling edge (default)
+               Select which edge of the X input scan mark for output as Xs.
+
+       --yrise  - Ym rising edge
+       --yfall  - Ym falling edge (default)
+               Select which edge of the Y input scan mark for output as Ys.
+
+       --palette=FILE  - RGB palette file in X11 color format.
+               A FILE without a path component is found in the installation
+               image/palette/ directory.  Use ./file to specify the current
+               directory.
+
+               The file should have one color entry per line, ordered in a
+               linear scale 0 to 255.  Colors can be any X11 color names -
+               See X(7) COLOR NAMES.  Typically use "rgb:hh/hh/hh", where
+               'hh' are hexadecimal digits specifying an intensity for
+               red/green/blue color.
+
+       --frame=N  - Grab N whole frames.
+               With N>0, discard pixels until the first frame mark (Ys==1),
+               then output N full frames.  When the last frame is complete,
+               the program terminates leaving any unread pixels on stdin. 
+               With N=0 (default), all input pixels are translated,
+               terminating when stdin reaches End-Of-File.
+
+       --help  - Show command usage and exit.
+       --man  - Show man page and exit.
+               Prints the manual page and exits.
+
+RETURN VALUE
+       0= success, otherwise errors
+
+EXAMPLES
+        Generate data for coefficients c0, c1, c8, c9.
+        % coeff2stream  --coeff=0,1,8,9  < in.csv
+
+        Reset scan on rising edge for both X and Y scan marks.
+        % coeff2stream  --coeff=3,4  --xrise --yrise  < in.csv
+
+        Compute color value as (coeff * 0.2) + 200
+        % coeff2stream  --scale=0.2 --offset=200  < in.csv
+
+        Process 2 full frames, ignoring pixels until the first Ys==1.
+        % coeff2stream  --frame=2  < in.csv
+
+        Specify an alternate color map palette.
+        % coeff2stream  --palette=./mymap.rgb  < in.csv
+
+        Show default options.  Is a hidden test option.
+        % coeff2stream --TESTOP
+
+ENVIRONMENT
+       PAGER   Value defines an output filter used to display manual pages. 
+               By default, less(1) is used.  If PAGER='', stdout is written
+               with no paging.
+
+FILES
+       In the source directory tree:
+
+        image/palette/     Directory of palette files.
+            cubeYF.rgb         Violet to Yellow, derived from
+                https://mycarta.wordpress.com/2013/03/06/perceptual-rainbow-palette-the-goodies/
+            cubeYF_clip.rgb    Clip limits index 0 Black, 255 White.  (Default)
+
+SEE ALSO
+       X(7)  X Window System
+

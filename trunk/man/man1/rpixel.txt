@@ -1,0 +1,308 @@
+NAME
+       rpixel -- FPGA data transfer on Raspberry Pi
+
+SYNOPSIS
+        rpixel [options]
+         output forms:  (default is none)
+           --stream=N          stream N pixels at a time to CSV output
+           --csv               CSV format
+           --tab               tabular format
+           --tab2              tabular format, no check
+           --hex               hex data dump
+           --raw               raw hex data
+           --delta             delta data in decimal
+           --flag              octal flags with 8-bit data in hex
+         raw data:  one sample per line, with headline
+           --load=FILE         load hex words from file
+           --save=FILE         save hex words to   file
+         options:
+           --npix=N            number of pixel to collect
+           --repeat=N          repeat data read loop N times
+           --frame=0           align to frame mark, +1= rising, -1=falling
+           --help              show this usage
+           --man               show manpage and exit
+         # -v, --verbose       verbose output
+           --debug             debug output
+         (options with GNU= only)
+
+DESCRIPTION
+       Transfer data from an FPGA Fifo buffer to this program running on a
+       Raspberry Pi3.
+
+   Setup
+       The GPIO pin directions must be initialized external to this program.
+       On reboot, the RPi (Raspberry Pi) sets all pins to Input, thus it is
+       really only necessary to set Output pin directions.  Use the 'gpio'
+       utility command provided by default in the RPi Raspbian distribution:
+
+           % gpio readall              # view all pin configuration
+           % gpio -g mode  5 out       # GoPixel
+           % gpio -g mode  6 out       # ReadAck (required)
+           % gpio -g mode  7 out       # nReset
+           % gpio -g mode  8 out       # TrigOut
+
+       Companion script 'rpixel_init' does this.
+
+       The ReadAck output signal is essential for handshake with the FPGA
+       fifo.  The other outputs (nReset, GoPixel, and TrigOut) are optional
+       and need not be configured if they are not used by the FPGA. 
+       Regardless, 'rpixel' will toggle these GPIO output register bits.
+
+       The resistor pull up/down need not be configured in any special way. 
+       Note the RPi does remember the resistor pull setting thru power down.
+       It is best to not fiddle with these.
+
+       See:  doc/rpixel.text  User Guide for GPIO pin connections to FPGA.
+
+       See:  src/rpixel.cpp  for GPIO pins used by this program.
+
+   Essential Operation
+       The following steps comprise the essential operation.
+
+       1a)  Flush fifo:  By reading 10000 samples in a tight loop, ignoring
+       the NoData signal.  The last sample is checked and a Warning issued
+       if the fifo was not empty (NoData=0).
+
+       1b)  Find first frame mark:  Only if requested with --frame.  Discard
+       samples until MarkY makes a rising transition with --frame=+1, or
+       falling with --frame=-1.
+
+       1c)  Find first coefficient:  Discard samples until coefficient 0 is
+       found.
+
+       2)  Collect the dataset in memory:  The number of samples in the
+       dataset is defined as ( --npix pixels * 16 coefficients/pixel * 4
+       samples/coeff ).  This inner loop repeatedly reads the GPIO pins,
+       discarding invalid samples where NoData=1.  Valid samples are stored
+       in a memory array as raw 12-bit values.  There are no other IO
+       operations in this loop, thus avoiding potential process blocking on
+       IO.  This step is timed in nano-seconds (ns) using the Linux
+       CLOCK_MONOTONIC_RAW timer (see clock_gettime(3)).
+
+       3)  Output statistics on stderr.
+
+       4)  Repeat loop:  Steps 1 to 3 are repeated --repeat=M times.  The
+       memory array contents are overwritten each time, so only the last
+       repetition is available for output.  This is primarily used to let
+       the rpixel process settle down (perhaps for more efficient running
+       with shorter process sleeps) and to see statistics from each
+       repetition.
+
+       5)  Output data on stdout:  The memory data is formatted and output
+       for each output form option.  The memory is not cleared, so the same
+       data can be output in multiple forms.
+
+       Option --stream=N works differently, in that output of N pixels is
+       done as part of the inner loop of step (2) instead of the normal
+       output in step (5).  This allows --npix to be arbitrarily large,
+       since only --stream number of pixels are stored in memory.
+
+   Data Array Size
+       The in-memory data array size is hardcoded in the 'yFramDat' class
+       constructor (see file src/yFramDat.cpp).  The constant 'sz' (const
+       int sz) is the maximum number of entries in the data array.  Change
+       the value and re-compile.
+
+       The array is type (unit16_t) and consumes 2 bytes/entry.  One pixel
+       requires 64 entries in the array (16 coeff/pixel * 4 nibble/coeff * 1
+       entry/nibble).  Thus typical image sizes require:
+
+            256x256   --npix=65536    sz=  4 M entries,   8 Mbyte
+            512x512   --npix=262144   sz= 16 M entries,  32 Mbyte
+           1024x1024  --npix=1048576  sz= 64 M entries, 128 Mbyte
+
+       Size limitation is the amount of free RAM on the RPi that can be used
+       without swapping to disk (the SD card).  Swapping may incur process
+       sleeps, possibly resulting in fifo OverFlow and lost data.  Excessive
+       swapping may wear out the SD card.  Use the free(1) command to
+       display the amount of free and used memory in the system.
+
+       The Raspberry Pi-3 has 1 Gbyte of RAM.  Data array size of 256 Mbyte
+       (128 M entries) was tested and seems to work fine.  No testing to
+       find failure limit has been done (as of 2018-02-25).
+
+OPTIONS
+   output forms
+       These options specify the format of the output data stream on stdout.
+       Zero or more may be combined (except --stream).  With no output
+       option nothing is output on stdout, useful to see only the statistics
+       on stderr.
+
+       --stream=N  - Stream N pixels at a time to CSV output.
+           As described above.  Output format is the same as --csv.  No
+           other output options may be combined with --stream.  The idea was
+           to stream output while making as little impact on the inner loop
+           as possible.
+
+       --csv  - Output CSV format.
+       --tab  - Output tabular format.
+           These are the primary output forms.  Columns are:  (left to
+           right) Index is a pixel number, counting from zero.  Ym,Xm are
+           the verticle and horizontal scan mark signals, binary 0/1 values.
+           Coefficient columns (named c0, c1, .., c15) are signed 16-bit
+           decimal values.
+
+       --hex  - Hex data dump.
+           Output a hex dump table, 16-bit big-endian data values.  Eight
+           data column follow an address index column on the left.  There is
+           a two-line heading for the columns.
+
+       --raw  - Raw hex data.
+           Output raw data as 16-bit hexadecimal words, with index, one line
+           per word.  There is a one-line heading for the columns.
+
+       --delta  - Delta data in decimal.
+           Output raw data as 16-bit word in unsigned decimal, with an index
+           and delta column.  The delta is the difference in value from the
+           previous entry.  There is a one-line heading for the columns. 
+           Primarily used for debug in early development.
+
+       --flag  - Octal flags with 8-bit data in hex.
+           This is the primary debug output form.  Output raw data as 8-bit
+           hex words with flag bits, index, and delta.  Delta is in decimal
+           (current - previous).  Flags are 4-bits in octal, with leading
+           zero.  Bit position values are:  001 MarkX scan mark  002 MarkY
+           scan mark  004 OverFlow (fifo write_full)  010 NoData (fifo
+           empty)
+
+   raw data
+       --load=FILE  - Load hex words from file.
+       --save=FILE  - Save hex words to  file.
+           These options allow the raw data array to be loaded/saved in text
+           form, mostly for debug and testing, but there may be other uses. 
+           They can be combined with any of the output forms, and are
+           processed in this order:  --load, --save, then memory outputs
+           --tab, --csv, etc.  File format is hexadecimal, one 16-bit value
+           per line.  First line is a headline, which may be null.
+
+   options
+       --npix=N  - Number of pixel to collect.
+           This is the total number of pixels to collect in step (2) above. 
+           The total number of valid transfers will be ( --npix * 16
+           coeff/pixel * 4 transfers/coeff ), and may be truncated to the
+           data array size.  Without --stream, all transfers will be to
+           memory.  With --stream, only --stream number of pixels need fit
+           in memory.
+
+       --repeat=N  - Repeat data read loop N times.
+           This is the number of repetitions of the outer repeat loop of
+           step (4) above.
+
+       --frame=0  - Align to frame mark, +1= rising, -1=falling.
+           Wait until the beginning of a frame, as in step (1b) above,
+           before collecting pixels.  With --frame=0 (default) alignment is
+           disabled (e.g. for when there are no scan mark input signals). 
+           Requires the MarkY input signal.  This is most useful when
+           collecting a full frame to limited memory.
+
+       --help  - Show command usage and exit.
+       --man  - Show manpage and exit.
+           These are the primary documentation.
+
+       -v, --verbose  - Verbose output.  (Not used)
+       --debug  - Debug output.
+           Output extra debug info, possibly on stdout.
+
+RETURN VALUE
+       0= success, otherwise errors
+
+EXAMPLES
+        Just show statistics for 2000 pixels repeated 3 times.
+        % rpixel --npix=2000  --repeat=3
+
+        Output tabular data.
+        % rpixel --tab
+
+        Output CSV data for 2000 pixels.
+        % rpixel --csv  --npix=2000
+
+        Stream pixels to CSV output in chunks of 10 pixels.
+        Note number of pixels can be arbitrarily large.
+        % rpixel --stream=10  --npix=2000000
+
+        Align data to falling edge of MarkY.
+        % rpixel --frame=-1  --csv
+
+        Output raw data with flag field in octal.  Useful for debug.
+        % rpixel --flag
+
+        Output the collected memory image in multiple formats.
+        % rpixel --tab --csv --flag
+
+        Save raw data to a file for later loading, and output CSV format.
+        % rpixel --save=outfile.raw  --csv
+
+        Load raw data and output it in table format.
+        % rpixel --load=infile.raw  --tab
+
+        Show default options.  Is a hidden test option.
+        % rpixel --TESTOP
+
+        Check free memory while rpixel is running.
+        % rpixel --npix=2000000 --repeat=4 &
+        % free
+
+TOUBLESHOOTING
+   GPIO pins not connected
+       A faulty GPIO pin connection can result in an apparent hang, erratic
+       operation, or bad data.  Visually inspect for loose connections.
+
+   ReadAck pin direction is not Output
+       With no ReadAck signal, the FPGA fifo will not advance to the next
+       output entry, and the input data will appear to be constant.  This
+       may result in a hang in finding the first coefficient in step (1c)
+       above.
+
+       Verify with utility command 'gpio readall'.  Set correct directions
+       with 'rpixel_init'.
+
+   OverFlow errors
+       If the FPGA fifo overflows, then no new entries can be inserted in
+       the fifo and are lost.  This typically results in "misaligned coeff
+       nibble" errors.  Overflow is used as a cross check for possible bad
+       data, and is not intended to be a recoverable condition.
+
+       Inspect stderr for statistics and error messages, e.g.:  OverFlow= 4 
+       Error:  Fifo overflow count= 4
+
+   /dev/gpiomem access permisions
+       This device special file is used to access the GPIO interface which
+       appears as registers in the ARM processor IO address space.  This may
+       result in errors like "can't open /dev/gpiomem" and program exit with
+       non-zero exit code.  File permission should be read-write for group
+       'gpio', and your user ID should belong to group 'gpio', e.g inspect:
+
+           % ls -l  /dev/gpiomem
+           crw-rw---- 1 root gpio 243, 0 Nov  7 12:42 /dev/gpiomem
+               ^^            ^^^^
+           % id
+           uid=1000(pi) gid=1000(pi) groups=1000(pi),...,997(gpio),...
+
+   Bad signal level on GPIO pins
+       This may result in flaky behavior or hang.  In one case, the NoData
+       signal had a bad low level input voltage of Vil= 1.2 V, due to a
+       likely damaged FPGA output pin driver (it should have been well below
+       0.4 V).  This was very near the CMOS input low threshold of ~1.1 V
+       (typicaly 1/3 * Vcc, at Vcc=3.3 V on the RPi).  The result was some
+       valid data transfers being interpreted as NoData=1 and discarded,
+       causing "misaligned coeff nibble" errors.
+
+       Use an oscilloscope and verify good 3.3V CMOS input signal levels,
+       typically (0.0V <= Vil <= 0.4V) and (3.1V <= Vih <= 3.3V).
+
+ENVIRONMENT
+       none
+
+FILES
+        /dev/gpiomem   Kernel memory map for parallel GPIO pins.
+           Allows access for normal users belonging to group 'gpio'.
+
+SEE ALSO
+       In the source directory tree:
+
+        doc/rpixel.text        User Guide.  Pin connections.
+        src/rpixel.cpp         Main program, table of GPIO pins used.
+        bin/rpixel_init        Initialize Raspberry Pi gpio for use with rpixel.
+
+       clock_gettime(3) free(1)
+

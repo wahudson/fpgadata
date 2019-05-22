@@ -1,0 +1,64 @@
+NAME
+       csvrow -- Extract rows from a csv file
+
+SYNOPSIS
+        csvrow  [options]  M .. < stdin
+           M                 row number
+         additional output:
+           -a, --after=N,    N rows after
+           -b, --before=N,   N rows before
+           -c, --center=N,   N rows centered, including row M
+           #!! redefine to be additional
+         options:
+           --debug           show debug output
+           --help            show command usage and exit
+           --man             show man page and exit
+
+DESCRIPTION
+       Extract rows by line number from a csv file on stdin.  The csv header
+       line is always output.  Line numbers count from 0 as the header line
+       and the first row is number 1.
+
+       The input lines are not parsed, so the input file need not be csv
+       format.
+
+OPTIONS
+       -a, --after=N  - Output N rows after,  not counting row M
+       -b, --before=N  - Output N rows before, not counting row M
+           These two output N additional rows.
+
+       -c, --center=N  - Output N rows centered, including row M
+           When N is even, the odd half count is applied after row M.
+
+       --help  - Show command usage and exit.
+       --man  - Show man page and exit.
+           Prints the manual page and exits.
+
+RETURN VALUE
+       0= success, otherwise errors
+
+EXAMPLES
+        Extract first data row.
+        % csvrow  1 < file
+
+        Extract multiple rows.
+        % csvrow  10 20 30 < file
+
+        Extract 3 rows after given rows.
+        % csvrow  --after=3  10 20 30 < file
+
+        Extract 3 rows before given rows.
+        % csvrow  --before=3  10 20 30 < file
+
+        Extract 2 rows before and 3 after given rows, total 6 rows.
+        % csvrow  --center=6  10 20 30 < file
+
+ENVIRONMENT
+       PAGER   Value defines an output filter used to display manual pages. 
+               By default, less(1) is used.  If PAGER='', stdout is written
+               with no paging.
+
+FILES
+       none
+
+SEE ALSO
