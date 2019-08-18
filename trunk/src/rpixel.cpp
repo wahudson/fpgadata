@@ -77,6 +77,7 @@ class yOptLong : public yOption {
     const char*		stream;
     const char*		repeat;
     const char*		frame;
+    bool		freerun;
     bool		csv;
     bool		tab;
     bool		tab2;
@@ -124,6 +125,7 @@ yOptLong::yOptLong( int argc,  char* argv[] )
     stream      = "";
     repeat      = "";
     frame       = "";
+    freerun     = 0;
     csv         = 0;
     tab         = 0;
     tab2        = 0;
@@ -159,6 +161,7 @@ yOptLong::parse_options()
 	else if ( is( "--stream="    )) { stream     = this->val(); }
 	else if ( is( "--repeat="    )) { repeat     = this->val(); }
 	else if ( is( "--frame="     )) { frame      = this->val(); }
+	else if ( is( "--freerun"    )) { freerun    = 1; }
 	else if ( is( "--csv"        )) { csv        = 1; }
 	else if ( is( "--tab"        )) { tab        = 1; }
 	else if ( is( "--tab2"       )) { tab2       = 1; }
@@ -237,6 +240,7 @@ yOptLong::print_option_flags()
     cout << "--stream      = " << stream       << endl;
     cout << "--repeat      = " << repeat       << endl;
     cout << "--frame       = " << frame        << endl;
+    cout << "--freerun     = " << freerun      << endl;
     cout << "--csv         = " << csv          << endl;
     cout << "--tab         = " << tab          << endl;
     cout << "--tab2        = " << tab2         << endl;
@@ -287,6 +291,7 @@ yOptLong::print_usage()
     "    --npix=N            number of pixel to collect\n"
     "    --repeat=N          repeat data read loop N times\n"
     "    --frame=0           align to frame mark, +1= rising, -1=falling\n"
+    "    --freerun           keep all samples, ignoring NoData\n"
     "    --help              show this usage\n"
     "    --man               show manpage and exit\n"
     "  # -v, --verbose       verbose output\n"
@@ -447,21 +452,23 @@ main( int	argc,
 	    }
 
 	    // Find first coeff
-	    while ( 1 )
-	    {
-		ilevel = *gpio_read;	// Read GPIO level
-		if ( ((ilevel & NODATA_G) == 0)   &&
-		     ((ilevel & COEFF_G)  == 0x0) ) {
-		    break;	// no read acknowledge
+	    if ( ! Opx.freerun ) {
+		while ( 1 )
+		{
+		    ilevel = *gpio_read;	// Read GPIO level
+		    if ( ((ilevel & NODATA_G) == 0)   &&
+			 ((ilevel & COEFF_G)  == 0x0) ) {
+			break;	// no read acknowledge
+		    }
+
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+		    *gpio_set = READAK_G;
+
+		    *gpio_clr = READAK_G;
 		}
-
-		*gpio_set = READAK_G;
-		*gpio_set = READAK_G;
-		*gpio_set = READAK_G;
-		*gpio_set = READAK_G;
-		*gpio_set = READAK_G;
-
-		*gpio_clr = READAK_G;
 	    }
 
 	    unsigned int	coef_num = 0;	// masked in-place
@@ -493,7 +500,9 @@ main( int	argc,
 
 		if ( ilevel & NODATA_G ) {	// fifo empty
 		    NoData_cnt++;
-		    continue;
+		    if ( ! Opx.freerun ) {
+			continue;
+		    }
 		}
 
 		if ( ilevel & OVFLOW_G ) {	// fifo overflow
