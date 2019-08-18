@@ -558,15 +558,19 @@ yFramDat::print_flag_hex()
     uint32_t		ff;
     int			dlast = 0;
 
-    cout << " index flag  data  delta" << endl;
+    cout << "        #<NoData,OverFlow,MarkY,MarkX>" << endl;
+    cout << " index   flag  data  delta" << endl;
 
     for ( unsigned int i = 0;  i < len;  i++  )
     {
 	dd =   data[i] & 0x00ff;
 	ff = ( data[i] & 0x0f00 ) >> 8;
 
-	cout <<setw(6) <<dec <<setfill(' ') << i  << "  "
-	     <<setw(3) <<oct <<setfill('0') << ff << "  0x"
+	cout <<setw(6) <<dec <<setfill(' ') << i  << "  #"
+	     <<setw(1) <<oct << ((ff >>3) & 0x1)
+			     << ((ff >>2) & 0x1)
+			     << ((ff >>1) & 0x1)
+			     << ( ff      & 0x1)  << "  0x"
 	     <<setw(2) <<hex <<setfill('0') << dd << "  "
 	     <<setw(4) <<dec <<setfill(' ') << ((int) dd - dlast)
 	     <<endl;
