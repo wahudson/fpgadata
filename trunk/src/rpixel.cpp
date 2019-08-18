@@ -453,6 +453,9 @@ main( int	argc,
 
 	    // Find first coeff
 	    if ( ! Opx.freerun ) {
+
+		if ( Opx.debug ) { cerr << "+ Find first coeff" << endl; }
+
 		while ( 1 )
 		{
 		    ilevel = *gpio_read;	// Read GPIO level
@@ -470,6 +473,8 @@ main( int	argc,
 		    *gpio_clr = READAK_G;
 		}
 	    }
+
+	    if ( Opx.debug ) { cerr << "+ Collect data" << endl; }
 
 	    unsigned int	coef_num = 0;	// masked in-place
 	    unsigned int	coef_old = 0xffffffff & COEFF_G;
