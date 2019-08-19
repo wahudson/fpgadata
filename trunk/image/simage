@@ -74,6 +74,7 @@ sub print_usage
     my $op_ny           = 256;
     my $op_magnify      = 1;
     my $op_wrap         = 1;
+    my $op_vert         = 0;
 
     Getopt::Long::Configure(
 	'posix_default',
@@ -91,6 +92,7 @@ sub print_usage
 	"--ny=i"         => \$op_ny,
 	"--magnify=i"    => \$op_magnify,
 	"--wrap=i"       => \$op_wrap,
+	"--vert"         => \$op_vert,
 	"--verbose|v"    => \$op_verbose,
 	"--TESTOP"       => \$op_TESTOP,
 
@@ -130,6 +132,7 @@ sub print_usage
 	print( "--ny           = $op_ny\n" );
 	print( "--magnify      = $op_magnify\n" );
 	print( "--wrap         = $op_wrap\n" );
+	print( "--vert         = $op_vert\n" );
 	last;
     }
 
@@ -161,6 +164,7 @@ sub print_usage
 
     $tx->Init_attrib(
 	CoeffHeads   => [@coeff_name],
+	StackVert    => $op_vert,
     );
 
     if ( $op_verbose ) {
@@ -261,6 +265,7 @@ simage -- Stream data into an image display.
     --ny=M            image M pixels high
     --magnify=1       magnify pixel size by integer factor
     --wrap=1          wrap scan lines at window size (bool)
+    --vert            stack images vertical
     --help            show command usage and exit
     --man             show man page and exit
 
@@ -327,6 +332,10 @@ With --wrap=1 scan lines reset at window width --nx, and at window hight --ny,
 ignoring any sync marks in the input stream.
 With --wrap=0 scan lines reset only on the sync marks (Ys,Xs) and any pixels
 beyond the edges of the image are not displayed.
+
+=item B<--vert>             - Stack images vertical.
+
+Images are stacked vertically in the window, instead of horizontally.
 
 =item B<--help>             - Show command usage and exit.
 

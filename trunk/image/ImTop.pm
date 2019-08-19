@@ -37,6 +37,7 @@ use Error_mixi (	# Error handling functions, mix-in
 #
 #    Nx           => 0,		# Image N pixels wide.
 #    Ny           => 0,		# Image N pixels high.
+#    StackVert    => 0,		# Stack images vertical.
 # }
 
 
@@ -72,6 +73,7 @@ sub new
 	CoeffHeads   => [],
 	Nx           => undef,
 	Ny           => undef,
+	StackVert    => 0,
     };
 
     bless( $self, $package );
@@ -246,7 +248,9 @@ sub go_flow
 	my $lab2 = $mw->Label( -image => $im_name,
 	    -relief => 'solid',
 	);
-	$lab2->pack( -side => 'left' );
+	$lab2->pack( -side => ($self->{StackVert} ? 'top' : 'left') );
+		# 'top'   stack images vertically
+		# 'left'  stack images horizontally
 
 	# mark corners of image
 	my $nx = $self->{Nx};

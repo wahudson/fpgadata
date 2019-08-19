@@ -10,6 +10,7 @@ SYNOPSIS
            --ny=M            image M pixels high
            --magnify=1       magnify pixel size by integer factor
            --wrap=1          wrap scan lines at window size (bool)
+           --vert            stack images vertical
            --help            show command usage and exit
            --man             show man page and exit
 
@@ -66,6 +67,10 @@ OPTIONS
                stream.  With --wrap=0 scan lines reset only on the sync
                marks (Ys,Xs) and any pixels beyond the edges of the image
                are not displayed.
+
+       --vert  - Stack images vertical.
+               Images are stacked vertically in the window, instead of
+               horizontally.
 
        --help  - Show command usage and exit.
        --man  - Show man page and exit.
