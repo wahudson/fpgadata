@@ -19,7 +19,7 @@ rpixel -- FPGA data transfer on Raspberry Pi
     --hex               hex data dump
     --raw               raw hex data
     --delta             delta data in decimal
-    --flag              octal flags with 8-bit data in hex
+    --flag              binary flags with 8-bit data in hex
   raw data:  one sample per line, with headline
     --load=FILE         load hex words from file
     --save=FILE         save hex words to   file
@@ -27,6 +27,7 @@ rpixel -- FPGA data transfer on Raspberry Pi
     --npix=N            number of pixel to collect
     --repeat=N          repeat data read loop N times
     --frame=0           align to frame mark, +1= rising, -1=falling
+    --freerun           keep all samples, ignoring NoData
     --help              show this usage
     --man               show manpage and exit
   # -v, --verbose       verbose output
@@ -184,16 +185,17 @@ column.  The delta is the difference in value from the previous entry.
 There is a one-line heading for the columns.
 Primarily used for debug in early development.
 
-=item B<--flag>             - Octal flags with 8-bit data in hex.
+=item B<--flag>             - Binary flags with 8-bit data in hex.
 
 This is the primary debug output form.
 Output raw data as 8-bit hex words with flag bits, index, and delta.
 Delta is in decimal (current - previous).
-Flags are 4-bits in octal, with leading zero.  Bit position values are:
-    001 MarkX scan mark
-    002 MarkY scan mark
-    004 OverFlow (fifo write_full)
-    010 NoData (fifo empty)
+Flags are 4-bits in binary.  Bit positions left to right are:
+
+    #1000 NoData (fifo empty)
+    #0100 OverFlow (fifo write_full)
+    #0010 MarkY scan mark
+    #0001 MarkX scan mark
 
 =back
 
@@ -239,6 +241,12 @@ scan mark input signals).
 Requires the MarkY input signal.
 This is most useful when collecting a full frame to limited memory.
 
+=item B<--freerun>          - Keep all samples, ignoring NoData.
+
+Ignore the NoData signal and continue thru any operation steps that might
+hang.  Use as a debug mode to capture a free running stream of input samples.
+Typically display result with --flag and look for stuck signal lines (bits).
+
 =item B<--help>             - Show command usage and exit.
 
 =item B<--man>              - Show manpage and exit.
@@ -250,6 +258,7 @@ These are the primary documentation.
 =item B<--debug>            - Debug output.
 
 Output extra debug info, possibly on stdout.
+Trace key operation steps with text preceeded by a '+' character on stderr.
 
 =back
 
@@ -277,7 +286,10 @@ Output extra debug info, possibly on stdout.
  Align data to falling edge of MarkY.
  % rpixel --frame=-1  --csv
 
- Output raw data with flag field in octal.  Useful for debug.
+ Free run data capture, to debug stuck signal lines.
+ % rpixel --freerun  --flag
+
+ Output raw data with flag field in binary.  Useful for debug.
  % rpixel --flag
 
  Output the collected memory image in multiple formats.
@@ -312,6 +324,15 @@ a hang in finding the first coefficient in step (1c) above.
 
 Verify with utility command 'gpio readall'.
 Set correct directions with 'rpixel_init'.
+
+=head2			Hang in execution
+
+Can be caused by stuck handshake (control) signals.  Commonly occurs in
+step (1c) "Find first coefficient".
+Use --debug to see operation trace comments (preceeded by a '+' character).
+Use --freerun to continue thru potential hangs, and --flag to show control
+signals and data.  Look for stuck signal lines (bits) in the flags, and in
+the coefficient number field (upper 4-bits of the 8-bit data).
 
 =head2			OverFlow errors
 

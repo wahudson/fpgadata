@@ -283,7 +283,7 @@ yOptLong::print_usage()
     "    --hex               hex data dump\n"
     "    --raw               raw hex data\n"
     "    --delta             delta data in decimal\n"
-    "    --flag              octal flags with 8-bit data in hex\n"
+    "    --flag              binary flags with 8-bit data in hex\n"
     "  raw data:  one sample per line, with headline\n"
     "    --load=FILE         load hex words from file\n"
     "    --save=FILE         save hex words to   file\n"

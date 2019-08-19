@@ -11,7 +11,7 @@ SYNOPSIS
            --hex               hex data dump
            --raw               raw hex data
            --delta             delta data in decimal
-           --flag              octal flags with 8-bit data in hex
+           --flag              binary flags with 8-bit data in hex
          raw data:  one sample per line, with headline
            --load=FILE         load hex words from file
            --save=FILE         save hex words to   file
@@ -19,6 +19,7 @@ SYNOPSIS
            --npix=N            number of pixel to collect
            --repeat=N          repeat data read loop N times
            --frame=0           align to frame mark, +1= rising, -1=falling
+           --freerun           keep all samples, ignoring NoData
            --help              show this usage
            --man               show manpage and exit
          # -v, --verbose       verbose output
@@ -157,13 +158,16 @@ OPTIONS
            previous entry.  There is a one-line heading for the columns. 
            Primarily used for debug in early development.
 
-       --flag  - Octal flags with 8-bit data in hex.
+       --flag  - Binary flags with 8-bit data in hex.
            This is the primary debug output form.  Output raw data as 8-bit
            hex words with flag bits, index, and delta.  Delta is in decimal
-           (current - previous).  Flags are 4-bits in octal, with leading
-           zero.  Bit position values are:  001 MarkX scan mark  002 MarkY
-           scan mark  004 OverFlow (fifo write_full)  010 NoData (fifo
-           empty)
+           (current - previous).  Flags are 4-bits in binary.  Bit positions
+           left to right are:
+
+               #1000 NoData (fifo empty)
+               #0100 OverFlow (fifo write_full)
+               #0010 MarkY scan mark
+               #0001 MarkX scan mark
 
    raw data
        --load=FILE  - Load hex words from file.
@@ -195,13 +199,20 @@ OPTIONS
            Requires the MarkY input signal.  This is most useful when
            collecting a full frame to limited memory.
 
+       --freerun  - Keep all samples, ignoring NoData.
+           Ignore the NoData signal and continue thru any operation steps
+           that might hang.  Use as a debug mode to capture a free running
+           stream of input samples.  Typically display result with --flag
+           and look for stuck signal lines (bits).
+
        --help  - Show command usage and exit.
        --man  - Show manpage and exit.
            These are the primary documentation.
 
        -v, --verbose  - Verbose output.  (Not used)
        --debug  - Debug output.
-           Output extra debug info, possibly on stdout.
+           Output extra debug info, possibly on stdout.  Trace key operation
+           steps with text preceeded by a '+' character on stderr.
 
 RETURN VALUE
        0= success, otherwise errors
@@ -223,7 +234,10 @@ EXAMPLES
         Align data to falling edge of MarkY.
         % rpixel --frame=-1  --csv
 
-        Output raw data with flag field in octal.  Useful for debug.
+        Free run data capture, to debug stuck signal lines.
+        % rpixel --freerun  --flag
+
+        Output raw data with flag field in binary.  Useful for debug.
         % rpixel --flag
 
         Output the collected memory image in multiple formats.
@@ -255,6 +269,14 @@ TOUBLESHOOTING
 
        Verify with utility command 'gpio readall'.  Set correct directions
        with 'rpixel_init'.
+
+   Hang in execution
+       Can be caused by stuck handshake (control) signals.  Commonly occurs
+       in step (1c) "Find first coefficient".  Use --debug to see operation
+       trace comments (preceeded by a '+' character).  Use --freerun to
+       continue thru potential hangs, and --flag to show control signals and
+       data.  Look for stuck signal lines (bits) in the flags, and in the
+       coefficient number field (upper 4-bits of the 8-bit data).
 
    OverFlow errors
        If the FPGA fifo overflows, then no new entries can be inserted in

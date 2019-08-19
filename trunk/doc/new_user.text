@@ -409,6 +409,101 @@ Gather data with rpixel:
     be interrupted long enough for the FIFO on the FPGA to overflow.
 
 
+Debug Hang in execution:
+------------------------
+
+    The FPGA has been simulated with an 8-bit binary counter for this
+    example.  Typically set --npix=1000 to get plenty of samples when
+    looking for stuck bits.
+
+    Here the NoData line is stuck high causing rpixel to hang.
+    Debug using --freerun --flag.  Only a snippet of output is shown here,
+    but you can see the stuck bit NoData=1.
+
+    % rpixel --freerun --flag --npix=1
+    Real GPIO
+    num pixels=     1
+    num samples=    64
+    Rep[1]
+	OverFlow=   0
+	NoData_cnt= 64
+	sample_cnt= 64
+	coeff_cnt=  17
+	delta_ns=   24948 ns
+	NoData per Coeff =     3.76
+	Pixel Rate       =    23472 ns/pixel
+	Coeff Rate       =     1467 ns/coeff
+	Sample Rate      =      389 ns/sample
+	    #<NoData,OverFlow,MarkY,MarkX>
+     index   flag  data  delta
+	 0  #1000  0x17    23
+	 1  #1000  0x17     0
+	 2  #1000  0x24    13
+	 3  #1000  0x24     0
+	 4  #1000  0x25     1
+	 5  #1000  0x25     0
+	 6  #1000  0x36    17
+	 7  #1000  0x36     0
+	 8  #1000  0x37     1
+	 9  #1000  0x37     0
+	10  #1000  0x44    13
+	11  #1000  0x44     0
+	12  #1000  0x45     1
+	13  #1000  0x45     0
+	14  #1000  0x56    17
+	15  #1000  0x56     0
+	16  #1000  0x57     1
+	...  ^
+
+    Here is another hang, but with data[4] (the coefficient number LSB (Least
+    Significant Bit) stuck high.  The flags are OK, but the first coefficient
+    (data= 0x0.) never appears, as all coeff numbers are forced to be odd.
+
+    % rpixel --freerun --flag --npix=1
+    Real GPIO
+    num pixels=     1
+    num samples=    64
+    Warning:  nReset:  fifo not empty (NoData=0)
+    Rep[1]
+	OverFlow=   0
+	NoData_cnt= 0
+	sample_cnt= 64
+	coeff_cnt=  9
+	delta_ns=   25521 ns
+	NoData per Coeff =     0.00
+	Pixel Rate       =    45360 ns/pixel
+	Coeff Rate       =     2835 ns/coeff
+	Sample Rate      =      398 ns/sample
+	    #<NoData,OverFlow,MarkY,MarkX>
+     index   flag  data  delta
+	 0  #0000  0xdf   223
+	 1  #0000  0xfc    29
+	 2  #0000  0xfc     0
+	 3  #0000  0xfd     1
+	 4  #0000  0xfd     0
+	 5  #0000  0xfe     1
+	 6  #0000  0xfe     0
+	 7  #0000  0xff     1
+	 8  #0000  0xff     0
+	 9  #0000  0x10  -239
+	10  #0000  0x10     0
+	11  #0000  0x11     1
+	12  #0000  0x11     0
+	13  #0000  0x12     1
+	14  #0000  0x12     0
+	15  #0000  0x13     1
+	16  #0000  0x13     0
+	17  #0000  0x30    29
+	18  #0000  0x30     0
+	19  #0000  0x31     1
+	20  #0000  0x31     0
+	21  #0000  0x32     1
+	22  #0000  0x32     0
+	23  #0000  0x33     1
+	24  #0000  0x33     0
+	25  #0000  0x50    29
+        ...          ^
+
 ----------------------------------------------------------------------------
 ## Linux notes
 ----------------------------------------------------------------------------
