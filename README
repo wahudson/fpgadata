@@ -94,6 +94,18 @@ Utility:
 	Used to assess the uniformity of sync marks in the pixel stream.
 	Written in Perl.
 
+Published Paper:
+----------------
+    wahudson/fpgadata: FPGA to Raspberry Pi Data Transfer - Published release
+	Upload archive:  2020-03-13  Version v1.0.0
+	https://doi.org/10.5281/zenodo.3710372
+
+    Error estimation and enhanced stiffness sensitivity in contact resonance
+	force microscopy with a multiple arbitrary frequency lock-in amplifier
+	(MAFLIA)
+	Erin E Flater, Arya C Mugdha, Saurabh Gupta, William A Hudson,
+	Abbigail A Fahrenkamp, Jason P Killgore and Jesse W Wilson
+	https://iopscience.iop.org/article/10.1088/1361-6501/ab97f9
 
 Contributing:
 -------------
