@@ -59,30 +59,43 @@ yCoeffItr::restart()
 *    Assume there are no NoData entries.
 *    Coefficients are signed 16-bit values packed from big-endian nibbles.
 *    Coefficient numbers are checked on each array entry.  If an alignment
-*    error occures, the remaining coefficients are flagged with value -99999,
-*    and array entries are skipped to re-synchronize on the start of the
-*    next pixel.
+*        error occurs, the remaining coefficients are flagged with value
+*        COEFF_ERR= -99999, and array entries are skipped to re-synchronize
+*        on the start of the next pixel.
 *    Each array entry is packed bits:
 *        data[15:0] = (0, OverFlow, Ymark, Xmark, cnum[3:0], nibble[3:0])
+*    Scan marks:  (same for X and Y)  If the scan mark changes on any nibble,
+*        the change will be reflected in the resulting PixMark.  This allows
+*        a scan mark as narrow as one nibble to be detected, regardless of
+*        polarity.
 * call:
 *    self.next_pixel()
 * return:
 *    ()  = pointer to coefficient arry, NULL at end of data
+*    Object single-pixel attributes are updated:
+*        PixCoef[16]    // array of coefficients
+*        PixNum         // pixel number
+*        PixErr         // pixel has an error
+*        PixMarkX       // X scan mark
+*        PixMarkY       // Y scan mark
 */
 int*
 yCoeffItr::next_pixel()
 {
     uint16_t		*max_dp;	// DaPtr past end of source array
     int			nib_err = 0;	// nibble error
+    uint16_t		xnew;		// new pixel Xmark
+    uint16_t		ynew;		// new pixel Ymark
+    uint16_t		xmark;		// current nibble Xmark
+    uint16_t		ymark;		// current nibble Ymark
 
     const int		COEFF_ERR = -99999;
 
     max_dp = Fdata->data_pointer_end();
     // Allow array to grow between calls.
 
-    // Look at only first coefficient, first nibble MSB, for scan mark.
-    PixMarkX = ((*DaPtr) >> X_MARK_BIT) & 0x1;
-    PixMarkY = ((*DaPtr) >> Y_MARK_BIT) & 0x1;
+    xnew = PixMarkX;		// new pixel mark init to old value
+    ynew = PixMarkY;
 
     PixErr = 0;
 
@@ -103,6 +116,12 @@ yCoeffItr::next_pixel()
 	    if ( cnum != jj ) {
 		nib_err = 1;
 	    }
+
+	    // update new pixel mark if old one differs in any nibble
+	    xmark = ((*DaPtr) >> X_MARK_BIT) & 0x1;
+	    ymark = ((*DaPtr) >> Y_MARK_BIT) & 0x1;
+	    if ( PixMarkX != xmark ) { xnew = xmark; }
+	    if ( PixMarkY != ymark ) { ynew = ymark; }
 	}
 
 	if ( nib_err ) {
@@ -110,6 +129,9 @@ yCoeffItr::next_pixel()
 	}
 	PixCoef[jj] = cvalue;
     }
+
+    PixMarkX = xnew;		// update final pixel mark
+    PixMarkY = ynew;
 
     PixNum++;
 
