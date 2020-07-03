@@ -2,9 +2,20 @@
 		rpixel -- Read FPGA Pixel
 		-------------------------
 
-Document application and use of 'rpixel' program on RPi (Raspberry Pi)
+Application and use of the 'rpixel' program on RPi (Raspberry Pi)
 with Altera DE2-115 FPGA Development board.
-Try to keep it current and focused on as-implemented function.
+
+Contents:
+    ## References
+    ## RPi Signals
+    ## FPGA Connections
+    ## Documentation Guide
+    ## FIFO Interface
+    ## rpixel Reading Data from FPGA
+    ## Scan Marks
+    ## Data Visualization
+    ## Live Update Plots
+    ## Live Update Images
 
 ----------------------------------------------------------------------------
 ##(2017-05-27)  References
@@ -129,7 +140,7 @@ Configure RPi pin modes:  (after each power-up)
 FrameGate   is the Shutter Enable signal from ScanImage.
 
 ----------------------------------------------------------------------------
-##(2018-08-12)  Documentation
+##(2018-08-12)  Documentation Guide
 ----------------------------------------------------------------------------
 
     Each documentation file tries to have a specific focus, and generally
@@ -270,6 +281,166 @@ Note memory usage:
     Long as plenty of free memory remains, all is OK.  (433 Mbyte in this case)
     If swap (to the SD card) occures, not so good, may wear out the card.
 
+----------------------------------------------------------------------------
+##(2020-07-02)  Scan Marks
+----------------------------------------------------------------------------
+
+See also:  doc/architecture.text  "Scan Image Formation", which is from the
+    initial design point of view.
+
+Scan Marks - What are they?
+
+    Also called "sync signals" or "trigger signals".  Often the signal is a
+    narrow pulse.
+
+    Here we generalize the concept to a "scan mark", where the signal edge
+    (rising or falling) marks an interesting point in time.  The signal is
+    still a pulse, but we no longer care about the duty cycle since only the
+    edges mark points in time.
+
+    In an image scanning system the image data is a sequential stream of
+    pixel values.  Scan marks are additional signals used to identify points
+    in that stream useful for reconstructing an image.
+    e.g. In an X-Y raster scan system typically there is a line sync
+    pulse to identify the start of each scan line in the X-direction, and a
+    frame sync pulse to identify the first scan line in a frame.
+    These sync pulses are the scan marks.
+
+    In the 'rpixel' program scan mark names are:
+	MarkX,    MarkY     Input scan marks
+	PixMarkX, PixMarkY  Output scan marks
+	Xm,       Ym        in output CSV file header
+
+Scan Mark flow:
+
+    Here we trace the scan marks thru a typical system to the 'rpixel' output.
+    Both the X and Y marks are treated virtually the same.
+
+    The scan marks originate in some source system, such as galvanometers
+    or AFM (Atomic Force Microscope).
+    They go thru a schmitt-trigger buffer, into a FIFO (First In First Out)
+    data buffer in the FPGA, and then into a memory array in the RPi 'rpixel'
+    program, and finally output as data in a CSV file:
+
+	Scan mark source (e.g. AFM)
+	    Output asynchronous pulse (e.g. 1 us, 5 V TTL level).
+	  v
+	Schmidt-trigger buffer (or Comparator)
+	    Input TTL level, slow edge rate.
+	    Output 3.3 V CMOS level, fast edge rate.
+	  v
+	FPGA (real time)
+	    GPIO input
+	    Synchronizer samples signal (e.g. 50 MHz)
+	    Pulse stretch to nibble period
+	    FIFO data buffer
+	    GPIO output (16 us/nibble)
+	  v
+	RPi 'rpixel' program (virtual time)
+	    GPIO input (16 us/nibble)
+	    Memory data array
+	    Output as CSV data, 1 pixel per data line (e.g. 1 ms/pixel)
+
+    Source:
+	The source signals are often 5 V TTL level signals, which may swing
+	up to +5 V, especially if there is a pull-up resistor.
+
+    Schmidt-trigger Buffer:
+	The FPGA and RPi both have a 3.3 V maximum input signal voltage, and
+	will be damaged by a 5 V signal.  A 5 V tolerant schmitt-trigger buffer
+	(e.g. 74AHC14), powered at 3.3 V, will output a signal no larger than
+	3.3 V, thus protecting the FPGA.
+
+	The hysteresis of the schmitt-trigger can accept a slow input edge
+	and produce a fast risetime edge for the FPGA.
+	[Slow edge rates on CMOS inputs of FPGA may be susceptible to noise,
+	and can cause the input receiver to draw more current during the edge
+	transistion.  See input edge rate specification.]
+
+    FPGA:
+	GPIO input pins receive the signals.
+	A Synchronizer samples the input in the system clock domain (e.g.
+	50 MHz).
+
+	A logic block may stretch the signal pulses to be at least as long
+	as a nibble time period (e.g. 16 us), (or coefficient period, or
+	pixel period).  This processing is in real time.
+
+	They then go into the FIFO data buffer.
+	Then out on GPIO output pins to the RPi.
+
+    RPi 'rpixel':
+	RPi receives the signals on GPIO input pins with program 'rpixel',
+	which puts them in a memory array along with associated data nibbles.
+	After all data is collected in memory, the array entries are coalesced
+	into pixel chunks and output as CSV data.
+
+	The 'rpixel' processing is in virtual time.  The actual input is
+	asynchronous with handshaking signals NoData and ReadAck to the
+	FIFO in the FPGA.
+
+'rpixel' pulse stretching:
+
+    Pulse polarity is immaterial, narrow high pulses are treated the same
+    as narrow low pulses.
+
+    Input scan mark signals are in the nibble sample domain, so the
+    narrowest pulse must be at least one nibble in time duration.
+    This is stretched (down sampled) to the pixel period by code in function
+    yCoeffItr::next_pixel() in file yCoeffItr.cpp.
+
+    The essential idea is if the scan mark in any nibble differs from the 
+    previous pixel mark, then it becomes the new pixel mark.  Note absolute
+    logic levels are ignored, and only comparison and copy operations
+    are performed.
+
+FPGA pulse stretching:
+
+    The scan mark on the GPIO input is asynchronous, and thus should be
+    first sampled by the system clock (e.g. 50 MHz).
+
+    The essential idea is if the scan mark in any input sample differs from
+    the previous down sample result, then it becomes the new down sample
+    result.  Similar to 'rpixel".
+
+    It might look something like this in pseudo hardware language:
+
+	always at pos_edge( system_clock ):	// sample async signal
+	    sysX = GPIO input pin;
+
+	always at neg_edge( system_clock ):	// down sample
+	    if ( resultX != sysX ) { newresX = sysX }
+
+	always at pos_edge( nibble_clock ):	// output to FIFO
+	    resultX = newresX;
+	    GPIO output pin = resultX;
+
+    Note:  Arrange the nibble_clock pos_edge to not be the same as
+    the system clock neg_edge, or a race condition will result.
+    e.g. Let nibble_clock edges be produced by pos_edge( system_clock ).
+    These absolute edges are arbitrary, but arrange their relationship
+    to avoid a race condition.
+
+    The down sample result could be in any one of the nibble, coefficient,
+    or pixel clock domains.
+
+    In this way scan mark pulse polarity does not matter, and there is
+    no time delay that needs to be configured.
+
+FPGA FIFO buffer:
+
+    In our system the FIFO buffer performed 4:1 multiplexing where the
+    input data width was 4 times wider than the output data width.  Thus
+    there was no nibble clock, and data was entered as 4 nibbles in parallel
+    (one coefficient) at the coefficient clock rate.  Thus pulse stretch
+    (down sample) to the coefficient clock period.
+
+Prior version of 'rpixel':
+
+    Prior to git commit fc99de94 (2020-07-02) the input scan marks were
+    sampled on only the first nibble of each pixel, thus missing narrow
+    scan marks.
+    See:  yCoeffItr::next_pixel()  in commit aef911a3 (2020-07-02).
 
 ----------------------------------------------------------------------------
 ##(2018-08-14)  Data Visualization

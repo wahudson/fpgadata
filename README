@@ -15,7 +15,7 @@ trunk/		mainline development
     README
     ...
     doc/	    documentation (start here)
-	rpixel.text	see "Documentation" section
+	rpixel.text	see "Documentation Guide" section
 	...
     man/man1/
 	*.txt		text format man pages
