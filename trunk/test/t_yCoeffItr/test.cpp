@@ -141,7 +141,7 @@ int main()
 	CHECK(    1, Cx.PixNum );		// not increment
 	CHECK(   10, Cx.PixCoef[0] );
 	CHECK( -257, Cx.PixCoef[15] );
-	CHECK(    0, Cx.PixMarkX );
+	CHECK(    1, Cx.PixMarkX );		// keeps last mark value
 	CHECK(    0, Cx.PixMarkY );
 	CHECK( "", Serr.str().c_str() );
     }
@@ -191,7 +191,7 @@ int main()
 	CHECK(    1, Cx.PixNum );		// unchanged
 	CHECK(   10, Cx.PixCoef[0] );		// unchanged
 	CHECK( -257, Cx.PixCoef[15] );		// unchanged
-	CHECK(    0, Cx.PixMarkX );		// unchanged
+	CHECK(    1, Cx.PixMarkX );		// unchanged
 	CHECK(    0, Cx.PixMarkY );		// unchanged
     }
     catch (...) {
