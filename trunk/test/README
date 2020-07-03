@@ -34,7 +34,7 @@ t_*/		Generic test suite contents
     tmp/		where the test program is executed, removed each time
 
 
-Test suites:  (2017-05-21)
+Test suites:  (2020-07-02)
 ------------
 ?       = not committed
   b     = uses bin/
@@ -45,10 +45,11 @@ Test suites:  (2017-05-21)
  m      = Module test (perl)     TestLib1.pm
  p      = Program test (command)
 ------  --------------
- u   s  t_Error/	Error      Error message class.
- u   s  t_yCoeffItr/	yCoeffItr  Coefficient Data Iterator class.
- u   s  t_yBuffStat/	yBuffStat  Buffer Statistics class.
- u   s  t_yFramDat/	yFramDat   Frame Data class.
+ u   s  t_Error/	    Error      Error message class.
+ u   s  t_yBuffStat/	    yBuffStat  Buffer Statistics class.
+ u   s  t_yCoeffItr/	    yCoeffItr  Coefficient Data Iterator class.
+ u   s  t_yCoeffItr_mark/   yCoeffItr  Scan marks
+ u   s  t_yFramDat/	    yFramDat   Frame Data class.
 
 
 Test Setup:
